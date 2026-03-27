@@ -573,14 +573,17 @@ const CATS = ['Todos','Empanadas','Carne al Vacío','Carnicería','Fiambres','L�
 const CE = {'Todos':'🏪','Empanadas':'🫓','Carne al Vacío':'🥩','Carnicería':'🥩','Fiambres':'🧀','Lácteos':'🥛','Panadería':'🍞','Bebidas':'🥤','Almacén':'🌾','Limpieza':'🧹'};
 const CBG = {'Todos':'#F5F5F0','Empanadas':'#1A0800','Carne al Vacío':'#1A1500','Carnicería':'#FFE8E8','Fiambres':'#F8F0FF','Lácteos':'#E8F5FF','Panadería':'#FFF8E8','Bebidas':'#E8FFE8','Almacén':'#FFF8F0','Limpieza':'#F0FFF4'};
 
-// REGLAS DE SUGERENCIAS INTELIGENTES
-const SUGERENCIAS = [
-  {si: p => p.cat === 'Carnicería' || p.cat === 'Carne al Vacío', sugerir: [22, 14, 20]}, // carne → gaseosa, pan, queso
-  {si: p => p.cat === 'Empanadas', sugerir: [22, 26]},   // empanadas → coca, gaseosa
-  {si: p => p.cat === 'Lácteos',   sugerir: [14, 28]},   // lácteos → pan, fideos
-  {si: p => p.cat === 'Bebidas',   sugerir: [40, 41]},   // bebidas → empanadas
-  {si: p => p.cat === 'Almacén',   sugerir: [25, 22]},   // almacén → leche, coca
+// Reglas estáticas base (se combinan con historial real)
+const REGLAS = [
+  {si: p => p.cat==='Carnicería'||p.cat==='Carne al Vacío', sugerir:[21,14,16]},
+  {si: p => p.cat==='Empanadas',  sugerir:[21,26]},
+  {si: p => p.cat==='Lácteos',    sugerir:[14,50]},
+  {si: p => p.cat==='Bebidas',    sugerir:[40,41]},
+  {si: p => p.cat==='Almacén',    sugerir:[25,21]},
+  {si: p => p.cat==='Panadería',  sugerir:[25,16]},
 ];
+let historialCliente = [];
+let historialCargado = false;
 
 // ══════════════════════════════════════════════════════
 // UTILS
@@ -684,7 +687,7 @@ async function registrarCliente() {
     if (error.code === '23505') {
       // Ya existe — cargarlo
       const { data: existing } = await db.from('clientes').select('*').eq('telefono', tel).single();
-      if (existing) { clienteActual = existing; bvActiva = existing.bv_activa; bvUsada = existing.bv_usada; }
+      if (existing) { clienteActual = existing; bvActiva = existing.bv_activa; bvUsada = existing.bv_usada; historialCliente=[]; historialCargado=false; }
       toast('✅ Bienvenido de vuelta — tarjeta cargada');
     } else {
       toast('⚠️ Error al crear tarjeta — intentá de nuevo');
@@ -693,6 +696,7 @@ async function registrarCliente() {
   } else {
     clienteActual = data;
     bvActiva = true;
+    historialCliente = []; historialCargado = false;
   }
 
   localStorage.setItem('alpaso_cliente', JSON.stringify(clienteActual));
@@ -828,33 +832,135 @@ function addById(id) {
 }
 
 // ══════════════════════════════════════════════════════
-// SUGERENCIAS INTELIGENTES
+// SUGERENCIAS INTELIGENTES — historial real + reglas
 // ══════════════════════════════════════════════════════
-function getSugerencias() {
-  const enCarrito = Object.values(cart);
-  const sugeridos = new Set();
-  enCarrito.forEach(item => {
-    SUGERENCIAS.forEach(regla => {
-      if (regla.si(item)) {
-        regla.sugerir.forEach(id => {
-          if (!cart[id]) sugeridos.add(id);
-        });
-      }
+
+async function cargarHistorialCliente() {
+  if (!clienteActual || historialCargado) return;
+  try {
+    const { data } = await db.from('pedido_items')
+      .select('nombre, cantidad, pedidos!inner(cliente_id)')
+      .eq('pedidos.cliente_id', clienteActual.id)
+      .limit(100);
+    const freq = {};
+    (data||[]).forEach(i => {
+      if (!freq[i.nombre]) freq[i.nombre] = {nombre:i.nombre, veces:0};
+      freq[i.nombre].veces++;
     });
-  });
-  return [...sugeridos].slice(0, 4).map(id => PRODS.find(p => p.id === id)).filter(Boolean);
+    historialCliente = Object.values(freq).sort((a,b) => b.veces-a.veces);
+    historialCargado = true;
+  } catch(e) { historialCargado = true; }
 }
 
-function renderSugerencias() {
-  const sg = getSugerencias();
-  if (!sg.length) { $('sugerencias-box').style.display = 'none'; return; }
-  $('sugerencias-box').style.display = 'block';
-  $('sugerencias-items').innerHTML = sg.map(p => `
-    <div class="sg-item" onclick="addById(${p.id})">
-      <div class="si-e">${p.nombre.includes('Empanada')?'🫓':p.nombre.includes('Leche')?'🥛':p.nombre.includes('Coca')||p.nombre.includes('Gaseosa')?'🥤':p.nombre.includes('Pan')?'🍞':'🛒'}</div>
-      <div class="si-n">${p.nombre.split(' ').slice(0,3).join(' ')}</div>
-      <div class="si-p">${fmt(p.precio_venta)}</div>
-    </div>`).join('');
+function calcularDescuentoPersonal() {
+  const sub = cartTotal();
+  const pts = clienteActual?.puntos || 0;
+  if (getNivel(pts)==='🥇 Gold' && sub>=20000) return {pct:8,label:'Exclusivo Gold 🥇'};
+  if (clienteActual?.cumpleanos) {
+    const m = new Date(clienteActual.cumpleanos).getMonth();
+    if (m===new Date().getMonth()) return {pct:10,label:'🎂 Descuento cumpleaños'};
+  }
+  return null;
+}
+
+function getCombosRecomendados() {
+  const cats = new Set(Object.values(cart).map(i=>i.cat));
+  const sub  = cartTotal();
+  return COMBOS.filter(c => {
+    if (c.ids.every(id=>cart[id])) return false;
+    if (c.id==='alm' && (cats.has('Empanadas')||cats.has('Bebidas'))) return true;
+    if (c.id==='sem' && (cats.has('Carnicería')||cats.has('Carne al Vacío'))) return true;
+    if (c.id==='des' && (cats.has('Lácteos')||cats.has('Panadería'))) return true;
+    if (c.id==='vie' && sub>=10000) return true;
+    return false;
+  }).slice(0,2);
+}
+
+async function getSugerencias() {
+  await cargarHistorialCliente();
+  const idsEnCarrito = new Set(Object.keys(cart).map(Number));
+  const scores = new Map();
+
+  // Del historial real
+  historialCliente.forEach((h,idx) => {
+    const p = PRODS.find(x=>x.nombre===h.nombre);
+    if (p && !idsEnCarrito.has(p.id)) {
+      let s = (historialCliente.length-idx)*2;
+      if (Object.values(cart).some(c=>REGLAS.some(r=>r.si(c)&&r.sugerir.includes(p.id)))) s+=10;
+      scores.set(p.id,(scores.get(p.id)||0)+s);
+    }
+  });
+
+  // Reglas estáticas
+  Object.values(cart).forEach(item => {
+    REGLAS.forEach(r => {
+      if (r.si(item)) r.sugerir.forEach((id,i) => {
+        if (!idsEnCarrito.has(id)) scores.set(id,(scores.get(id)||0)+(3-i));
+      });
+    });
+  });
+
+  return [...scores.entries()].sort((a,b)=>b[1]-a[1]).slice(0,5)
+    .map(([id])=>PRODS.find(p=>p.id===id)).filter(Boolean);
+}
+
+async function renderSugerencias() {
+  if (!Object.keys(cart).length) { $('sugerencias-box').style.display='none'; return; }
+
+  const [prods, combosRec] = await Promise.all([getSugerencias(), Promise.resolve(getCombosRecomendados())]);
+  const desc = calcularDescuentoPersonal();
+
+  if (!prods.length && !combosRec.length && !desc) { $('sugerencias-box').style.display='none'; return; }
+  $('sugerencias-box').style.display='block';
+
+  const emo = p => {
+    if (!p) return '🛒';
+    if (p.nombre?.includes('Empanada')) return '🫓';
+    if (p.cat==='Carnicería'||p.cat==='Carne al Vacío') return '🥩';
+    if (p.cat==='Fiambres') return '🧀';
+    if (p.cat==='Lácteos') return '🥛';
+    if (p.cat==='Bebidas') return '🥤';
+    if (p.cat==='Panadería') return '🍞';
+    return '🛒';
+  };
+
+  let html = '';
+
+  if (desc) {
+    html += `<div style="background:linear-gradient(135deg,var(--n),#1A1500);border:1px solid rgba(201,168,76,.3);border-radius:11px;padding:11px 13px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+      <div><div style="font-size:9px;font-weight:800;color:var(--do);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">${desc.label}</div>
+      <div style="font-size:12px;font-weight:700;color:#fff">${desc.pct}% off en este pedido</div></div>
+      <div style="font-size:20px;font-weight:900;color:var(--do)">-${desc.pct}%</div></div>`;
+  }
+
+  if (combosRec.length) {
+    html += `<div style="font-size:9px;font-weight:800;color:var(--g3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">🔥 Combos para vos</div>`;
+    combosRec.forEach(c => {
+      html += `<div onclick="addCombo('${c.id}')" style="background:var(--n);border-radius:11px;padding:10px 12px;margin-bottom:7px;border-left:3px solid var(--do);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <div style="flex:1"><div style="font-size:12px;font-weight:800;color:#fff;margin-bottom:2px">${c.e} ${c.nombre}</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.4)">${c.desc.join(' · ')}</div></div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:9px;color:#444;text-decoration:line-through">${fmt(c.normal)}</div>
+          <div style="font-size:14px;font-weight:900;color:var(--do)">${fmt(c.combo)}</div>
+          <div style="font-size:9px;background:rgba(39,174,96,.15);color:var(--gr);padding:1px 5px;border-radius:8px">-${fmt(c.ahorro)}</div>
+        </div></div>`;
+    });
+  }
+
+  if (prods.length) {
+    const label = clienteActual&&historialCliente.length?'🔄 Solés llevar también':'💡 También te puede interesar';
+    html += `<div style="font-size:9px;font-weight:800;color:var(--g3);text-transform:uppercase;letter-spacing:1px;margin:8px 0 6px">${label}</div>
+    <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none">
+      ${prods.map(p=>`<div class="sg-item" onclick="addById(${p.id})" style="min-width:76px">
+        <div class="si-e">${emo(p)}</div>
+        <div class="si-n">${p.nombre.split(' ').slice(0,3).join(' ')}</div>
+        <div class="si-p">${fmt(p.precio_venta)}</div>
+      </div>`).join('')}
+    </div>`;
+  }
+
+  $('sg-title').style.display='none';
+  $('sugerencias-items').innerHTML=html;
 }
 
 // ══════════════════════════════════════════════════════
