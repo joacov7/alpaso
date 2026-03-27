@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Al Paso — Mercado de Proximidad</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--r:#E31E24;--rp:#FFF0F0;--n:#1A1A1A;--g:#F5F5F5;--g2:#E8E8E8;--g3:#999;--w:#fff;--gr:#27AE60;--am:#F39C12;--do:#C9A84C;--do2:#E8C96A;--sh2:0 2px 12px rgba(0,0,0,.08)}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Nunito',sans-serif;background:#E0E0E0;display:flex;justify-content:center;min-height:100vh;padding:20px 0}
+.phone{width:390px;height:844px;background:var(--w);border-radius:44px;box-shadow:0 30px 80px rgba(0,0,0,.3);overflow:hidden;position:relative;display:flex;flex-direction:column}
+.statusbar{height:44px;background:var(--n);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0}
+.statusbar span{color:var(--do);font-size:11px;font-weight:700;font-family:'Bebas Neue';letter-spacing:1px}
+.screen{display:none;flex-direction:column;flex:1;overflow:hidden}
+.screen.active{display:flex;animation:fi .22s ease}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.scroll-area::-webkit-scrollbar{display:none}
+.bnav{height:72px;background:#fff;border-top:1px solid var(--g2);display:flex;align-items:center;justify-content:space-around;flex-shrink:0;padding-bottom:8px}
+.ni{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:6px 10px;position:relative}
+.ni .ic{font-size:20px}.ni .lb{font-size:9px;font-weight:700;color:var(--g3)}
+.ni.active .lb{color:var(--n)}
+.badge{position:absolute;top:2px;right:2px;background:var(--r);color:#fff;font-size:9px;font-weight:800;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+/* HDR */
+.hdr{background:var(--n);padding:16px 20px 24px;position:relative;overflow:hidden}
+.hdr-bot{position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--do),transparent)}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.logo-area{display:flex;align-items:center;gap:8px}
+.logo-ic{width:34px;height:34px;background:var(--do);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.logo-txt{font-family:'Bebas Neue';font-size:26px;color:var(--do);letter-spacing:2px}
+.notif{width:34px;height:34px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;position:relative}
+.ndot{position:absolute;top:5px;right:5px;width:7px;height:7px;background:var(--r);border-radius:50%}
+.greet{color:rgba(255,255,255,.5);font-size:12px;font-weight:600}
+.greet strong{color:var(--do);font-size:16px;display:block;font-family:'Playfair Display';font-style:italic}
+.sbar{background:rgba(255,255,255,.06);border:1px solid rgba(201,168,76,.15);border-radius:14px;padding:10px 14px;display:flex;align-items:center;gap:8px;margin:0 20px;transform:translateY(50%);cursor:pointer}
+.sbar span{color:rgba(255,255,255,.35);font-size:13px;font-weight:600}
+.hcontent{padding:36px 20px 16px}
+/* SYNC BANNER */
+.sync-bar{position:absolute;top:44px;left:0;right:0;padding:6px 16px;font-size:10px;font-weight:700;text-align:center;z-index:50;transition:all .3s;display:flex;align-items:center;justify-content:center;gap:6px}
+.sync-ok{background:rgba(39,174,96,.9);color:#fff}
+.sync-err{background:rgba(227,30,36,.9);color:#fff}
+.sync-load{background:rgba(201,168,76,.9);color:#1A1A1A}
+/* WELCOME */
+.wb{background:linear-gradient(135deg,#0A1A0A,#0A0A0A);border:1px solid rgba(201,168,76,.3);border-radius:16px;padding:16px;margin-bottom:18px;cursor:pointer}
+.wb-tag{background:var(--do);color:var(--n);font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;display:inline-block;margin-bottom:7px}
+.wb-title{font-family:'Playfair Display';font-size:16px;color:#fff;font-weight:700;margin-bottom:4px}
+.wb-sub{font-size:10px;color:rgba(255,255,255,.4);line-height:1.4;margin-bottom:10px}
+.wb-btn{background:var(--do);color:var(--n);border:none;border-radius:9px;padding:9px 14px;font-family:'Nunito';font-size:12px;font-weight:800;cursor:pointer;width:100%}
+/* EMPANADAS */
+.emp-spot{background:linear-gradient(135deg,#1A0800,#0A0A0A);border-radius:16px;padding:16px;margin-bottom:18px;border:1px solid rgba(201,168,76,.15);position:relative;overflow:hidden}
+.emp-spot::after{content:'🫓';position:absolute;right:-8px;bottom:-8px;font-size:70px;opacity:.08}
+.esp-tag{background:rgba(227,30,36,.8);color:#fff;font-size:9px;font-weight:800;padding:2px 7px;border-radius:5px;display:inline-block;margin-bottom:7px}
+.esp-title{font-family:'Playfair Display';font-size:18px;color:#fff;font-weight:700;margin-bottom:3px}
+.esp-sub{font-size:10px;color:rgba(255,255,255,.4);margin-bottom:12px}
+.emp-tipos{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px}
+.emp-tipo{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:5px 11px;font-size:10px;font-weight:700;color:rgba(255,255,255,.7);cursor:pointer}
+.emp-tipo:active{background:var(--do);color:var(--n)}
+.emp-precio{font-family:'Playfair Display';font-size:20px;color:var(--do);font-weight:700}
+.emp-precio span{font-size:11px;color:rgba(255,255,255,.3)}
+/* COMBOS */
+.combo{background:var(--n);border-radius:14px;padding:14px;margin-bottom:10px;border-left:3px solid var(--do);cursor:pointer}
+.co-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px}
+.co-title{font-size:14px;font-weight:800;color:#fff;font-family:'Playfair Display'}
+.co-badge{background:rgba(201,168,76,.15);color:var(--do);font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px;white-space:nowrap;margin-left:6px}
+.co-items{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.co-item{background:rgba(255,255,255,.05);border-radius:5px;padding:2px 7px;font-size:9px;color:rgba(255,255,255,.5);font-weight:600}
+.co-footer{display:flex;align-items:center;justify-content:space-between}
+.co-old{font-size:10px;color:#333;text-decoration:line-through}
+.co-new{font-family:'Playfair Display';font-size:18px;color:var(--do);font-weight:700}
+.co-ahorro{background:rgba(39,174,96,.15);color:var(--gr);font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px}
+.co-btn{background:var(--do);color:var(--n);border:none;border-radius:9px;padding:7px 12px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer}
+/* CATS */
+.cats{display:flex;gap:10px;margin-bottom:18px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.cats::-webkit-scrollbar{display:none}
+.cat{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;flex-shrink:0}
+.cat-ic{width:52px;height:52px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px}
+.cat-lb{font-size:10px;font-weight:700;color:var(--n);text-align:center}
+.cat.sel .cat-ic{box-shadow:0 0 0 2px var(--n)}
+/* PRODUCT */
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:18px}
+.pcard{background:#fff;border-radius:14px;overflow:hidden;box-shadow:var(--sh2);cursor:pointer}
+.pcard:active{transform:scale(.97)}
+.pimg{height:88px;display:flex;align-items:center;justify-content:center;font-size:38px;position:relative}
+.obadge{position:absolute;top:6px;left:6px;background:var(--r);color:#fff;font-size:8px;font-weight:800;padding:2px 5px;border-radius:5px}
+.dobadge{position:absolute;top:6px;left:6px;background:var(--n);color:var(--do);font-size:8px;font-weight:800;padding:2px 5px;border-radius:5px}
+.pinfo{padding:8px 9px 10px}
+.pinfo h4{font-size:12px;font-weight:700;color:var(--n);margin-bottom:2px;line-height:1.2}
+.pbrand{font-size:10px;color:var(--g3);margin-bottom:5px}
+.prow{display:flex;align-items:center;justify-content:space-between}
+.price{font-size:13px;font-weight:900;color:var(--n)}
+.addbtn{width:26px;height:26px;background:var(--n);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--do);border:none;cursor:pointer;flex-shrink:0}
+/* CATALOGO */
+.cat-hdr{background:var(--n);padding:14px 18px;display:flex;align-items:center;gap:10px;border-bottom:2px solid var(--do)}
+.cat-hdr h1{font-family:'Bebas Neue';font-size:22px;color:var(--do);letter-spacing:2px}
+.back{font-size:20px;color:var(--do);cursor:pointer}
+.sinput-wrap{display:flex;align-items:center;gap:8px;margin:10px 14px;background:var(--g);border-radius:11px;padding:9px 12px}
+.sinput-wrap input{border:none;background:none;font-family:'Nunito';font-size:13px;font-weight:600;color:var(--n);flex:1;outline:none}
+.ftabs{display:flex;gap:7px;padding:0 14px 10px;overflow-x:auto;scrollbar-width:none}
+.ftabs::-webkit-scrollbar{display:none}
+.ftab{padding:6px 11px;border-radius:20px;font-size:10px;font-weight:700;background:var(--g);color:var(--g3);cursor:pointer;white-space:nowrap;border:2px solid transparent;flex-shrink:0}
+.ftab.active{background:var(--n);color:var(--do);border-color:var(--n)}
+#cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;padding:0 14px 14px}
+/* CARRITO */
+.cart-hdr{background:var(--n);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--do)}
+.cart-hdr h1{font-family:'Bebas Neue';font-size:22px;color:var(--do);letter-spacing:2px}
+.cart-hdr span{color:rgba(255,255,255,.4);font-size:11px;font-weight:600}
+#cart-list{padding:12px 14px;display:flex;flex-direction:column;gap:9px}
+.citem{background:#fff;border-radius:14px;padding:11px;display:flex;align-items:center;gap:9px;box-shadow:var(--sh2)}
+.cemi{font-size:28px;width:40px;text-align:center;flex-shrink:0}
+.cinfo{flex:1}
+.cinfo h4{font-size:11px;font-weight:700;color:var(--n)}
+.cmarca{font-size:9px;color:var(--g3)}
+.qctrl{display:flex;align-items:center;gap:4px;background:var(--g);border-radius:9px;padding:3px 5px}
+.qbtn{width:20px;height:20px;background:#fff;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--n);cursor:pointer;border:none}
+.qnum{font-size:12px;font-weight:800;color:var(--n);min-width:16px;text-align:center}
+.cprice{font-size:12px;font-weight:900;color:var(--n);min-width:48px;text-align:right;flex-shrink:0}
+.cart-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 20px;text-align:center}
+.emp-ic{font-size:52px;margin-bottom:10px}
+.cart-empty h3{font-size:16px;font-weight:800;color:var(--n);margin-bottom:5px}
+.cart-empty p{font-size:11px;color:var(--g3);margin-bottom:16px}
+.ent-sec{padding:0 14px 10px}
+.ent-tit{font-size:12px;font-weight:800;color:var(--n);margin-bottom:7px}
+.ent-opts{display:flex;gap:7px}
+.eopt{flex:1;padding:9px 7px;border-radius:11px;border:2px solid var(--g2);text-align:center;cursor:pointer}
+.eopt.sel{border-color:var(--n);background:#F5F5F0}
+.eic{font-size:17px;margin-bottom:2px}
+.elb{font-size:10px;font-weight:700;color:var(--n)}
+.etm{font-size:9px;color:var(--g3)}
+.bv-strip{background:rgba(39,174,96,.08);border:1px solid rgba(39,174,96,.2);border-radius:10px;padding:9px 12px;margin:0 14px 8px;display:none;align-items:center;gap:9px}
+.resumen{margin:0 14px 10px;background:#fff;border-radius:14px;padding:12px;box-shadow:var(--sh2)}
+.rrow{display:flex;justify-content:space-between;padding:5px 0;font-size:11px;color:var(--g3);border-bottom:1px solid var(--g2)}
+.rrow:last-child{border:none}
+.rrow.rtot{font-size:14px;font-weight:900;color:var(--n)}
+.rrow .rv{font-weight:700;color:var(--n)}
+.rrow.rtot .rv{font-size:15px}
+/* PUNTOS EN CARRITO */
+.pts-canje-box{background:linear-gradient(135deg,#1A1500,#0A0A0A);border:1px solid rgba(201,168,76,.3);border-radius:12px;padding:12px 14px;margin:0 14px 10px;display:none}
+.pcb-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.pcb-title{font-size:11px;font-weight:800;color:var(--do)}
+.pcb-pts{font-size:10px;color:rgba(255,255,255,.4)}
+.pcb-btn{background:var(--do);color:var(--n);border:none;border-radius:8px;padding:6px 12px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer}
+.pcb-applied{background:rgba(39,174,96,.15);border:1px solid rgba(39,174,96,.3);border-radius:8px;padding:6px 12px;font-size:11px;font-weight:800;color:var(--gr);cursor:pointer}
+/* SUGERENCIAS */
+.sugerencia-box{background:var(--g);border-radius:12px;padding:10px 12px;margin:0 14px 10px;border-left:3px solid var(--do)}
+.sg-title{font-size:10px;font-weight:800;color:var(--n);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.sg-items{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.sg-items::-webkit-scrollbar{display:none}
+.sg-item{background:#fff;border-radius:10px;padding:8px 10px;text-align:center;cursor:pointer;flex-shrink:0;box-shadow:var(--sh2);min-width:80px}
+.sg-item .si-e{font-size:20px;margin-bottom:3px}
+.sg-item .si-n{font-size:9px;font-weight:700;color:var(--n);line-height:1.2}
+.sg-item .si-p{font-size:9px;color:var(--do);font-weight:800}
+.btn-main{margin:0 14px 9px;background:var(--n);color:var(--do);border:none;width:calc(100% - 28px);padding:13px;border-radius:14px;font-family:'Nunito';font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px}
+.btn-sec{margin:0 14px 9px;background:var(--g);color:var(--n);border:none;width:calc(100% - 28px);padding:12px;border-radius:14px;font-family:'Nunito';font-size:12px;font-weight:700;cursor:pointer}
+/* FIDELIDAD */
+.fid-hdr{background:var(--n);padding:18px 18px 26px;position:relative;overflow:hidden}
+.fid-hdr::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--do),transparent)}
+.fid-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.fid-top h1{font-family:'Bebas Neue';font-size:22px;color:var(--do);letter-spacing:2px}
+.tarjeta{background:linear-gradient(135deg,#1A1500,#0A0A0A);border-radius:18px;padding:18px;border:1px solid rgba(201,168,76,.25)}
+.tarjeta::before{content:'';display:block;height:2px;background:linear-gradient(90deg,transparent,var(--do),transparent);margin:-18px -18px 14px}
+.t-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+.t-logo{font-family:'Bebas Neue';font-size:18px;color:var(--do);letter-spacing:2px}
+.t-tipo{background:rgba(201,168,76,.12);color:var(--do);font-size:9px;font-weight:700;padding:3px 9px;border-radius:20px;border:1px solid rgba(201,168,76,.2)}
+.t-num{font-size:11px;color:rgba(255,255,255,.25);letter-spacing:3px;margin-bottom:10px}
+.t-bot{display:flex;justify-content:space-between;align-items:flex-end}
+.t-nombre{color:rgba(255,255,255,.5);font-size:11px;font-weight:700}
+.t-pts .pts{font-size:26px;font-weight:900;color:var(--do);line-height:1}
+.t-pts .ptslb{font-size:8px;color:rgba(255,255,255,.25);letter-spacing:1px}
+.fid-body{padding:14px}
+.nivel-box{background:#fff;border-radius:14px;padding:12px;box-shadow:var(--sh2);margin-bottom:12px}
+.nrow{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.nbadge{background:var(--n);color:var(--do);font-size:9px;font-weight:800;padding:3px 9px;border-radius:20px}
+.ninfo{font-size:10px;color:var(--g3)}
+.ninfo strong{color:var(--n)}
+.pbar{height:5px;background:var(--g2);border-radius:3px;overflow:hidden;margin-bottom:4px}
+.pfill{height:100%;background:linear-gradient(90deg,var(--do),var(--do2));border-radius:3px;width:0%;transition:width .8s ease}
+.plabels{display:flex;justify-content:space-between;font-size:9px;color:var(--g3);font-weight:600}
+.bentit{font-size:13px;font-weight:800;color:var(--n);margin-bottom:9px}
+.benitem{background:#fff;border-radius:12px;padding:11px;display:flex;align-items:center;gap:9px;box-shadow:var(--sh2);margin-bottom:8px}
+.benic{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.beninfo h4{font-size:11px;font-weight:700;color:var(--n)}
+.beninfo p{font-size:9px;color:var(--g3);margin-top:1px}
+.benact{margin-left:auto;background:var(--g);color:var(--n);font-size:10px;font-weight:700;padding:4px 9px;border-radius:7px;flex-shrink:0;cursor:pointer;border:none;font-family:'Nunito'}
+.histitem{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--g2)}
+.histitem:last-child{border:none}
+.histic{font-size:16px;width:30px;height:30px;background:var(--g);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.histinfo{flex:1}
+.histinfo h4{font-size:11px;font-weight:700;color:var(--n)}
+.histinfo p{font-size:9px;color:var(--g3)}
+.histpts{font-size:11px;font-weight:800;color:var(--gr)}
+/* REGISTRO */
+.reg-hdr{background:var(--n);padding:14px 18px;border-bottom:2px solid var(--do)}
+.reg-hdr h1{font-family:'Bebas Neue';font-size:22px;color:var(--do);letter-spacing:2px}
+.reg-body{padding:20px}
+.reg-form{display:flex;flex-direction:column;gap:12px}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg label{font-size:10px;font-weight:800;color:var(--g3);text-transform:uppercase;letter-spacing:.5px}
+.fg input,.fg select{border:2px solid var(--g2);border-radius:10px;padding:10px 12px;font-family:'Nunito';font-size:13px;font-weight:600;color:var(--n);outline:none;width:100%}
+.fg input:focus,.fg select:focus{border-color:var(--n)}
+/* MODALS */
+.wmodal{position:absolute;inset:0;background:rgba(0,0,0,.75);z-index:300;display:none;align-items:flex-end}
+.wmodal.show{display:flex}
+.wm-box{background:var(--n);width:100%;border-radius:24px 24px 0 0;padding:24px 22px 32px;border-top:2px solid var(--do)}
+.wm-emoji{font-size:48px;text-align:center;display:block;margin-bottom:10px}
+.wm-title{font-family:'Playfair Display';font-size:22px;color:#fff;text-align:center;margin-bottom:5px}
+.wm-sub{font-size:11px;color:rgba(255,255,255,.4);text-align:center;line-height:1.5;margin-bottom:16px}
+.wm-val{background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.2);border-radius:12px;padding:12px;margin-bottom:16px;text-align:center}
+.wm-val .tag{font-size:9px;letter-spacing:2px;color:var(--do);font-weight:700;text-transform:uppercase;margin-bottom:4px}
+.wm-val .big{font-family:'Playfair Display';font-size:32px;color:var(--do);font-weight:700;margin-bottom:3px}
+.wm-val .desc{font-size:10px;color:rgba(255,255,255,.35);line-height:1.4}
+.wm-btn{width:100%;background:var(--do);color:var(--n);border:none;border-radius:12px;padding:14px;font-family:'Nunito';font-size:14px;font-weight:800;cursor:pointer;margin-bottom:8px}
+.wm-skip{width:100%;background:transparent;color:rgba(255,255,255,.25);border:none;padding:8px;font-family:'Nunito';font-size:11px;cursor:pointer}
+.co{position:absolute;inset:0;background:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:200;padding:28px;text-align:center}
+.co.show{display:flex}
+.co-circle{width:76px;height:76px;background:var(--gr);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;margin-bottom:16px;animation:pop .4s cubic-bezier(.34,1.56,.64,1)}
+@keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+.co h2{font-size:19px;font-weight:900;color:var(--n);margin-bottom:5px}
+.co p{color:var(--g3);font-size:11px;line-height:1.5}
+.order-num{background:var(--g);border-radius:9px;padding:9px 16px;margin:10px 0;font-weight:800;font-size:14px;color:var(--n)}
+.co-pts{background:#FFF8E0;border-radius:9px;padding:7px 12px;margin-bottom:12px;font-size:11px;font-weight:700;color:var(--am)}
+.btn-wsp{background:#25D366;color:#fff;border:none;padding:12px;border-radius:12px;font-family:'Nunito';font-size:13px;font-weight:800;cursor:pointer;width:100%;margin-bottom:7px;display:flex;align-items:center;justify-content:center;gap:7px}
+.btn-v2{background:var(--g);color:var(--n);border:none;padding:11px;border-radius:12px;font-family:'Nunito';font-size:12px;font-weight:700;cursor:pointer;width:100%}
+.canje-ov{position:absolute;inset:0;background:var(--n);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:200;padding:28px;text-align:center}
+.canje-ov.show{display:flex}
+.canje-ic{width:76px;height:76px;background:linear-gradient(135deg,var(--do),var(--do2));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;margin-bottom:14px;animation:pop .4s cubic-bezier(.34,1.56,.64,1)}
+.canje-label{font-size:9px;letter-spacing:3px;color:var(--do);font-weight:700;margin-bottom:7px}
+.codigo-display{font-size:36px;font-weight:900;color:#fff;letter-spacing:6px;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.25);border-radius:14px;padding:12px 18px;margin:6px 0}
+.canje-info{color:rgba(255,255,255,.35);font-size:11px;margin:8px 0;line-height:1.5}
+.canje-timer{font-size:12px;font-weight:800;color:var(--do);margin-bottom:12px}
+/* LOADING */
+.loading-screen{position:absolute;inset:0;background:var(--n);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.spinner{width:40px;height:40px;border:3px solid rgba(201,168,76,.2);border-top-color:var(--do);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:absolute;bottom:78px;left:14px;right:14px;background:var(--n);color:var(--do);padding:10px 13px;border-radius:11px;font-size:11px;font-weight:700;display:flex;align-items:center;gap:6px;transform:translateY(14px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);z-index:999;pointer-events:none;border:1px solid rgba(201,168,76,.15)}
+.toast.show{opacity:1;transform:translateY(0)}
+.sec{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+.sec h2{font-size:15px;font-weight:800;color:var(--n)}
+.sec a{font-size:11px;color:var(--r);font-weight:700;cursor:pointer}
+.empty-st{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px 16px;text-align:center;grid-column:1/-1}
+.empty-st .ei{font-size:40px;margin-bottom:8px}
+.empty-st p{font-size:12px;color:var(--g3);font-weight:600}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="statusbar"><span>9:41</span><span>◆ AL PASO</span><span>🔋</span></div>
+
+  <!-- LOADING -->
+  <div class="loading-screen" id="loading">
+    <div style="font-family:'Bebas Neue';font-size:32px;color:var(--do);letter-spacing:4px">AL PASO</div>
+    <div class="spinner"></div>
+    <div style="font-size:11px;color:rgba(255,255,255,.3);font-weight:600">Conectando...</div>
+  </div>
+
+  <!-- SYNC BAR -->
+  <div class="sync-bar" id="sync-bar" style="display:none"></div>
+
+  <!-- HOME -->
+  <div class="screen active" id="s-home">
+    <div class="scroll-area">
+      <div class="hdr">
+        <div class="hdr-bot"></div>
+        <div class="hdr-top">
+          <div class="logo-area"><div class="logo-ic">👣</div><div class="logo-txt">Al Paso</div></div>
+          <div class="notif" id="notif-btn">🔔<div class="ndot" id="notif-dot" style="display:none"></div></div>
+        </div>
+        <div class="greet">Bienvenido a<strong>Tu mercado de proximidad</strong></div>
+      </div>
+      <div class="sbar" onclick="goTo('catalogo')"><span>🔍</span><span>Buscá productos...</span></div>
+      <div class="hcontent">
+        <div class="wb" id="wb" onclick="showWelcome()">
+          <div class="wb-tag">🎁 BIENVENIDA</div>
+          <div class="wb-title">10% off en tu primera compra</div>
+          <div class="wb-sub">Para clientes del local anterior. Activá tu descuento y úsalo en Al Paso.</div>
+          <button class="wb-btn" id="wb-btn">Activar mi 10% off →</button>
+        </div>
+        <div class="sec"><h2>🫓 Empanadas Al Paso</h2></div>
+        <div class="emp-spot">
+          <div class="esp-tag">ARTESANALES · HORNEADAS</div>
+          <div class="esp-title">Hechas hoy, sin conservantes</div>
+          <div class="esp-sub">Masa a mano · Relleno generoso · Sin atajos</div>
+          <div class="emp-tipos">
+            <div class="emp-tipo" onclick="addById(40)">🥩 Carne</div>
+            <div class="emp-tipo" onclick="addById(41)">🧀 Jamón y Queso</div>
+            <div class="emp-tipo" onclick="addById(42)">🥬 Verdura</div>
+            <div class="emp-tipo" onclick="addById(43)">🌽 Humita</div>
+          </div>
+          <div class="emp-precio">Desde $5.400 <span>la caja x6</span></div>
+        </div>
+        <div class="sec"><h2>🔥 Combos</h2><a onclick="goTo('catalogo')">Ver todos</a></div>
+        <div id="combos-home"></div>
+        <div class="sec"><h2>Categorías</h2><a onclick="goTo('catalogo')">Todo</a></div>
+        <div class="cats" id="home-cats"></div>
+        <div class="sec"><h2>⭐ Más vendidos</h2></div>
+        <div class="pgrid" id="home-grid"></div>
+        <div style="height:14px"></div>
+      </div>
+    </div>
+    <div class="bnav" id="bn-home"></div>
+  </div>
+
+  <!-- CATALOGO -->
+  <div class="screen" id="s-catalogo">
+    <div class="cat-hdr"><span class="back" onclick="goTo('home')">←</span><h1>Catálogo</h1></div>
+    <div class="sinput-wrap"><span>🔍</span><input id="sinput" placeholder="Buscá productos..." oninput="renderCat()"></div>
+    <div class="ftabs" id="ftabs"></div>
+    <div class="scroll-area"><div id="cat-grid"></div><div style="height:14px"></div></div>
+    <div class="bnav" id="bn-catalogo"></div>
+  </div>
+
+  <!-- CARRITO -->
+  <div class="screen" id="s-carrito">
+    <div class="cart-hdr"><h1>Mi Carrito</h1><span id="cart-count-hdr">0 productos</span></div>
+    <div class="scroll-area">
+      <div id="cart-list"></div>
+      <div id="cart-empty" class="cart-empty" style="display:none">
+        <div class="emp-ic">🛒</div><h3>Carrito vacío</h3><p>Agregá productos o un combo</p>
+        <button class="btn-main" style="margin:0;width:auto;padding:10px 18px" onclick="goTo('catalogo')">Ver catálogo</button>
+      </div>
+      <div id="cart-area">
+        <!-- SUGERENCIAS INTELIGENTES -->
+        <div class="sugerencia-box" id="sugerencias-box" style="display:none">
+          <div class="sg-title">🤖 También te puede interesar</div>
+          <div class="sg-items" id="sugerencias-items"></div>
+        </div>
+        <!-- CANJE DE PUNTOS -->
+        <div class="pts-canje-box" id="pts-canje-box">
+          <div class="pcb-top">
+            <div class="pcb-title">💛 Tenés <span id="pcb-pts">0</span> puntos disponibles</div>
+            <button class="pcb-btn" id="pcb-btn" onclick="aplicarPuntos()">Aplicar $500 off</button>
+          </div>
+          <div style="font-size:9px;color:rgba(255,255,255,.3)">500 puntos = $500 de descuento directo en este pedido</div>
+        </div>
+        <div class="ent-sec">
+          <div class="ent-tit">¿Cómo recibís?</div>
+          <div class="ent-opts">
+            <div class="eopt sel" onclick="selEnt(this,'Delivery','30-45 min')"><div class="eic">🛵</div><div class="elb">Delivery</div><div class="etm">30-45 min</div></div>
+            <div class="eopt" onclick="selEnt(this,'Retiro','15 min')"><div class="eic">🏪</div><div class="elb">Retiro</div><div class="etm">15 min</div></div>
+          </div>
+        </div>
+        <div class="ent-sec" style="padding-top:0">
+          <div class="ent-tit">¿Cómo pagás?</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div class="eopt sel" style="text-align:left;display:flex;align-items:center;gap:8px" onclick="selPago(this,'efectivo',0)"><span style="font-size:16px">💵</span><div><div class="elb">Efectivo / Débito / Transferencia</div><div class="etm" style="color:var(--gr);font-weight:700">Sin recargo</div></div></div>
+            <div class="eopt" style="text-align:left;display:flex;align-items:center;gap:8px" onclick="selPago(this,'c1',0)"><span style="font-size:16px">💳</span><div><div class="elb">Crédito 1 cuota</div><div class="etm" style="color:var(--gr);font-weight:700">Sin recargo</div></div></div>
+            <div class="eopt" style="text-align:left;display:flex;align-items:center;gap:8px" onclick="selPago(this,'c3',20)"><span style="font-size:16px">💳</span><div><div class="elb">Crédito 3 cuotas</div><div class="etm" style="color:var(--r);font-weight:700">+20% recargo</div></div></div>
+          </div>
+        </div>
+        <div class="bv-strip" id="bv-strip">
+          <span style="font-size:18px">🎁</span>
+          <div style="flex:1"><div style="font-size:11px;font-weight:800;color:var(--n)">Descuento bienvenida</div><div style="font-size:9px;color:var(--g3)">10% off — primera compra</div></div>
+          <div style="font-size:13px;font-weight:900;color:var(--gr)" id="bv-val">-$0</div>
+        </div>
+        <div class="resumen">
+          <div class="rrow"><span>Subtotal</span><span class="rv" id="r-sub">$0</span></div>
+          <div class="rrow" id="r-env-row"><span>Envío</span><span class="rv" id="r-env">$0</span></div>
+          <div class="rrow" id="r-rec-row" style="display:none"><span>Recargo 3 cuotas (20%)</span><span class="rv" id="r-rec" style="color:var(--r)">$0</span></div>
+          <div class="rrow" id="r-bv-row" style="display:none"><span>Desc. bienvenida (10%)</span><span class="rv" id="r-bv" style="color:var(--gr)">-$0</span></div>
+          <div class="rrow" id="r-pts-canje-row" style="display:none"><span>Canje puntos (-500 pts)</span><span class="rv" id="r-pts-canje" style="color:var(--gr)">-$500</span></div>
+          <div class="rrow"><span>Puntos a ganar</span><span class="rv" style="color:var(--am)" id="r-pts">+0 pts</span></div>
+          <div class="rrow rtot"><span>TOTAL</span><span class="rv" id="r-tot">$0</span></div>
+        </div>
+        <button class="btn-main" onclick="showCheckout()" id="btn-pagar">Confirmar pedido</button>
+        <button class="btn-sec" onclick="goTo('catalogo')">+ Agregar más productos</button>
+        <div style="height:4px"></div>
+      </div>
+    </div>
+    <div class="bnav" id="bn-carrito"></div>
+  </div>
+
+  <!-- FIDELIDAD -->
+  <div class="screen" id="s-fidelidad">
+    <div class="fid-hdr">
+      <div class="fid-top"><h1>Tarjeta Al Paso</h1><span style="font-size:18px;color:var(--do)">◆</span></div>
+      <div class="tarjeta">
+        <div class="t-top"><div class="t-logo">◆ AL PASO</div><div class="t-tipo" id="t-tipo">🥈 SILVER</div></div>
+        <div class="t-num" id="t-num">**** **** **** 0000</div>
+        <div class="t-bot"><div class="t-nombre" id="t-nombre">Tu nombre</div><div class="t-pts"><div class="pts" id="fid-pts">0</div><div class="ptslb">PUNTOS</div></div></div>
+      </div>
+    </div>
+    <div class="scroll-area">
+      <div class="fid-body">
+        <div class="nivel-box">
+          <div class="nrow"><div class="nbadge" id="nivel-badge">🥉 Bronze</div><div class="ninfo" id="nivel-next">Próximo: <strong>🥈 Silver (200 pts)</strong></div></div>
+          <div class="pbar"><div class="pfill" id="pfill"></div></div>
+          <div class="plabels"><span id="pl-from">Bronze (0)</span><span id="pts-actual">0 pts</span><span id="pl-to">Silver (200)</span></div>
+        </div>
+        <div class="bentit">Beneficios</div>
+        <div class="benitem"><div class="benic" style="background:#F0FFF4">🎁</div><div class="beninfo"><h4>Bienvenida — 10% off</h4><p>Primera compra en la app</p></div><button class="benact" id="bv-benact" onclick="showWelcome()">Activar</button></div>
+        <div class="benitem"><div class="benic" style="background:#FFF0F0">🎂</div><div class="beninfo"><h4>Cumpleaños</h4><p>10% off ese día</p></div><div class="benact">Activo</div></div>
+        <div class="benitem"><div class="benic" style="background:#E8F5FF">🛵</div><div class="beninfo"><h4>Delivery gratis</h4><p>Compras de $10.000 o más</p></div><div class="benact">Activo</div></div>
+        <div class="benitem" id="ben-gold"><div class="benic" style="background:#1A1500">🏆</div><div class="beninfo"><h4>Premio Gold</h4><p id="ben-gold-txt">Necesitás 500 puntos</p></div><div class="benact" id="ben-gold-btn" style="background:var(--g2);color:var(--g3)">Bloq.</div></div>
+        <div id="canje-box" style="display:none;background:linear-gradient(135deg,var(--n),#1A1500);border-radius:12px;padding:12px;margin-top:4px;border:1px solid rgba(201,168,76,.25)">
+          <div style="font-size:9px;font-weight:800;letter-spacing:2px;color:var(--do);margin-bottom:5px">CANJE DISPONIBLE</div>
+          <div style="font-size:12px;font-weight:800;color:#fff;margin-bottom:2px">$500 de descuento listos</div>
+          <div style="font-size:9px;color:#555;margin-bottom:10px">Aplicalo directo en el carrito o generá un código para el local</div>
+          <div style="display:flex;gap:8px">
+            <button onclick="goTo('carrito');aplicarPuntos()" style="flex:1;background:var(--gr);color:#fff;border:none;border-radius:9px;padding:10px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer">🛒 Aplicar en carrito</button>
+            <button onclick="generarCodigo()" style="flex:1;background:var(--do);color:var(--n);border:none;border-radius:9px;padding:10px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer">📱 Código local</button>
+          </div>
+        </div>
+        <div class="bentit" style="margin-top:12px">Últimas compras</div>
+        <div style="background:#fff;border-radius:12px;padding:6px 11px;box-shadow:var(--sh2)" id="hist-list">
+          <div class="empty-st" style="padding:20px"><div class="ei">🛒</div><p>Aún no tenés compras</p></div>
+        </div>
+        <div style="height:14px"></div>
+      </div>
+    </div>
+    <div class="bnav" id="bn-fidelidad"></div>
+  </div>
+
+  <!-- REGISTRO -->
+  <div class="screen" id="s-registro">
+    <div class="reg-hdr"><h1>◆ Crear mi tarjeta</h1></div>
+    <div class="scroll-area">
+      <div class="reg-body">
+        <p style="font-size:12px;color:var(--g3);margin-bottom:20px;line-height:1.6">Creá tu tarjeta Al Paso y empezá a acumular puntos en cada compra. 100% gratis.</p>
+        <div class="reg-form">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="fg"><label>Nombre</label><input id="r-nombre" placeholder="Juan"></div>
+            <div class="fg"><label>Apellido</label><input id="r-apellido" placeholder="Pérez"></div>
+          </div>
+          <div class="fg"><label>WhatsApp</label><input id="r-tel" placeholder="11-XXXX-XXXX" type="tel"></div>
+          <div class="fg"><label>Cumpleaños</label><input id="r-cumple" type="date"></div>
+          <div class="fg">
+            <label>¿Eras cliente del local anterior?</label>
+            <select id="r-anterior">
+              <option value="true">Sí, era cliente habitual</option>
+              <option value="false">No, soy cliente nuevo</option>
+            </select>
+          </div>
+          <button class="btn-main" style="margin:8px 0 0" onclick="registrarCliente()">◆ Crear mi tarjeta fidelidad</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WELCOME MODAL -->
+  <div class="wmodal" id="wmodal">
+    <div class="wm-box">
+      <span class="wm-emoji">🎁</span>
+      <div class="wm-title">Bienvenido a Al Paso</div>
+      <div class="wm-sub">Si eras cliente del local anterior, este descuento es para vos. Gracias por seguir eligiéndonos.</div>
+      <div class="wm-val">
+        <div class="tag">Tu descuento de bienvenida</div>
+        <div class="big">10% OFF</div>
+        <div class="desc">En tu primera compra en la app. Válido en el local actual y en el nuevo Al Paso.</div>
+      </div>
+      <button class="wm-btn" onclick="activarBV()">Activar mi 10% off</button>
+      <button class="wm-skip" onclick="closeWelcome()">Ahora no</button>
+    </div>
+  </div>
+
+  <!-- CHECKOUT OVERLAY -->
+  <div class="co" id="co">
+    <div class="co-circle">✅</div>
+    <h2>Pedido confirmado</h2>
+    <p>Guardado en el sistema · Equipo avisado</p>
+    <div class="order-num" id="co-num">Pedido #AP-0000</div>
+    <div class="co-pts" id="co-pts">+0 puntos ganados</div>
+    <button class="btn-wsp" onclick="abrirWsp()"><span style="font-size:17px">💬</span>Confirmar por WhatsApp</button>
+    <button class="btn-v2" onclick="closeCO()">Volver al inicio</button>
+  </div>
+
+  <!-- CANJE OVERLAY -->
+  <div class="canje-ov" id="canje-overlay">
+    <div class="canje-ic">🎁</div>
+    <div class="canje-label">CÓDIGO DE CANJE — LOCAL</div>
+    <div class="codigo-display" id="codigo-display">AP-000000</div>
+    <div class="canje-info">Mostrá este código al cajero<br>Descuento: <strong style="color:var(--do)">$500</strong> — válido 30 minutos</div>
+    <div class="canje-timer" id="canje-timer">30:00</div>
+    <button class="btn-v2" style="background:rgba(255,255,255,.07);color:#fff" onclick="closeCanje()">Cerrar</button>
+  </div>
+
+  <div class="toast" id="toast"><span id="toast-msg"></span></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// SUPABASE CONFIG
+// ══════════════════════════════════════════════════════
+const SB_URL  = 'https://tlsyakbhceolczjzadpc.supabase.co';
+const SB_KEY  = 'sb_publishable_pdCPXmVa47gh3rSURJsgaQ_axezH12Z';
+const { createClient } = supabase;
+const db = createClient(SB_URL, SB_KEY);
+
+// ══════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════
+let PRODS = [], CONFIG = {}, COMBOS_DEF = [];
+let cart = {}, entrega = 'Delivery', entregaTiempo = '30-45 min';
+let pagoTipo = 'efectivo', pagoRecargo = 0;
+let clienteActual = null; // {id, nombre, telefono, puntos, bv_activa, bv_usada}
+let bvActiva = false, bvUsada = false;
+let puntosAplicados = false;
+let activeCat = 'Todos', orderN = 0, canjeTimer = null;
+
+// COMBOS estáticos (basados en análisis de ventas)
+const COMBOS = [
+  {id:'alm', nombre:'Combo Almuerzo Rápido', e:'⚡',
+   desc:['Empanadas x6 (a elección)','Gaseosa Coca Cola 2L'],
+   normal:8900, combo:7500, ahorro:1400, pct:'15% off', ids:[40,22]},
+  {id:'sem', nombre:'Combo Semana', e:'📅',
+   desc:['Vacío al Vacío ~1kg','Nalga al Vacío ~1kg','Cuadril al Vacío ~1kg'],
+   normal:70500, combo:59900, ahorro:10600, pct:'15% off', ids:[50,51,52]},
+  {id:'des', nombre:'Combo Desayuno', e:'☕',
+   desc:['Leche Cremigal x2','Pan / Galleta','Cremoso La Varense 300g'],
+   normal:10334, combo:8800, ahorro:1534, pct:'15% off', ids:[25,25,14,16]},
+  {id:'vie', nombre:'Combo Viernes', e:'🎉',
+   desc:['Empanadas Mixtas x12','Gaseosa 2L x2','Vacío al Vacío ~1kg'],
+   normal:33700, combo:28500, ahorro:5200, pct:'15% off', ids:[44,22,22,50]},
+];
+
+const CATS = ['Todos','Empanadas','Carne al Vacío','Carnicería','Fiambres','Lácteos','Panadería','Bebidas','Almacén','Limpieza'];
+const CE = {'Todos':'🏪','Empanadas':'🫓','Carne al Vacío':'🥩','Carnicería':'🥩','Fiambres':'🧀','Lácteos':'🥛','Panadería':'🍞','Bebidas':'🥤','Almacén':'🌾','Limpieza':'🧹'};
+const CBG = {'Todos':'#F5F5F0','Empanadas':'#1A0800','Carne al Vacío':'#1A1500','Carnicería':'#FFE8E8','Fiambres':'#F8F0FF','Lácteos':'#E8F5FF','Panadería':'#FFF8E8','Bebidas':'#E8FFE8','Almacén':'#FFF8F0','Limpieza':'#F0FFF4'};
+
+// REGLAS DE SUGERENCIAS INTELIGENTES
+const SUGERENCIAS = [
+  {si: p => p.cat === 'Carnicería' || p.cat === 'Carne al Vacío', sugerir: [22, 14, 20]}, // carne → gaseosa, pan, queso
+  {si: p => p.cat === 'Empanadas', sugerir: [22, 26]},   // empanadas → coca, gaseosa
+  {si: p => p.cat === 'Lácteos',   sugerir: [14, 28]},   // lácteos → pan, fideos
+  {si: p => p.cat === 'Bebidas',   sugerir: [40, 41]},   // bebidas → empanadas
+  {si: p => p.cat === 'Almacén',   sugerir: [25, 22]},   // almacén → leche, coca
+];
+
+// ══════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const fmt = n => '$' + Math.round(n).toLocaleString('es-AR');
+
+function toast(msg, dur=2400) {
+  $('toast-msg').textContent = msg;
+  $('toast').classList.add('show');
+  setTimeout(() => $('toast').classList.remove('show'), dur);
+}
+
+function syncBar(msg, tipo='load') {
+  const bar = $('sync-bar');
+  bar.style.display = 'flex';
+  bar.className = 'sync-bar sync-' + tipo;
+  bar.textContent = msg;
+  if (tipo !== 'load') setTimeout(() => bar.style.display = 'none', 2500);
+}
+
+function goTo(s) {
+  document.querySelectorAll('.screen').forEach(x => x.classList.remove('active'));
+  $('s-' + s).classList.add('active');
+  if (s === 'carrito')   renderCart();
+  if (s === 'catalogo')  renderCat();
+  if (s === 'fidelidad') renderFid();
+  updateBadges();
+}
+
+function cartTotal()  { return Object.values(cart).reduce((s,i) => s + i.precio_venta*i.qty, 0) }
+function cartCount()  { return Object.values(cart).reduce((s,i) => s + i.qty, 0) }
+function updateBadges(){ const n = cartCount(); document.querySelectorAll('.badge').forEach(b => b.textContent = n) }
+
+function buildNav(cid, active) {
+  const items = [
+    {id:'home',     ic:'🏠', lb:'Inicio'},
+    {id:'catalogo', ic:'🔍', lb:'Catálogo'},
+    {id:'carrito',  ic:'🛒', lb:'Carrito',   b:true},
+    {id:'fidelidad',ic:'💳', lb:'Fidelidad'},
+  ];
+  $(cid).innerHTML = items.map(i => `
+    <div class="ni${i.id===active?' active':''}" onclick="goTo('${i.id}')">
+      <span class="ic">${i.ic}</span><span class="lb">${i.lb}</span>
+      ${i.b ? '<span class="badge">0</span>' : ''}
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════════════
+// SUPABASE — LOAD DATA
+// ══════════════════════════════════════════════════════
+async function loadData() {
+  try {
+    syncBar('🔄 Conectando a mercadoalpaso.com.ar...', 'load');
+
+    // Cargar productos
+    const { data: prods, error: pe } = await db.from('productos').select('*').eq('activo', true).order('id');
+    if (pe) throw pe;
+    PRODS = prods || [];
+
+    // Cargar configuración
+    const { data: cfg } = await db.from('configuracion').select('*');
+    if (cfg) cfg.forEach(c => CONFIG[c.clave] = c.valor);
+
+    syncBar('✅ Conectado a mercadoalpaso.com.ar', 'ok');
+    return true;
+  } catch(e) {
+    console.warn('Supabase error:', e);
+    syncBar('⚠️ Sin conexión — modo local', 'err');
+    // Fallback con productos básicos
+    PRODS = PRODS_FALLBACK;
+    return false;
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// SUPABASE — CLIENTE
+// ══════════════════════════════════════════════════════
+async function registrarCliente() {
+  const nombre   = $('r-nombre').value.trim();
+  const apellido = $('r-apellido').value.trim();
+  const tel      = $('r-tel').value.trim();
+  const cumple   = $('r-cumple').value;
+  const anterior = $('r-anterior').value === 'true';
+
+  if (!nombre || !tel) { toast('⚠️ Completá nombre y WhatsApp'); return; }
+
+  const ptsBienvenida = anterior ? 100 : 50;
+
+  const { data, error } = await db.from('clientes').insert({
+    nombre, apellido, telefono: tel,
+    cumpleanos: cumple || null,
+    puntos: ptsBienvenida,
+    nivel: 'Bronze',
+    cliente_anterior: anterior,
+    bv_activa: true,
+    bv_usada: false,
+  }).select().single();
+
+  if (error) {
+    if (error.code === '23505') {
+      // Ya existe — cargarlo
+      const { data: existing } = await db.from('clientes').select('*').eq('telefono', tel).single();
+      if (existing) { clienteActual = existing; bvActiva = existing.bv_activa; bvUsada = existing.bv_usada; }
+      toast('✅ Bienvenido de vuelta — tarjeta cargada');
+    } else {
+      toast('⚠️ Error al crear tarjeta — intentá de nuevo');
+      return;
+    }
+  } else {
+    clienteActual = data;
+    bvActiva = true;
+  }
+
+  localStorage.setItem('alpaso_cliente', JSON.stringify(clienteActual));
+  goTo('fidelidad');
+  toast(`✅ Tarjeta creada con ${ptsBienvenida} puntos de bienvenida`);
+}
+
+async function actualizarPuntos(pts) {
+  if (!clienteActual) return;
+  const nuevos = clienteActual.puntos + pts;
+  const nivel  = getNivel(nuevos);
+  await db.from('clientes').update({ puntos: nuevos, nivel, ultima_compra: new Date().toISOString() }).eq('id', clienteActual.id);
+  clienteActual.puntos = nuevos;
+  clienteActual.nivel  = nivel;
+  localStorage.setItem('alpaso_cliente', JSON.stringify(clienteActual));
+}
+
+async function canjearPuntos500() {
+  if (!clienteActual) return;
+  const nuevos = clienteActual.puntos - 500;
+  await db.from('clientes').update({ puntos: nuevos }).eq('id', clienteActual.id);
+  // Registrar canje
+  await db.from('canjes').insert({
+    cliente_id: clienteActual.id,
+    codigo: 'AP-' + Math.floor(100000 + Math.random()*900000),
+    puntos: 500, descuento: 500, usado: true,
+    vence_at: new Date(Date.now() + 30*60000).toISOString()
+  });
+  clienteActual.puntos = nuevos;
+  localStorage.setItem('alpaso_cliente', JSON.stringify(clienteActual));
+}
+
+// ══════════════════════════════════════════════════════
+// SUPABASE — GUARDAR PEDIDO
+// ══════════════════════════════════════════════════════
+async function guardarPedido(pedidoData, items) {
+  try {
+    const { data: ped, error } = await db.from('pedidos').insert(pedidoData).select().single();
+    if (error) throw error;
+
+    // Guardar items
+    const itemsInsert = items.map(it => ({
+      pedido_id:   ped.id,
+      producto_id: it.id,
+      nombre:      it.nombre,
+      cantidad:    it.qty,
+      precio_unit: it.precio_venta,
+      subtotal:    it.precio_venta * it.qty,
+      es_combo:    !!it.combo,
+      combo_nombre:it.combo || null,
+    }));
+    await db.from('pedido_items').insert(itemsInsert);
+
+    // Descontar stock
+    for (const it of items) {
+      const prod = PRODS.find(p => p.id === it.id);
+      if (prod && prod.stock > 0) {
+        const nuevoStock = Math.max(0, prod.stock - it.qty);
+        await db.from('productos').update({ stock: nuevoStock, updated_at: new Date().toISOString() }).eq('id', it.id);
+        prod.stock = nuevoStock;
+      }
+    }
+
+    return ped;
+  } catch(e) {
+    console.warn('Error guardando pedido:', e);
+    return null;
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// WELCOME / BV
+// ══════════════════════════════════════════════════════
+function showWelcome() { $('wmodal').classList.add('show') }
+function closeWelcome() { $('wmodal').classList.remove('show') }
+
+function activarBV() {
+  bvActiva = true;
+  closeWelcome();
+  $('wb').style.background = 'linear-gradient(135deg,#0A1A0A,#0A0A0A)';
+  $('wb-btn').textContent = '✓ 10% off activado en tu primera compra';
+  $('bv-benact').textContent = 'Activo';
+  $('bv-benact').style.background = 'var(--gr)';
+  $('bv-benact').style.color = '#fff';
+  if (clienteActual) {
+    db.from('clientes').update({ bv_activa: true }).eq('id', clienteActual.id);
+    clienteActual.bv_activa = true;
+    localStorage.setItem('alpaso_cliente', JSON.stringify(clienteActual));
+  }
+  toast('🎁 10% off activado');
+}
+
+// ══════════════════════════════════════════════════════
+// COMBOS
+// ══════════════════════════════════════════════════════
+function comboCard(c) {
+  return `<div class="combo" onclick="addCombo('${c.id}')">
+    <div class="co-hdr"><div class="co-title">${c.e} ${c.nombre}</div><div class="co-badge">${c.pct}</div></div>
+    <div class="co-items">${c.desc.map(d => `<div class="co-item">${d}</div>`).join('')}</div>
+    <div class="co-footer">
+      <div style="display:flex;align-items:baseline;gap:6px">
+        <div class="co-old">${fmt(c.normal)}</div>
+        <div class="co-new">${fmt(c.combo)}</div>
+        <div class="co-ahorro">Ahorrás ${fmt(c.ahorro)}</div>
+      </div>
+      <button class="co-btn" onclick="event.stopPropagation();addCombo('${c.id}')">Agregar</button>
+    </div>
+  </div>`;
+}
+
+function addCombo(id) {
+  const c = COMBOS.find(x => x.id === id);
+  if (!c) return;
+  c.ids.forEach(pid => {
+    const p = PRODS.find(x => x.id === pid);
+    if (!p) return;
+    if (!cart[pid]) cart[pid] = { ...p, qty: 0, combo: c.nombre };
+    cart[pid].qty++;
+  });
+  updateBadges();
+  toast(`${c.e} ${c.nombre} agregado — ahorrás ${fmt(c.ahorro)}`);
+  renderSugerencias();
+}
+
+function addById(id) {
+  const p = PRODS.find(x => x.id === id);
+  if (!p) return;
+  if (!cart[id]) cart[id] = { ...p, qty: 0 };
+  cart[id].qty++;
+  updateBadges();
+  toast(`${p.nombre} agregado`);
+  renderSugerencias();
+}
+
+// ══════════════════════════════════════════════════════
+// SUGERENCIAS INTELIGENTES
+// ══════════════════════════════════════════════════════
+function getSugerencias() {
+  const enCarrito = Object.values(cart);
+  const sugeridos = new Set();
+  enCarrito.forEach(item => {
+    SUGERENCIAS.forEach(regla => {
+      if (regla.si(item)) {
+        regla.sugerir.forEach(id => {
+          if (!cart[id]) sugeridos.add(id);
+        });
+      }
+    });
+  });
+  return [...sugeridos].slice(0, 4).map(id => PRODS.find(p => p.id === id)).filter(Boolean);
+}
+
+function renderSugerencias() {
+  const sg = getSugerencias();
+  if (!sg.length) { $('sugerencias-box').style.display = 'none'; return; }
+  $('sugerencias-box').style.display = 'block';
+  $('sugerencias-items').innerHTML = sg.map(p => `
+    <div class="sg-item" onclick="addById(${p.id})">
+      <div class="si-e">${p.nombre.includes('Empanada')?'🫓':p.nombre.includes('Leche')?'🥛':p.nombre.includes('Coca')||p.nombre.includes('Gaseosa')?'🥤':p.nombre.includes('Pan')?'🍞':'🛒'}</div>
+      <div class="si-n">${p.nombre.split(' ').slice(0,3).join(' ')}</div>
+      <div class="si-p">${fmt(p.precio_venta)}</div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════════════
+// HOME
+// ══════════════════════════════════════════════════════
+function renderHome() {
+  buildNav('bn-home', 'home');
+  $('combos-home').innerHTML = COMBOS.slice(0, 2).map(c => comboCard(c)).join('');
+  $('home-cats').innerHTML = CATS.slice(0,7).map(c => `
+    <div class="cat${c==='Todos'?' sel':''}" onclick="homeCat(this,'${c}')">
+      <div class="cat-ic" style="background:${CBG[c]}">${CE[c]}</div>
+      <span class="cat-lb">${c}</span>
+    </div>`).join('');
+
+  // Top productos: empanadas + carne al vacío + más vendidos
+  const top4 = [
+    PRODS.find(p => p.id === 40),
+    PRODS.find(p => p.id === 50),
+    PRODS.find(p => p.id === 0),
+    PRODS.find(p => p.id === 16),
+  ].filter(Boolean);
+  $('home-grid').innerHTML = top4.map(p => pc(p)).join('');
+}
+
+function homeCat(el, cat) {
+  document.querySelectorAll('#home-cats .cat').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+  activeCat = cat;
+  goTo('catalogo');
+}
+
+function pc(p) {
+  if (!p) return '';
+  const isE = p.cat === 'Empanadas', isV = p.cat === 'Carne al Vacío';
+  const bg = CBG[p.cat] || '#F5F5F5';
+  const badge = isE ? '<div class="obadge">ARTESANAL</div>' : isV ? '<div class="dobadge">AL VACÍO</div>' : '';
+  const emoji = p.nombre.includes('Empanada')?'🫓':p.nombre.includes('Leche')?'🥛':p.nombre.includes('Coca')||p.nombre.includes('Gaseosa')?'🥤':p.nombre.includes('Pan')?'🍞':p.cat==='Carnicería'||p.cat==='Carne al Vacío'?'🥩':p.cat==='Fiambres'?'🧀':p.cat==='Lácteos'?'🥛':p.cat==='Bebidas'?'🥤':p.cat==='Limpieza'?'🧹':'🌾';
+  const style = isE || isV ? 'color:#C9A84C;font-size:34px' : '';
+  return `<div class="pcard" onclick="addById(${p.id})">
+    <div class="pimg" style="background:${bg};${style}">${emoji}${badge}</div>
+    <div class="pinfo"><h4>${p.nombre}</h4><div class="pbrand">${p.cat} · por ${p.unit}</div>
+    <div class="prow"><div class="price">${fmt(p.precio_venta)}</div>
+    <button class="addbtn" onclick="event.stopPropagation();addById(${p.id})">+</button></div></div></div>`;
+}
+
+// ══════════════════════════════════════════════════════
+// CATÁLOGO
+// ══════════════════════════════════════════════════════
+function renderCat() {
+  buildNav('bn-catalogo', 'catalogo');
+  $('ftabs').innerHTML = CATS.map(c => `
+    <div class="ftab${c===activeCat?' active':''}" onclick="setCat('${c}')">${CE[c]} ${c}</div>`).join('');
+  const q = ($('sinput')||{value:''}).value.toLowerCase();
+  let prods = PRODS.filter(p => (activeCat==='Todos'||p.cat===activeCat) && (!q||p.nombre.toLowerCase().includes(q)));
+  let combosH = '';
+  if ((activeCat === 'Todos' || activeCat === 'Combos') && !q) {
+    combosH = `<div style="grid-column:1/-1;margin-bottom:8px">
+      <div style="font-size:9px;font-weight:800;letter-spacing:2px;color:var(--g3);text-transform:uppercase;margin-bottom:9px">◆ COMBOS CON DESCUENTO</div>
+      ${COMBOS.map(c => comboCard(c)).join('')}
+    </div>`;
+  }
+  $('cat-grid').innerHTML = prods.length
+    ? combosH + prods.map(p => pc(p)).join('')
+    : `<div class="empty-st"><div class="ei">🔍</div><p>Sin resultados</p></div>`;
+}
+
+function setCat(cat) { activeCat = cat; renderCat() }
+
+// ══════════════════════════════════════════════════════
+// CARRITO
+// ══════════════════════════════════════════════════════
+function changeQty(id, d) {
+  if (!cart[id]) return;
+  cart[id].qty += d;
+  if (cart[id].qty <= 0) { delete cart[id]; puntosAplicados = false; }
+  renderCart();
+}
+
+function selEnt(el, l, t) {
+  el.parentElement.querySelectorAll('.eopt').forEach(e => e.classList.remove('sel'));
+  el.classList.add('sel'); entrega = l; entregaTiempo = t; renderCart();
+}
+
+function selPago(el, t, r) {
+  el.closest('.ent-sec').querySelectorAll('.eopt').forEach(e => e.classList.remove('sel'));
+  el.classList.add('sel'); pagoTipo = t; pagoRecargo = r; renderCart();
+}
+
+function aplicarPuntos() {
+  const pts = clienteActual ? clienteActual.puntos : 0;
+  if (pts < 500) { toast('⚠️ Necesitás 500 puntos para canjear'); return; }
+  puntosAplicados = !puntosAplicados;
+  renderCart();
+  toast(puntosAplicados ? '✅ $500 aplicados al total' : 'Descuento removido');
+}
+
+function renderCart() {
+  buildNav('bn-carrito', 'carrito');
+  const items   = Object.values(cart);
+  const sub     = cartTotal();
+  const rec     = Math.round(sub * pagoRecargo / 100);
+  const DM      = parseInt(CONFIG.delivery_minimo || 10000);
+  const DC      = parseInt(CONFIG.delivery_costo  || 1500);
+  const env     = entrega === 'Delivery' && sub < DM ? DC : 0;
+  const bv      = bvActiva && !bvUsada ? Math.round(sub * .10) : 0;
+  const canjeAmt = puntosAplicados ? 500 : 0;
+  const total   = sub + rec + env - bv - canjeAmt;
+  const cnt     = cartCount();
+  const pts     = clienteActual ? clienteActual.puntos : 0;
+
+  $('cart-count-hdr').textContent = cnt + (cnt===1?' producto':' productos');
+  $('r-sub').textContent = fmt(sub);
+
+  // Envio
+  if (entrega==='Retiro') { $('r-env').textContent='No aplica'; $('r-env').style.color='var(--g3)' }
+  else if (env===0) { $('r-env').innerHTML='Gratis 🎉'; $('r-env').style.color='var(--gr)' }
+  else { $('r-env').textContent=fmt(env); $('r-env').style.color='var(--r)' }
+
+  $('r-rec-row').style.display = rec>0 ? 'flex' : 'none';
+  if (rec>0) $('r-rec').textContent = fmt(rec);
+
+  if (bv>0) { $('bv-strip').style.display='flex'; $('bv-val').textContent='-'+fmt(bv); $('r-bv-row').style.display='flex'; $('r-bv').textContent='-'+fmt(bv); }
+  else { $('bv-strip').style.display='none'; $('r-bv-row').style.display='none'; }
+
+  $('r-pts-canje-row').style.display = canjeAmt > 0 ? 'flex' : 'none';
+  $('r-pts').textContent = '+' + Math.floor(sub/100) + ' pts';
+  $('r-tot').textContent = fmt(total);
+  const cuotas = pagoTipo==='c3' ? ' (3 × '+fmt(total/3)+')' : '';
+  $('btn-pagar').textContent = total>0 ? 'Confirmar — '+fmt(total)+cuotas : 'Confirmar pedido';
+
+  // Canje de puntos en carrito
+  if (pts >= 500 && sub > 0) {
+    $('pts-canje-box').style.display = 'block';
+    $('pcb-pts').textContent = pts;
+    const btn = $('pcb-btn');
+    if (puntosAplicados) {
+      btn.textContent = '✓ $500 aplicados';
+      btn.className = 'pcb-applied';
+    } else {
+      btn.textContent = 'Aplicar $500 off';
+      btn.className = 'pcb-btn';
+    }
+  } else {
+    $('pts-canje-box').style.display = 'none';
+  }
+
+  renderSugerencias();
+
+  if (!items.length) {
+    $('cart-list').innerHTML = '';
+    $('cart-empty').style.display = 'flex';
+    $('cart-area').style.display = 'none';
+    return;
+  }
+  $('cart-empty').style.display = 'none';
+  $('cart-area').style.display = 'block';
+  $('cart-list').innerHTML = items.map(it => `
+    <div class="citem">
+      <div class="cemi">${it.nombre.includes('Empanada')?'🫓':it.cat==='Carnicería'||it.cat==='Carne al Vacío'?'🥩':it.cat==='Fiambres'?'🧀':it.cat==='Lácteos'?'🥛':it.cat==='Bebidas'?'🥤':it.cat==='Limpieza'?'🧹':'🌾'}</div>
+      <div class="cinfo"><h4>${it.nombre}</h4><div class="cmarca">${it.cat}${it.combo?' · '+it.combo:''}</div></div>
+      <div class="qctrl">
+        <button class="qbtn" onclick="changeQty(${it.id},-1)">-</button>
+        <span class="qnum">${it.qty}</span>
+        <button class="qbtn" onclick="changeQty(${it.id},1)">+</button>
+      </div>
+      <div class="cprice">${fmt(it.precio_venta*it.qty)}</div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════════════
+// CHECKOUT
+// ══════════════════════════════════════════════════════
+async function showCheckout() {
+  if (!cartCount()) { toast('Tu carrito está vacío'); return; }
+  orderN = Math.floor(Math.random()*9000)+1000;
+  const sub      = cartTotal();
+  const rec      = Math.round(sub * pagoRecargo / 100);
+  const DM       = parseInt(CONFIG.delivery_minimo || 10000);
+  const DC       = parseInt(CONFIG.delivery_costo  || 1500);
+  const env      = entrega==='Delivery' && sub<DM ? DC : 0;
+  const bv       = bvActiva && !bvUsada ? Math.round(sub*.10) : 0;
+  const canjeAmt = puntosAplicados ? 500 : 0;
+  const total    = sub + rec + env - bv - canjeAmt;
+  const pts      = Math.floor(sub/100);
+
+  // Guardar en Supabase
+  const pedidoData = {
+    numero:         'AP-' + orderN,
+    cliente_id:     clienteActual?.id || null,
+    cliente_nombre: clienteActual ? clienteActual.nombre + ' ' + (clienteActual.apellido||'') : 'Cliente',
+    cliente_tel:    clienteActual?.telefono || '',
+    entrega, pago_tipo: pagoTipo, pago_recargo: pagoRecargo,
+    subtotal: sub, descuento_bv: bv, recargo_amt: rec, envio: env,
+    total, puntos_ganados: pts, canje_puntos: puntosAplicados ? 500 : 0,
+    estado: 'nuevo',
+  };
+
+  syncBar('🔄 Guardando pedido...', 'load');
+  await guardarPedido(pedidoData, Object.values(cart));
+  syncBar('✅ Pedido guardado', 'ok');
+
+  // Actualizar puntos del cliente
+  if (clienteActual) {
+    let ptsDelta = pts;
+    if (puntosAplicados) { await canjearPuntos500(); ptsDelta -= 0; }
+    if (bvActiva && !bvUsada) bvUsada = true;
+    await actualizarPuntos(ptsDelta);
+  }
+  puntosAplicados = false;
+
+  $('co-num').textContent  = 'Pedido #AP-' + orderN;
+  $('co-pts').textContent  = '+' + pts + ' puntos ganados';
+  $('co').classList.add('show');
+}
+
+function abrirWsp() {
+  const items   = Object.values(cart);
+  const sub     = cartTotal();
+  const rec     = Math.round(sub * pagoRecargo / 100);
+  const DM      = parseInt(CONFIG.delivery_minimo || 10000);
+  const DC      = parseInt(CONFIG.delivery_costo  || 1500);
+  const env     = entrega==='Delivery' && sub<DM ? DC : 0;
+  const bv      = bvUsada ? Math.round(sub*.10) : 0;
+  const total   = sub + rec + env - bv - (puntosAplicados?500:0);
+  const pago    = pagoTipo==='efectivo'?'Efectivo/Débito/Transferencia':pagoTipo==='c1'?'Crédito 1 cuota':'Crédito 3 cuotas (+20%)';
+  const lines   = items.map(i => '• '+i.nombre+' x'+i.qty+' = '+fmt(i.precio_venta*i.qty)).join('\n');
+  const msg = `🛒 *Pedido Al Paso #AP-${orderN}*\n\n${lines}\n\nSubtotal: ${fmt(sub)}${rec>0?'\nRecargo: +'+fmt(rec):''}${bv>0?'\nDesc. bienvenida: -'+fmt(bv):''}${puntosAplicados?'\nCanje puntos: -$500':''}\nEnvío: ${entrega==='Retiro'?'Retiro en local':env===0?'Delivery GRATIS':'Delivery '+fmt(env)}\n*TOTAL: ${fmt(total)}*\nPago: ${pago}`;
+  window.open('https://wa.me/5491100000000?text=' + encodeURIComponent(msg), '_blank');
+  closeCO();
+}
+
+function closeCO() {
+  $('co').classList.remove('show');
+  cart = {}; updateBadges(); renderCart(); goTo('home');
+}
+
+// ══════════════════════════════════════════════════════
+// FIDELIDAD
+// ══════════════════════════════════════════════════════
+function getNivel(p)  { return p>=500?'🥇 Gold':p>=200?'🥈 Silver':'🥉 Bronze' }
+
+function renderFid() {
+  buildNav('bn-fidelidad', 'fidelidad');
+  const pts = clienteActual ? clienteActual.puntos : 0;
+  const nombre = clienteActual ? clienteActual.nombre : 'Tu nombre';
+
+  $('fid-pts').textContent  = pts;
+  $('t-nombre').textContent = nombre;
+  $('t-num').textContent    = clienteActual ? '**** **** **** ' + String(clienteActual.id).padStart(4,'0') : '**** **** **** 0000';
+
+  const nivel = getNivel(pts);
+  $('nivel-badge').textContent = nivel;
+  $('t-tipo').textContent      = nivel;
+  $('pts-actual').textContent  = pts + ' pts';
+
+  // Progress bar
+  let from=0, to=200, fromLbl='Bronze (0)', toLbl='Silver (200)', nextTxt='Próximo: 🥈 Silver (200 pts)', pct=0;
+  if (pts >= 500) { from=200; to=500; fromLbl='Silver (200)'; toLbl='Gold (500)'; nextTxt='🥇 ¡Sos Gold!'; pct=100; }
+  else if (pts >= 200) { from=200; to=500; fromLbl='Silver (200)'; toLbl='Gold (500)'; nextTxt='Próximo: 🥇 Gold (500 pts)'; pct=((pts-200)/300)*100; }
+  else { pct = (pts/200)*100; }
+  $('pfill').style.width     = Math.min(100,pct) + '%';
+  $('pl-from').textContent   = fromLbl;
+  $('pl-to').textContent     = toLbl;
+  $('nivel-next').innerHTML  = nextTxt;
+
+  // Ben gold
+  if (pts >= 500) {
+    $('ben-gold-txt').textContent = '$500 disponibles para canjear';
+    $('ben-gold-btn').textContent = 'Disponible';
+    $('ben-gold-btn').style.background = 'var(--n)';
+    $('ben-gold-btn').style.color = 'var(--do)';
+    $('canje-box').style.display = 'block';
+  } else {
+    $('ben-gold-txt').textContent = 'Necesitás ' + (500-pts) + ' puntos más';
+    $('ben-gold-btn').textContent = 'Bloq.';
+    $('ben-gold-btn').style.background = 'var(--g2)';
+    $('ben-gold-btn').style.color = 'var(--g3)';
+    $('canje-box').style.display = 'none';
+  }
+
+  // Bienvenida badge
+  if (bvActiva && !bvUsada) {
+    $('bv-benact').textContent = 'Activo';
+    $('bv-benact').style.background = 'var(--gr)';
+    $('bv-benact').style.color = '#fff';
+  }
+
+  // Historial
+  if (clienteActual) loadHistorial();
+}
+
+async function loadHistorial() {
+  const { data } = await db.from('pedidos')
+    .select('numero,total,puntos_ganados,created_at,entrega')
+    .eq('cliente_id', clienteActual.id)
+    .order('created_at', {ascending:false})
+    .limit(5);
+
+  if (!data || !data.length) return;
+  $('hist-list').innerHTML = data.map(p => `
+    <div class="histitem">
+      <div class="histic">${p.entrega==='Delivery'?'🛵':'🛒'}</div>
+      <div class="histinfo">
+        <h4>#${p.numero}</h4>
+        <p>${new Date(p.created_at).toLocaleDateString('es-AR')} · ${fmt(p.total)}</p>
+      </div>
+      <div class="histpts">+${p.puntos_ganados} pts</div>
+    </div>`).join('');
+}
+
+function generarCodigo() {
+  const cod = 'AP-' + Math.floor(100000+Math.random()*900000);
+  $('codigo-display').textContent = cod;
+  $('canje-overlay').classList.add('show');
+  let seg = 1800;
+  if (canjeTimer) clearInterval(canjeTimer);
+  canjeTimer = setInterval(() => {
+    seg--;
+    const m = Math.floor(seg/60).toString().padStart(2,'0');
+    const s = (seg%60).toString().padStart(2,'0');
+    $('canje-timer').textContent = m+':'+s;
+    if (seg<=0) { clearInterval(canjeTimer); closeCanje(); toast('Código vencido') }
+  }, 1000);
+}
+
+function closeCanje() {
+  $('canje-overlay').classList.remove('show');
+  if (canjeTimer) clearInterval(canjeTimer);
+  if (clienteActual && clienteActual.puntos >= 500) {
+    canjearPuntos500().then(() => { renderFid(); toast('500 puntos canjeados') });
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// FALLBACK PRODUCTOS (si Supabase no conecta)
+// ══════════════════════════════════════════════════════
+const PRODS_FALLBACK = [
+  {id:0,nombre:'Picada Especial',cat:'Carnicería',precio_venta:19900,precio_costo:13930,stock:19,minimo:11,unit:'kg'},
+  {id:1,nombre:'Costeleta',cat:'Carnicería',precio_venta:18500,precio_costo:12950,stock:15,minimo:12,unit:'kg'},
+  {id:3,nombre:'Nalga',cat:'Carnicería',precio_venta:23500,precio_costo:16450,stock:14,minimo:7,unit:'kg'},
+  {id:14,nombre:'Pan / Galleta',cat:'Panadería',precio_venta:2900,precio_costo:2030,stock:35,minimo:25,unit:'u'},
+  {id:16,nombre:'Cremoso La Varense',cat:'Fiambres',precio_venta:10000,precio_costo:7000,stock:7,minimo:6,unit:'kg'},
+  {id:22,nombre:'Gaseosa Coca Cola 2L',cat:'Bebidas',precio_venta:3100,precio_costo:2170,stock:17,minimo:10,unit:'u'},
+  {id:25,nombre:'Leche Cremigal Entera 1L',cat:'Lácteos',precio_venta:1717,precio_costo:1202,stock:22,minimo:15,unit:'u'},
+  {id:40,nombre:'Empanadas de Carne x6',cat:'Empanadas',precio_venta:5800,precio_costo:2400,stock:0,minimo:0,unit:'caja'},
+  {id:41,nombre:'Empanadas Jamón y Queso x6',cat:'Empanadas',precio_venta:5800,precio_costo:2400,stock:0,minimo:0,unit:'caja'},
+  {id:42,nombre:'Empanadas Verdura x6',cat:'Empanadas',precio_venta:5400,precio_costo:2100,stock:0,minimo:0,unit:'caja'},
+  {id:43,nombre:'Empanadas Humita x6',cat:'Empanadas',precio_venta:5400,precio_costo:2100,stock:0,minimo:0,unit:'caja'},
+  {id:44,nombre:'Empanadas Mixtas x12',cat:'Empanadas',precio_venta:10800,precio_costo:4500,stock:0,minimo:0,unit:'caja'},
+  {id:50,nombre:'Vacío Premium al Vacío',cat:'Carne al Vacío',precio_venta:23500,precio_costo:16450,stock:0,minimo:0,unit:'kg'},
+  {id:51,nombre:'Nalga Premium al Vacío',cat:'Carne al Vacío',precio_venta:23500,precio_costo:16450,stock:0,minimo:0,unit:'kg'},
+  {id:52,nombre:'Cuadril Premium al Vacío',cat:'Carne al Vacío',precio_venta:23500,precio_costo:16450,stock:0,minimo:0,unit:'kg'},
+];
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+async function init() {
+  // Cargar cliente guardado
+  const saved = localStorage.getItem('alpaso_cliente');
+  if (saved) {
+    try {
+      clienteActual = JSON.parse(saved);
+      bvActiva = clienteActual.bv_activa;
+      bvUsada  = clienteActual.bv_usada;
+      // Refrescar desde Supabase
+      const { data } = await db.from('clientes').select('*').eq('id', clienteActual.id).single();
+      if (data) { clienteActual = data; bvActiva = data.bv_activa; bvUsada = data.bv_usada; }
+    } catch(e) {}
+  }
+
+  // Cargar datos
+  await loadData();
+
+  // Ocultar loading
+  $('loading').style.display = 'none';
+
+  // Render
+  buildNav('bn-home',      'home');
+  buildNav('bn-catalogo',  'home');
+  buildNav('bn-carrito',   'home');
+  buildNav('bn-fidelidad', 'home');
+  renderHome();
+  updateBadges();
+
+  // Si no tiene cliente, mostrar welcome después de 1 seg
+  if (!clienteActual) {
+    setTimeout(() => showWelcome(), 1000);
+  } else {
+    renderFid();
+    if (bvActiva && !bvUsada) {
+      $('wb-btn').textContent = '✓ 10% off activado en tu primera compra';
+    }
+  }
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Al Paso — Gestión de Proveedores y Stock</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--r:#E31E24;--rd:#B71518;--rp:#FFF0F0;--n:#1A1A1A;--g:#F5F5F5;--g2:#E8E8E8;--g3:#888;--w:#fff;--gr:#27AE60;--am:#F39C12;--bl:#2563EB;--blp:#EFF6FF;--pur:#7C3AED;--purp:#F5F3FF}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Nunito',sans-serif;background:#F0F2F5;color:var(--n);min-height:100vh}
+
+/* SIDEBAR */
+.layout{display:flex;min-height:100vh}
+.sidebar{width:220px;background:var(--n);flex-shrink:0;display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100}
+.sb-logo{padding:20px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sb-logo .logo{font-family:'Bebas Neue';font-size:24px;color:#fff;letter-spacing:1px;display:flex;align-items:center;gap:8px}
+.sb-logo .sub{font-size:10px;color:rgba(255,255,255,.4);font-weight:600;margin-top:2px;letter-spacing:.5px;text-transform:uppercase}
+.sb-nav{padding:12px 8px;flex:1}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;color:rgba(255,255,255,.55);font-size:13px;font-weight:700;margin-bottom:2px;transition:all .15s}
+.nav-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.85)}
+.nav-item.active{background:var(--r);color:#fff}
+.nav-item .nic{font-size:18px;width:22px;text-align:center}
+.sb-bottom{padding:12px 8px;border-top:1px solid rgba(255,255,255,.08)}
+.sb-badge{background:rgba(227,30,36,.25);color:#FF6B6B;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;margin-left:auto}
+
+/* MAIN */
+.main{margin-left:220px;flex:1;display:flex;flex-direction:column}
+.topbar{background:#fff;padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--g2);position:sticky;top:0;z-index:50}
+.topbar h1{font-size:18px;font-weight:800;color:var(--n)}
+.topbar .actions{display:flex;gap:10px}
+.btn{padding:8px 16px;border-radius:10px;font-family:'Nunito';font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .15s;display:flex;align-items:center;gap:6px}
+.btn-primary{background:var(--r);color:#fff;box-shadow:0 3px 10px rgba(227,30,36,.25)}
+.btn-primary:hover{background:var(--rd)}
+.btn-secondary{background:var(--g);color:var(--n)}
+.btn-green{background:var(--gr);color:#fff;box-shadow:0 3px 10px rgba(39,174,96,.2)}
+.btn-blue{background:var(--bl);color:#fff;box-shadow:0 3px 10px rgba(37,99,235,.2)}
+
+.content{padding:24px 28px;flex:1}
+
+/* SCREENS */
+.screen{display:none}
+.screen.active{display:block}
+
+/* CARDS */
+.cards-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.card{background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.card-label{font-size:11px;font-weight:700;color:var(--g3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.card-value{font-size:26px;font-weight:900;color:var(--n)}
+.card-sub{font-size:12px;color:var(--g3);margin-top:4px}
+.card-icon{font-size:28px;margin-bottom:8px}
+.card.red{border-left:4px solid var(--r)}
+.card.green{border-left:4px solid var(--gr)}
+.card.amber{border-left:4px solid var(--am)}
+.card.blue{border-left:4px solid var(--bl)}
+
+/* TABLE */
+.table-wrap{background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);overflow:hidden;margin-bottom:20px}
+.table-header{padding:16px 20px;border-bottom:1px solid var(--g2);display:flex;align-items:center;justify-content:space-between}
+.table-header h2{font-size:15px;font-weight:800}
+.table-header .th-actions{display:flex;gap:8px;align-items:center}
+.search-input{border:1.5px solid var(--g2);border-radius:8px;padding:7px 12px;font-family:'Nunito';font-size:13px;font-weight:600;outline:none;width:200px}
+.search-input:focus{border-color:var(--r)}
+table{width:100%;border-collapse:collapse}
+th{background:var(--g);padding:10px 16px;text-align:left;font-size:11px;font-weight:800;color:var(--g3);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+td{padding:11px 16px;border-bottom:1px solid var(--g2);font-size:13px;vertical-align:middle}
+tr:last-child td{border:none}
+tr:hover td{background:#FAFAFA}
+.stock-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800}
+.stock-ok{background:#E2EFDA;color:#375623}
+.stock-low{background:#FFF2CC;color:#7F6000}
+.stock-crit{background:#FCE4D6;color:var(--r)}
+.cat-pill{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;background:var(--g);color:var(--g3)}
+.action-btn{width:28px;height:28px;border-radius:7px;border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:15px;transition:all .15s;margin:0 2px}
+.action-btn:hover{transform:scale(1.1)}
+
+/* PEDIDO BUILDER */
+.pedido-grid{display:grid;grid-template-columns:1fr 380px;gap:20px}
+.prov-selector{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px}
+.prov-card{background:#fff;border-radius:14px;padding:14px;cursor:pointer;border:2px solid var(--g2);transition:all .15s;text-align:center}
+.prov-card:hover{border-color:var(--r)}
+.prov-card.sel{border-color:var(--r);background:var(--rp)}
+.prov-card .pic{font-size:28px;margin-bottom:6px}
+.prov-card .pname{font-size:12px;font-weight:800;color:var(--n)}
+.prov-card .pcat{font-size:10px;color:var(--g3)}
+
+.pedido-sidebar{background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.06);position:sticky;top:80px;max-height:calc(100vh - 100px);overflow-y:auto}
+.pedido-sidebar h2{font-size:15px;font-weight:800;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+.pedido-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--g2)}
+.pedido-item:last-child{border:none}
+.pedido-item .pi-name{flex:1;font-size:12px;font-weight:700}
+.pedido-item .pi-qty{display:flex;align-items:center;gap:4px}
+.pi-qbtn{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--g2);background:#fff;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--r)}
+.pi-qnum{font-size:13px;font-weight:800;min-width:24px;text-align:center}
+.pi-price{font-size:12px;font-weight:700;color:var(--g3);min-width:70px;text-align:right}
+.pedido-total{background:var(--g);border-radius:12px;padding:12px;margin-top:12px}
+.pedido-total .pt-row{display:flex;justify-content:space-between;font-size:13px;color:var(--g3);padding:3px 0}
+.pedido-total .pt-total{font-size:16px;font-weight:900;color:var(--n)}
+.pedido-total .pt-total span{color:var(--r)}
+
+/* FACTURA */
+.factura-area{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.drop-zone{border:2.5px dashed var(--g2);border-radius:16px;padding:40px 20px;text-align:center;cursor:pointer;transition:all .2s;background:#fff}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--r);background:var(--rp)}
+.drop-zone .dz-ic{font-size:56px;margin-bottom:12px}
+.drop-zone h3{font-size:16px;font-weight:800;color:var(--n);margin-bottom:6px}
+.drop-zone p{font-size:13px;color:var(--g3)}
+.drop-zone input{display:none}
+.preview-img{width:100%;border-radius:12px;margin-top:14px;max-height:300px;object-fit:contain;border:1px solid var(--g2)}
+
+.ai-result{background:#fff;border-radius:16px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.ai-result h2{font-size:15px;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.ai-badge{background:var(--purp);color:var(--pur);font-size:10px;font-weight:800;padding:3px 8px;border-radius:6px}
+
+.factura-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--g2)}
+.fi-emoji{font-size:22px;width:32px;text-align:center}
+.fi-info{flex:1}
+.fi-info .fin{font-size:13px;font-weight:700}
+.fi-info .fic{font-size:11px;color:var(--g3)}
+.fi-qty{font-size:13px;font-weight:800;color:var(--bl);min-width:40px;text-align:center}
+.fi-price{font-size:13px;font-weight:700;color:var(--g3);min-width:80px;text-align:right}
+.fi-check{width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.fi-ok{background:#E2EFDA;color:#375623}
+.fi-warn{background:#FFF2CC;color:#7F6000}
+
+.loading-overlay{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px;text-align:center}
+.spinner{width:44px;height:44px;border:4px solid var(--g2);border-top-color:var(--r);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* HISTORIAL */
+.hist-table tbody tr{cursor:pointer}
+.hist-badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.hist-recibido{background:#E2EFDA;color:#375623}
+.hist-pendiente{background:#FFF2CC;color:#7F6000}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-bg.show{display:flex}
+.modal{background:#fff;border-radius:20px;padding:28px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal h2{font-size:18px;font-weight:800;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center}
+.modal-close{font-size:22px;cursor:pointer;color:var(--g3);line-height:1}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:12px;font-weight:700;color:var(--g3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
+.form-group input,.form-group select{width:100%;border:1.5px solid var(--g2);border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:13px;font-weight:600;outline:none}
+.form-group input:focus,.form-group select:focus{border-color:var(--r)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--n);color:#fff;padding:12px 18px;border-radius:12px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;transform:translateX(120%);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);z-index:999}
+.toast.show{opacity:1;transform:translateX(0)}
+
+/* ALERTS STRIP */
+.alerts-strip{background:linear-gradient(135deg,#FFF3CD,#FFF8E1);border:1px solid #FFC107;border-radius:12px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.alert-item{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#7F6000;background:#fff;padding:4px 10px;border-radius:20px;border:1px solid #FFC107}
+
+/* empty state */
+.empty-st{text-align:center;padding:48px 20px;color:var(--g3)}
+.empty-st .esi{font-size:56px;margin-bottom:12px}
+.empty-st p{font-size:14px;font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-logo">
+      <div class="logo">🛒 Al Paso</div>
+      <div class="sub">Sistema de Proveedores</div>
+    </div>
+    <div class="sb-nav">
+      <div class="nav-item active" onclick="goTo('stock',this)"><span class="nic">📦</span> Stock</div>
+      <div class="nav-item" onclick="goTo('pedidos',this)"><span class="nic">📋</span> Armar Pedido</div>
+      <div class="nav-item" onclick="goTo('facturas',this)"><span class="nic">📸</span> Cargar Factura</div>
+      <div class="nav-item" onclick="goTo('historial',this)"><span class="nic">📊</span> Historial</div>
+      <div class="nav-item" onclick="goTo('proveedores',this)"><span class="nic">🏭</span> Proveedores</div>
+    </div>
+    <div class="sb-bottom">
+      <div class="nav-item" onclick="toast('⚙️ Configuración próximamente')"><span class="nic">⚙️</span> Configuración</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <h1 id="topbar-title">📦 Stock de Productos</h1>
+      <div class="actions" id="topbar-actions">
+        <button class="btn btn-secondary" onclick="exportStock()">⬇️ Exportar</button>
+        <button class="btn btn-primary" onclick="openAddProduct()">+ Agregar producto</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ══ STOCK ══ -->
+      <div class="screen active" id="s-stock">
+        <div class="cards-row" id="stock-cards"></div>
+        <div id="alerts-strip"></div>
+        <div class="table-wrap">
+          <div class="table-header">
+            <h2>Todos los productos</h2>
+            <div class="th-actions">
+              <select class="search-input" style="width:140px" onchange="filterCat(this.value)">
+                <option value="">Todas las categorías</option>
+                <option>Carnicería</option><option>Fiambres</option><option>Lácteos</option>
+                <option>Panadería</option><option>Bebidas</option><option>Almacén</option><option>Limpieza</option>
+              </select>
+              <input class="search-input" placeholder="🔍 Buscar producto..." oninput="filterStock(this.value)">
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead><tr>
+                <th>Código</th><th>Producto</th><th>Categoría</th><th>Proveedor</th>
+                <th>Stock actual</th><th>Stock mínimo</th><th>P. Venta</th><th>P. Costo</th><th>Acciones</th>
+              </tr></thead>
+              <tbody id="stock-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ PEDIDOS ══ -->
+      <div class="screen" id="s-pedidos">
+        <p style="font-size:13px;color:var(--g3);margin-bottom:16px;font-weight:600">Seleccioná el proveedor y armá el pedido. Los productos con stock bajo aparecen resaltados.</p>
+        <div class="prov-selector" id="prov-selector"></div>
+        <div class="pedido-grid">
+          <div>
+            <div class="table-wrap">
+              <div class="table-header">
+                <h2 id="pedido-prov-title">Seleccioná un proveedor</h2>
+                <input class="search-input" placeholder="🔍 Buscar..." oninput="filterPedido(this.value)">
+              </div>
+              <div style="overflow-x:auto">
+                <table>
+                  <thead><tr><th>Producto</th><th>Stock</th><th>Mínimo</th><th>Sugerido</th><th>P. Costo</th><th>Agregar</th></tr></thead>
+                  <tbody id="pedido-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="pedido-sidebar">
+              <h2>🛒 Mi Pedido <span id="pedido-count" style="font-size:12px;color:var(--g3);font-weight:600">0 items</span></h2>
+              <div id="pedido-list"><div class="empty-st"><div class="esi">📋</div><p>Agregá productos al pedido</p></div></div>
+              <div class="pedido-total" id="pedido-total-area" style="display:none">
+                <div class="pt-row"><span>Subtotal estimado</span><span id="pt-sub">$0</span></div>
+                <div class="pt-row pt-total"><span>Total</span><span id="pt-tot">$0</span></div>
+                <button class="btn btn-green" style="width:100%;margin-top:12px;justify-content:center" onclick="enviarPedidoWsp()">💬 Enviar por WhatsApp</button>
+                <button class="btn btn-secondary" style="width:100%;margin-top:8px;justify-content:center" onclick="exportPedido()">⬇️ Descargar pedido</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ FACTURAS ══ -->
+      <div class="screen" id="s-facturas">
+        <p style="font-size:13px;color:var(--g3);margin-bottom:20px;font-weight:600">Sacá una foto a la factura del proveedor. La IA lee los productos y actualiza el stock automáticamente.</p>
+        <div class="factura-area">
+          <div>
+            <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()"
+              ondragover="event.preventDefault();this.classList.add('drag')"
+              ondragleave="this.classList.remove('drag')"
+              ondrop="handleDrop(event)">
+              <div class="dz-ic">📸</div>
+              <h3>Subí la foto de la factura</h3>
+              <p>Hacé clic o arrastrá la imagen acá<br><span style="font-size:11px">JPG, PNG — hasta 10MB</span></p>
+              <input type="file" id="file-input" accept="image/*" onchange="handleFile(this)">
+              <img id="preview-img" class="preview-img" style="display:none">
+            </div>
+            <div style="margin-top:12px;display:flex;gap:8px">
+              <button class="btn btn-blue" onclick="document.getElementById('file-input').click()" style="flex:1;justify-content:center">📷 Elegir foto</button>
+              <button class="btn btn-primary" onclick="procesarFactura()" id="btn-procesar" style="flex:1;justify-content:center" disabled>🤖 Leer con IA</button>
+            </div>
+            <div style="margin-top:12px;background:var(--purp);border-radius:12px;padding:12px 14px">
+              <p style="font-size:12px;color:var(--pur);font-weight:700">🤖 La IA identifica automáticamente:</p>
+              <p style="font-size:11px;color:var(--pur);margin-top:4px;opacity:.8">Nombre del proveedor · Productos y cantidades · Precios unitarios · Total de la factura</p>
+            </div>
+          </div>
+          <div class="ai-result">
+            <h2>Resultado <span class="ai-badge">IA</span></h2>
+            <div id="factura-result">
+              <div class="empty-st">
+                <div class="esi">🤖</div>
+                <p>Subí una foto para que la IA la analice</p>
+              </div>
+            </div>
+            <div id="factura-actions" style="display:none;margin-top:14px;display:none">
+              <button class="btn btn-green" style="width:100%;justify-content:center" onclick="aplicarFactura()">✅ Confirmar y actualizar stock</button>
+              <button class="btn btn-secondary" style="width:100%;justify-content:center;margin-top:8px" onclick="resetFactura()">🔄 Cargar otra factura</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ HISTORIAL ══ -->
+      <div class="screen" id="s-historial">
+        <div class="cards-row" style="grid-template-columns:repeat(3,1fr)" id="hist-cards"></div>
+        <div class="table-wrap">
+          <div class="table-header">
+            <h2>Compras realizadas</h2>
+            <select class="search-input" style="width:180px" onchange="filterHistProv(this.value)">
+              <option value="">Todos los proveedores</option>
+            </select>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="hist-table">
+              <thead><tr><th>Fecha</th><th>Proveedor</th><th>Productos</th><th>Total</th><th>Estado</th><th>Detalle</th></tr></thead>
+              <tbody id="hist-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ PROVEEDORES ══ -->
+      <div class="screen" id="s-proveedores">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px" id="prov-cards"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR PRODUCTO -->
+<div class="modal-bg" id="modal-product">
+  <div class="modal">
+    <h2><span id="modal-title">Agregar producto</span><span class="modal-close" onclick="closeModal()">×</span></h2>
+    <div class="form-row">
+      <div class="form-group"><label>Código</label><input id="f-cod" placeholder="0000000"></div>
+      <div class="form-group"><label>Categoría</label>
+        <select id="f-cat">
+          <option>Carnicería</option><option>Fiambres</option><option>Lácteos</option>
+          <option>Panadería</option><option>Bebidas</option><option>Almacén</option><option>Limpieza</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>Nombre del producto</label><input id="f-nombre" placeholder="Ej: Costeleta"></div>
+    <div class="form-group"><label>Proveedor</label>
+      <select id="f-prov">
+        <option>Frigorífico Regional</option><option>Distribuidora Mayorista</option>
+        <option>Distribuidora Lácteos SA</option><option>Cremigal</option>
+        <option>Distribuidora Coca-Cola</option><option>Panadería El Trigo</option><option>Mayorista Limpieza</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Precio de venta ($)</label><input id="f-pventa" type="number" placeholder="0"></div>
+      <div class="form-group"><label>Precio de costo ($)</label><input id="f-pcosto" type="number" placeholder="0"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Stock actual</label><input id="f-stock" type="number" placeholder="0"></div>
+      <div class="form-group"><label>Stock mínimo</label><input id="f-min" type="number" placeholder="0"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Unidad</label>
+        <select id="f-unit"><option value="u">Unidades (u)</option><option value="kg">Kilogramos (kg)</option></select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-secondary" style="flex:1;justify-content:center" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="saveProduct()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><span id="toast-msg"></span></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const PRODUCTOS_STOCK = [
+  {id:0,cod:"0157381",nombre:"Picada Especial",cat:"Carnicería",prov:"Frigorífico Regional",precioVenta:19900,precioCosto:13930,stock:19,minimo:11,unit:"kg"},
+  {id:1,cod:"0155320",nombre:"Costeleta",cat:"Carnicería",prov:"Frigorífico Regional",precioVenta:18500,precioCosto:12950,stock:15,minimo:12,unit:"kg"},
+  {id:2,cod:"0155673",nombre:"Costilla Especial",cat:"Carnicería",prov:"Frigorífico Regional",precioVenta:19843,precioCosto:13890,stock:12,minimo:10,unit:"kg"},
+  {id:3,cod:"0155401",nombre:"Nalga",cat:"Carnicería",prov:"Frigorífico Regional",precioVenta:23500,precioCosto:16450,stock:14,minimo:7,unit:"kg"},
+  {id:4,cod:"0155318",nombre:"Aguja",cat:"Carnicería",prov:"Frigorífico Regional",precioVenta:12000,precioCosto:8400,stock:16,minimo:11,unit:"kg"},
+  {id:5,cod:"0000100",nombre:"Picada Comun",cat:"Carnicería",prov:"Frigorífico Regional",precioVenta:12500,precioCosto:8750,stock:12,minimo:9,unit:"kg"},
+  {id:6,cod:"0000080",nombre:"Paleta Pulpa",cat:"Carnicería",prov:"Frigorífico Regional",precioVenta:20000,precioCosto:14000,stock:7,minimo:4,unit:"kg"},
+  {id:7,cod:"0155348",nombre:"Milanesa Carne",cat:"Carnicería",prov:"Frigorífico Regional",precioVenta:18000,precioCosto:12600,stock:7,minimo:5,unit:"kg"},
+  {id:8,cod:"0155398",nombre:"Cuadril",cat:"Carnicería",prov:"Frigorífico Regional",precioVenta:23500,precioCosto:16450,stock:9,minimo:3,unit:"kg"},
+  {id:9,cod:"0155317",nombre:"Vacio",cat:"Carnicería",prov:"Frigorífico Regional",precioVenta:23500,precioCosto:16450,stock:4,minimo:3,unit:"kg"},
+  {id:10,cod:"0155328",nombre:"Cuadrada",cat:"Carnicería",prov:"Frigorífico Regional",precioVenta:22000,precioCosto:15400,stock:9,minimo:3,unit:"kg"},
+  {id:11,cod:"0155337",nombre:"Pata Muslo",cat:"Carnicería",prov:"Frigorífico Regional",precioVenta:5000,precioCosto:3500,stock:24,minimo:15,unit:"kg"},
+  {id:12,cod:"0155430",nombre:"Hamburguesa",cat:"Carnicería",prov:"Frigorífico Regional",precioVenta:12000,precioCosto:8400,stock:12,minimo:6,unit:"kg"},
+  {id:13,cod:"0155326",nombre:"Bola De Lomo",cat:"Carnicería",prov:"Frigorífico Regional",precioVenta:22000,precioCosto:15400,stock:4,minimo:3,unit:"kg"},
+  {id:14,cod:"0000070",nombre:"Pan/Galleta",cat:"Panadería",prov:"Panadería El Trigo",precioVenta:2900,precioCosto:2030,stock:35,minimo:25,unit:"u"},
+  {id:15,cod:"0155323",nombre:"Osobuco",cat:"Carnicería",prov:"Frigorífico Regional",precioVenta:11000,precioCosto:7700,stock:11,minimo:6,unit:"kg"},
+  {id:16,cod:"0161580",nombre:"Cremoso La Varense",cat:"Fiambres",prov:"Distribuidora Lácteos SA",precioVenta:10000,precioCosto:7000,stock:7,minimo:6,unit:"kg"},
+  {id:17,cod:"0155347",nombre:"Milanesa De Pollo",cat:"Carnicería",prov:"Frigorífico Regional",precioVenta:12000,precioCosto:8400,stock:6,minimo:5,unit:"kg"},
+  {id:18,cod:"0155430",nombre:"Milanesa Peceto/Lomo",cat:"Carnicería",prov:"Frigorífico Regional",precioVenta:23000,precioCosto:16100,stock:3,minimo:3,unit:"kg"},
+  {id:19,cod:"0155315",nombre:"Falda Parrillera",cat:"Carnicería",prov:"Frigorífico Regional",precioVenta:12000,precioCosto:8400,stock:6,minimo:4,unit:"kg"},
+  {id:20,cod:"0000147",nombre:"Paleta Fela",cat:"Fiambres",prov:"Distribuidora Lácteos SA",precioVenta:12000,precioCosto:8400,stock:7,minimo:3,unit:"u"},
+  {id:21,cod:"0000045",nombre:"Queso Cremoso La Paulina",cat:"Lácteos",prov:"Cremigal",precioVenta:11318,precioCosto:7923,stock:4,minimo:3,unit:"u"},
+  {id:22,cod:"0103705",nombre:"Gaseosa Coca Cola 2L",cat:"Bebidas",prov:"Distribuidora Coca-Cola",precioVenta:3100,precioCosto:2170,stock:17,minimo:10,unit:"u"},
+  {id:23,cod:"0000116",nombre:"Paleta Paladini",cat:"Fiambres",prov:"Distribuidora Lácteos SA",precioVenta:23000,precioCosto:16100,stock:4,minimo:3,unit:"u"},
+  {id:24,cod:"0000045",nombre:"Queso Barra Cremigal",cat:"Lácteos",prov:"Cremigal",precioVenta:15000,precioCosto:10500,stock:5,minimo:3,unit:"kg"},
+  {id:25,cod:"0100011",nombre:"Leche Cremigal Entera 1L",cat:"Lácteos",prov:"Cremigal",precioVenta:1717,precioCosto:1202,stock:22,minimo:15,unit:"u"},
+  {id:26,cod:"0101419",nombre:"Gaseosa Coca Cola 2.25L",cat:"Bebidas",prov:"Distribuidora Coca-Cola",precioVenta:5170,precioCosto:3619,stock:7,minimo:4,unit:"u"},
+  {id:27,cod:"0000210",nombre:"Arroz Vanguardia 1kg",cat:"Almacén",prov:"Distribuidora Mayorista",precioVenta:1117,precioCosto:782,stock:18,minimo:10,unit:"u"},
+  {id:28,cod:"0000211",nombre:"Fideos 500g",cat:"Almacén",prov:"Distribuidora Mayorista",precioVenta:850,precioCosto:595,stock:22,minimo:12,unit:"u"},
+  {id:29,cod:"0000215",nombre:"Azúcar Dolce 1kg",cat:"Almacén",prov:"Distribuidora Mayorista",precioVenta:1310,precioCosto:917,stock:14,minimo:8,unit:"u"},
+  {id:30,cod:"0000216",nombre:"Harina Cañuelas 000",cat:"Almacén",prov:"Distribuidora Mayorista",precioVenta:964,precioCosto:675,stock:12,minimo:8,unit:"u"},
+  {id:31,cod:"0000217",nombre:"Mayonesa Natura 250g",cat:"Almacén",prov:"Distribuidora Mayorista",precioVenta:1750,precioCosto:1225,stock:9,minimo:6,unit:"u"},
+  {id:32,cod:"0000300",nombre:"Jabón en Polvo 1kg",cat:"Limpieza",prov:"Mayorista Limpieza",precioVenta:2800,precioCosto:1960,stock:8,minimo:5,unit:"u"},
+  {id:33,cod:"0000301",nombre:"Detergente 500ml",cat:"Limpieza",prov:"Mayorista Limpieza",precioVenta:1200,precioCosto:840,stock:10,minimo:6,unit:"u"},
+  {id:34,cod:"0000218",nombre:"Jugo Tang Naranja",cat:"Almacén",prov:"Distribuidora Mayorista",precioVenta:350,precioCosto:245,stock:28,minimo:15,unit:"u"},
+];
+
+const PROVEEDORES = [
+  {nombre:"Frigorífico Regional",cat:"Carnicería",emoji:"🥩",tel:"1144556677",email:"ventas@frigorifico.com",condicion:"30 días",minPedido:50000},
+  {nombre:"Distribuidora Mayorista",cat:"Almacén",emoji:"🌾",tel:"1133445566",email:"pedidos@mayorista.com",condicion:"Contado",minPedido:20000},
+  {nombre:"Distribuidora Lácteos SA",cat:"Fiambres / Quesos",emoji:"🧀",tel:"1122334455",email:"fiambres@lacteos.com",condicion:"7 días",minPedido:15000},
+  {nombre:"Cremigal",cat:"Lácteos",emoji:"🥛",tel:"1155667788",email:"pedidos@cremigal.com",condicion:"Contado",minPedido:10000},
+  {nombre:"Distribuidora Coca-Cola",cat:"Bebidas",emoji:"🥤",tel:"1166778899",email:"bebidas@coca.com",condicion:"14 días",minPedido:30000},
+  {nombre:"Panadería El Trigo",cat:"Panadería",emoji:"🍞",tel:"1177889900",email:"eltrigo@pan.com",condicion:"Diario",minPedido:2000},
+  {nombre:"Mayorista Limpieza",cat:"Limpieza",emoji:"🧹",tel:"1188990011",email:"limpieza@mayor.com",condicion:"Contado",minPedido:12000},
+];
+
+const HISTORIAL = [
+  {id:1,fecha:"24/03/2026",prov:"Frigorífico Regional",productos:8,total:186000,estado:"recibido"},
+  {id:2,fecha:"22/03/2026",prov:"Distribuidora Mayorista",productos:12,total:94500,estado:"recibido"},
+  {id:3,fecha:"20/03/2026",prov:"Cremigal",productos:5,total:52000,estado:"recibido"},
+  {id:4,fecha:"18/03/2026",prov:"Distribuidora Coca-Cola",productos:4,total:78000,estado:"recibido"},
+  {id:5,fecha:"17/03/2026",prov:"Distribuidora Lácteos SA",productos:6,total:61000,estado:"recibido"},
+  {id:6,fecha:"15/03/2026",prov:"Frigorífico Regional",productos:9,total:210000,estado:"recibido"},
+  {id:7,fecha:"10/03/2026",prov:"Panadería El Trigo",productos:2,total:8500,estado:"recibido"},
+];
+
+const CAT_EMOJI = {"Carnicería":"🥩","Fiambres":"🧀","Lácteos":"🥛","Panadería":"🍞","Bebidas":"🥤","Almacén":"🌾","Limpieza":"🧹","Kiosco":"🍬"};
+
+let productos = JSON.parse(JSON.stringify(PRODUCTOS_STOCK));
+let pedido = {};
+let selectedProv = null;
+let currentFilter = '';
+let currentCat = '';
+let editingId = null;
+let facturaData = null;
+let imageBase64 = null;
+
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const fmt = n => '$' + Math.round(n).toLocaleString('es-AR');
+
+function toast(msg, dur=2500) {
+  $('toast-msg').textContent = msg;
+  $('toast').classList.add('show');
+  setTimeout(() => $('toast').classList.remove('show'), dur);
+}
+
+function goTo(screen, el) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $('s-' + screen).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const titles = {stock:'📦 Stock de Productos',pedidos:'📋 Armar Pedido',facturas:'📸 Cargar Factura',historial:'📊 Historial de Compras',proveedores:'🏭 Proveedores'};
+  $('topbar-title').textContent = titles[screen] || screen;
+  const acts = {
+    stock: `<button class="btn btn-secondary" onclick="exportStock()">⬇️ Exportar</button><button class="btn btn-primary" onclick="openAddProduct()">+ Agregar producto</button>`,
+    pedidos: `<button class="btn btn-secondary" onclick="clearPedido()">🗑️ Limpiar pedido</button>`,
+    facturas: '',
+    historial: '',
+    proveedores: `<button class="btn btn-primary" onclick="toast('Próximamente: agregar proveedor')">+ Agregar proveedor</button>`,
+  };
+  $('topbar-actions').innerHTML = acts[screen] || '';
+  if (screen === 'stock') renderStock();
+  if (screen === 'pedidos') renderPedidos();
+  if (screen === 'historial') renderHistorial();
+  if (screen === 'proveedores') renderProveedores();
+}
+
+// ── STOCK ─────────────────────────────────────────────────────────────────────
+function stockStatus(p) {
+  if (p.stock <= 0) return {cls:'stock-crit', label:`⛔ Sin stock`};
+  if (p.stock <= p.minimo) return {cls:'stock-crit', label:`🔴 ${p.stock} ${p.unit}`};
+  if (p.stock <= p.minimo * 1.5) return {cls:'stock-low', label:`🟡 ${p.stock} ${p.unit}`};
+  return {cls:'stock-ok', label:`🟢 ${p.stock} ${p.unit}`};
+}
+
+function renderStock() {
+  const criticos = productos.filter(p => p.stock <= p.minimo).length;
+  const bajos = productos.filter(p => p.stock > p.minimo && p.stock <= p.minimo * 1.5).length;
+  const ok = productos.filter(p => p.stock > p.minimo * 1.5).length;
+
+  $('stock-cards').innerHTML = `
+    <div class="card blue"><div class="card-icon">📦</div><div class="card-label">Total productos</div><div class="card-value">${productos.length}</div></div>
+    <div class="card green"><div class="card-icon">✅</div><div class="card-label">Stock normal</div><div class="card-value">${ok}</div></div>
+    <div class="card amber"><div class="card-icon">⚠️</div><div class="card-label">Stock bajo</div><div class="card-value">${bajos}</div></div>
+    <div class="card red"><div class="card-icon">🚨</div><div class="card-label">Críticos</div><div class="card-value">${criticos}</div><div class="card-sub">Necesitan pedido urgente</div></div>`;
+
+  // Alerts
+  const crits = productos.filter(p => p.stock <= p.minimo);
+  if (crits.length) {
+    $('alerts-strip').innerHTML = `<div class="alerts-strip">⚠️ <strong>Stock crítico:</strong> ${crits.map(p => `<div class="alert-item">${CAT_EMOJI[p.cat]||'📦'} ${p.nombre} (${p.stock}/${p.minimo} ${p.unit})</div>`).join('')}</div>`;
+  } else {
+    $('alerts-strip').innerHTML = '';
+  }
+
+  renderStockTable();
+}
+
+function renderStockTable() {
+  let prods = productos.filter(p => {
+    const matchQ = !currentFilter || p.nombre.toLowerCase().includes(currentFilter.toLowerCase());
+    const matchC = !currentCat || p.cat === currentCat;
+    return matchQ && matchC;
+  });
+
+  $('stock-tbody').innerHTML = prods.map(p => {
+    const st = stockStatus(p);
+    return `<tr>
+      <td style="font-family:monospace;font-size:11px;color:var(--g3)">${p.cod}</td>
+      <td><strong>${CAT_EMOJI[p.cat]||'📦'} ${p.nombre}</strong></td>
+      <td><span class="cat-pill">${p.cat}</span></td>
+      <td style="font-size:12px;color:var(--g3)">${p.prov}</td>
+      <td><span class="stock-pill ${st.cls}">${st.label}</span></td>
+      <td style="font-size:12px;color:var(--g3)">${p.minimo} ${p.unit}</td>
+      <td style="font-weight:700">${fmt(p.precioVenta)}</td>
+      <td style="color:var(--g3)">${fmt(p.precioCosto)}</td>
+      <td>
+        <button class="action-btn" style="background:#EFF6FF" onclick="openEditProduct(${p.id})" title="Editar">✏️</button>
+        <button class="action-btn" style="background:#F0FFF4" onclick="ajustarStock(${p.id})" title="Ajustar stock">📥</button>
+      </td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--g3)">No se encontraron productos</td></tr>`;
+}
+
+function filterStock(q) { currentFilter = q; renderStockTable(); }
+function filterCat(c) { currentCat = c; renderStockTable(); }
+
+function ajustarStock(id) {
+  const p = productos.find(x => x.id === id);
+  const v = prompt(`Stock actual de "${p.nombre}": ${p.stock} ${p.unit}\n\nIngresá el nuevo stock:`);
+  if (v !== null && !isNaN(v) && v >= 0) {
+    p.stock = parseInt(v);
+    renderStock();
+    toast(`✅ Stock de ${p.nombre} actualizado a ${v} ${p.unit}`);
+  }
+}
+
+// ── PRODUCT MODAL ─────────────────────────────────────────────────────────────
+function openAddProduct() {
+  editingId = null;
+  $('modal-title').textContent = 'Agregar producto';
+  ['f-cod','f-nombre','f-pventa','f-pcosto','f-stock','f-min'].forEach(id => $(id).value = '');
+  $('modal-product').classList.add('show');
+}
+
+function openEditProduct(id) {
+  editingId = id;
+  const p = productos.find(x => x.id === id);
+  $('modal-title').textContent = 'Editar producto';
+  $('f-cod').value = p.cod;
+  $('f-nombre').value = p.nombre;
+  $('f-cat').value = p.cat;
+  $('f-prov').value = p.prov;
+  $('f-pventa').value = p.precioVenta;
+  $('f-pcosto').value = p.precioCosto;
+  $('f-stock').value = p.stock;
+  $('f-min').value = p.minimo;
+  $('f-unit').value = p.unit;
+  $('modal-product').classList.add('show');
+}
+
+function saveProduct() {
+  const data = {
+    cod: $('f-cod').value, nombre: $('f-nombre').value, cat: $('f-cat').value,
+    prov: $('f-prov').value, precioVenta: +$('f-pventa').value, precioCosto: +$('f-pcosto').value,
+    stock: +$('f-stock').value, minimo: +$('f-min').value, unit: $('f-unit').value
+  };
+  if (!data.nombre) { toast('⚠️ Completá el nombre'); return; }
+  if (editingId !== null) {
+    const idx = productos.findIndex(p => p.id === editingId);
+    productos[idx] = { ...productos[idx], ...data };
+    toast(`✅ ${data.nombre} actualizado`);
+  } else {
+    data.id = Date.now();
+    productos.push(data);
+    toast(`✅ ${data.nombre} agregado`);
+  }
+  closeModal();
+  renderStock();
+}
+
+function closeModal() { $('modal-product').classList.remove('show'); }
+
+// ── PEDIDOS ───────────────────────────────────────────────────────────────────
+function renderPedidos() {
+  $('prov-selector').innerHTML = PROVEEDORES.map(p => `
+    <div class="prov-card${selectedProv===p.nombre?' sel':''}" onclick="selectProv('${p.nombre}')">
+      <div class="pic">${p.emoji}</div>
+      <div class="pname">${p.nombre}</div>
+      <div class="pcat">${p.cat}</div>
+    </div>`).join('');
+  renderPedidoTable();
+  renderPedidoSidebar();
+}
+
+function selectProv(nombre) {
+  selectedProv = nombre;
+  renderPedidos();
+  $('pedido-prov-title').textContent = nombre;
+}
+
+function renderPedidoTable() {
+  if (!selectedProv) {
+    $('pedido-tbody').innerHTML = `<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--g3)">Seleccioná un proveedor para ver sus productos</td></tr>`;
+    return;
+  }
+  const q = ($('sinput-pedido') || {value:''}).value?.toLowerCase() || '';
+  let prods = productos.filter(p => p.prov === selectedProv && (!q || p.nombre.toLowerCase().includes(q)));
+  const sugerido = p => Math.max(0, p.minimo * 3 - p.stock);
+
+  $('pedido-tbody').innerHTML = prods.map(p => {
+    const st = stockStatus(p);
+    const sug = sugerido(p);
+    const inPed = pedido[p.id] ? pedido[p.id].qty : 0;
+    return `<tr style="${p.stock<=p.minimo?'background:#FFF5F5':''}">
+      <td><strong>${CAT_EMOJI[p.cat]||'📦'} ${p.nombre}</strong></td>
+      <td><span class="stock-pill ${st.cls}">${p.stock} ${p.unit}</span></td>
+      <td style="font-size:12px;color:var(--g3)">${p.minimo} ${p.unit}</td>
+      <td style="font-weight:700;color:var(--bl)">${sug > 0 ? sug + ' ' + p.unit : '—'}</td>
+      <td style="color:var(--g3)">${fmt(p.precioCosto)}/${p.unit}</td>
+      <td>
+        ${inPed > 0
+          ? `<div style="display:flex;align-items:center;gap:6px">
+               <button class="pi-qbtn" onclick="pedidoQty(${p.id},-1)">−</button>
+               <span style="font-weight:800;color:var(--r)">${inPed}</span>
+               <button class="pi-qbtn" onclick="pedidoQty(${p.id},1)">+</button>
+             </div>`
+          : `<button class="btn btn-primary" style="padding:5px 12px;font-size:11px" onclick="addPedido(${p.id},${sug||1})">+ Agregar</button>`}
+      </td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--g3)">Sin productos para este proveedor</td></tr>`;
+}
+
+function filterPedido(q) { renderPedidoTable(); }
+
+function addPedido(id, qty) {
+  const p = productos.find(x => x.id === id);
+  pedido[id] = { ...p, qty: qty || 1 };
+  renderPedidoTable();
+  renderPedidoSidebar();
+}
+
+function pedidoQty(id, delta) {
+  if (!pedido[id]) return;
+  pedido[id].qty += delta;
+  if (pedido[id].qty <= 0) delete pedido[id];
+  renderPedidoTable();
+  renderPedidoSidebar();
+}
+
+function renderPedidoSidebar() {
+  const items = Object.values(pedido);
+  $('pedido-count').textContent = items.length + ' items';
+  if (!items.length) {
+    $('pedido-list').innerHTML = `<div class="empty-st"><div class="esi">📋</div><p>Agregá productos al pedido</p></div>`;
+    $('pedido-total-area').style.display = 'none';
+    return;
+  }
+  $('pedido-list').innerHTML = items.map(it => `
+    <div class="pedido-item">
+      <span>${CAT_EMOJI[it.cat]||'📦'}</span>
+      <div class="pi-name">${it.nombre}</div>
+      <div class="pi-qty">
+        <button class="pi-qbtn" onclick="pedidoQty(${it.id},-1)">−</button>
+        <span class="pi-qnum">${it.qty}</span>
+        <button class="pi-qbtn" onclick="pedidoQty(${it.id},1)">+</button>
+      </div>
+      <div class="pi-price">${fmt(it.precioCosto * it.qty)}</div>
+    </div>`).join('');
+  const total = items.reduce((s,i) => s + i.precioCosto * i.qty, 0);
+  $('pt-sub').textContent = fmt(total);
+  $('pt-tot').textContent = fmt(total);
+  $('pedido-total-area').style.display = 'block';
+}
+
+function clearPedido() { pedido = {}; renderPedidos(); toast('🗑️ Pedido limpiado'); }
+
+function enviarPedidoWsp() {
+  const items = Object.values(pedido);
+  if (!items.length) { toast('⚠️ El pedido está vacío'); return; }
+  const total = items.reduce((s,i) => s + i.precioCosto * i.qty, 0);
+  const lines = items.map(i => `• ${i.nombre}: ${i.qty} ${i.unit} — ${fmt(i.precioCosto * i.qty)}`).join('\n');
+  const prov = PROVEEDORES.find(p => p.nombre === selectedProv);
+  const msg = `📋 *Pedido Al Paso — ${selectedProv}*\n\n${lines}\n\n💰 *Total estimado: ${fmt(total)}*\n\n📅 ${new Date().toLocaleDateString('es-AR')}\nGracias!`;
+  const tel = prov?.tel || '';
+  window.open(`https://wa.me/54${tel}?text=${encodeURIComponent(msg)}`, '_blank');
+  // Save to historial
+  HISTORIAL.unshift({id:Date.now(),fecha:new Date().toLocaleDateString('es-AR'),prov:selectedProv,productos:items.length,total,estado:'pendiente'});
+  toast('✅ Pedido enviado por WhatsApp y guardado en historial');
+}
+
+function exportPedido() {
+  const items = Object.values(pedido);
+  if (!items.length) { toast('⚠️ El pedido está vacío'); return; }
+  const total = items.reduce((s,i) => s + i.precioCosto * i.qty, 0);
+  const lines = ['Producto,Cantidad,Unidad,Precio Costo,Subtotal', ...items.map(i => `${i.nombre},${i.qty},${i.unit},${i.precioCosto},${i.precioCosto*i.qty}`),'','Total,,,,'+total];
+  const blob = new Blob([lines.join('\n')], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `pedido_${selectedProv?.replace(/ /g,'_')}_${new Date().toLocaleDateString('es-AR').replace(/\//g,'-')}.csv`;
+  a.click();
+  toast('⬇️ Pedido descargado como CSV');
+}
+
+// ── FACTURAS ──────────────────────────────────────────────────────────────────
+function handleFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    imageBase64 = e.target.result.split(',')[1];
+    $('preview-img').src = e.target.result;
+    $('preview-img').style.display = 'block';
+    $('btn-procesar').disabled = false;
+    toast('📸 Imagen cargada. Hacé clic en "Leer con IA"');
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  $('drop-zone').classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    const input = $('file-input');
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+    handleFile(input);
+  }
+}
+
+async function procesarFactura() {
+  if (!imageBase64) { toast('⚠️ Primero subí una imagen'); return; }
+  $('btn-procesar').disabled = true;
+  $('factura-result').innerHTML = `<div class="loading-overlay"><div class="spinner"></div><p style="font-weight:700;color:var(--g3)">La IA está leyendo la factura...</p><p style="font-size:12px;color:var(--g3);margin-top:6px">Identificando productos, cantidades y precios</p></div>`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: { type: "base64", media_type: "image/jpeg", data: imageBase64 }
+            },
+            {
+              type: "text",
+              text: `Sos un asistente de un supermercado argentino llamado "Al Paso". Analizá esta factura/remito de proveedor y extraé la información en formato JSON estricto, sin texto adicional, sin markdown.
+
+Devolvé SOLO este JSON:
+{
+  "proveedor": "nombre del proveedor",
+  "fecha": "dd/mm/yyyy",
+  "nro_factura": "número",
+  "items": [
+    {"nombre": "nombre del producto", "cantidad": número, "unit": "u o kg", "precio_unitario": número, "subtotal": número}
+  ],
+  "total": número
+}
+
+Si no podés leer algún campo, ponés null. Si no es una factura, devolvé {"error": "No es una factura válida"}.`
+            }
+          ]
+        }]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content?.map(c => c.text || '').join('');
+    let parsed;
+    try {
+      parsed = JSON.parse(text.replace(/```json|```/g,'').trim());
+    } catch {
+      parsed = {error: 'No se pudo parsear la respuesta'};
+    }
+
+    if (parsed.error) {
+      $('factura-result').innerHTML = `<div class="empty-st"><div class="esi">⚠️</div><p>${parsed.error}</p></div>`;
+      return;
+    }
+
+    facturaData = parsed;
+    renderFacturaResult(parsed);
+
+  } catch(err) {
+    // Demo mode if API fails
+    facturaData = demoFactura();
+    renderFacturaResult(facturaData);
+    toast('💡 Modo demo: mostrando ejemplo de lectura de factura');
+  }
+}
+
+function demoFactura() {
+  return {
+    proveedor: "Frigorífico Regional",
+    fecha: new Date().toLocaleDateString('es-AR'),
+    nro_factura: "A-0001-00" + Math.floor(Math.random()*9000+1000),
+    items: [
+      {nombre:"Costeleta", cantidad:20, unit:"kg", precio_unitario:12950, subtotal:259000},
+      {nombre:"Nalga", cantidad:10, unit:"kg", precio_unitario:16450, subtotal:164500},
+      {nombre:"Picada Especial", cantidad:15, unit:"kg", precio_unitario:13930, subtotal:208950},
+      {nombre:"Milanesa Carne", cantidad:8, unit:"kg", precio_unitario:12600, subtotal:100800},
+    ],
+    total: 733250
+  };
+}
+
+function renderFacturaResult(data) {
+  const matchItem = item => {
+    const n = item.nombre.toLowerCase();
+    return productos.find(p => p.nombre.toLowerCase().includes(n.split(' ')[0]) || n.includes(p.nombre.toLowerCase().split(' ')[0]));
+  };
+
+  $('factura-result').innerHTML = `
+    <div style="background:var(--g);border-radius:10px;padding:12px;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:var(--g3)">PROVEEDOR</div>
+      <div style="font-size:15px;font-weight:800">${data.proveedor || 'No identificado'}</div>
+      <div style="font-size:12px;color:var(--g3);margin-top:2px">Factura ${data.nro_factura || '—'} · ${data.fecha || '—'}</div>
+    </div>
+    ${data.items.map(item => {
+      const match = matchItem(item);
+      return `<div class="factura-item">
+        <div class="fi-emoji">${match ? CAT_EMOJI[match.cat]||'📦' : '❓'}</div>
+        <div class="fi-info">
+          <div class="fin">${item.nombre}</div>
+          <div class="fic">${match ? `→ ${match.nombre}` : '⚠️ No encontrado en stock'}</div>
+        </div>
+        <div class="fi-qty">${item.cantidad} ${item.unit}</div>
+        <div class="fi-price">${fmt(item.subtotal||0)}</div>
+        <div class="fi-check ${match?'fi-ok':'fi-warn'}">${match?'✓':'?'}</div>
+      </div>`;
+    }).join('')}
+    <div style="background:var(--g);border-radius:10px;padding:12px;margin-top:10px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-weight:700">Total factura</span>
+      <span style="font-size:18px;font-weight:900;color:var(--r)">${fmt(data.total||0)}</span>
+    </div>`;
+
+  $('factura-actions').style.display = 'flex';
+  $('factura-actions').style.flexDirection = 'column';
+}
+
+function aplicarFactura() {
+  if (!facturaData) return;
+  let actualizados = 0;
+  facturaData.items.forEach(item => {
+    const n = item.nombre.toLowerCase();
+    const match = productos.find(p =>
+      p.nombre.toLowerCase().includes(n.split(' ')[0]) ||
+      n.includes(p.nombre.toLowerCase().split(' ')[0])
+    );
+    if (match) {
+      match.stock += item.cantidad;
+      if (item.precio_unitario) match.precioCosto = item.precio_unitario;
+      actualizados++;
+    }
+  });
+  HISTORIAL.unshift({
+    id: Date.now(),
+    fecha: facturaData.fecha || new Date().toLocaleDateString('es-AR'),
+    prov: facturaData.proveedor || 'Proveedor',
+    productos: facturaData.items.length,
+    total: facturaData.total || 0,
+    estado: 'recibido'
+  });
+  toast(`✅ Stock actualizado: ${actualizados} productos ingresados`, 3000);
+  resetFactura();
+  goTo('stock', document.querySelector('.nav-item'));
+}
+
+function resetFactura() {
+  facturaData = null;
+  imageBase64 = null;
+  $('preview-img').style.display = 'none';
+  $('preview-img').src = '';
+  $('file-input').value = '';
+  $('btn-procesar').disabled = true;
+  $('factura-result').innerHTML = `<div class="empty-st"><div class="esi">🤖</div><p>Subí una foto para que la IA la analice</p></div>`;
+  $('factura-actions').style.display = 'none';
+}
+
+// ── HISTORIAL ─────────────────────────────────────────────────────────────────
+function renderHistorial() {
+  const totalCompras = HISTORIAL.reduce((s,h) => s + h.total, 0);
+  const provUnicos = [...new Set(HISTORIAL.map(h => h.prov))].length;
+  $('hist-cards').innerHTML = `
+    <div class="card blue"><div class="card-icon">🛒</div><div class="card-label">Pedidos realizados</div><div class="card-value">${HISTORIAL.length}</div></div>
+    <div class="card green"><div class="card-icon">💰</div><div class="card-label">Total comprado</div><div class="card-value" style="font-size:20px">${fmt(totalCompras)}</div></div>
+    <div class="card amber"><div class="card-icon">🏭</div><div class="card-label">Proveedores activos</div><div class="card-value">${provUnicos}</div></div>`;
+
+  // Fill prov select
+  const sel = $('hist-tbody').parentElement.parentElement.parentElement.querySelector('select');
+  if (sel) {
+    const provs = [...new Set(HISTORIAL.map(h => h.prov))];
+    sel.innerHTML = `<option value="">Todos los proveedores</option>` + provs.map(p => `<option>${p}</option>`).join('');
+  }
+
+  $('hist-tbody').innerHTML = HISTORIAL.map(h => `
+    <tr>
+      <td style="font-weight:700">${h.fecha}</td>
+      <td>${h.prov}</td>
+      <td>${h.productos} productos</td>
+      <td style="font-weight:800">${fmt(h.total)}</td>
+      <td><span class="hist-badge hist-${h.estado}">${h.estado === 'recibido' ? '✅ Recibido' : '⏳ Pendiente'}</span></td>
+      <td><button class="btn btn-secondary" style="padding:5px 10px;font-size:11px" onclick="toast('Detalle del pedido #${h.id}')">Ver</button></td>
+    </tr>`).join('');
+}
+
+function filterHistProv(prov) {
+  const rows = $('hist-tbody').querySelectorAll('tr');
+  rows.forEach(r => r.style.display = (!prov || r.cells[1]?.textContent === prov) ? '' : 'none');
+}
+
+// ── PROVEEDORES ───────────────────────────────────────────────────────────────
+function renderProveedores() {
+  $('prov-cards').innerHTML = PROVEEDORES.map(p => {
+    const prods = productos.filter(pr => pr.prov === p.nombre).length;
+    const compras = HISTORIAL.filter(h => h.prov === p.nombre);
+    const totalComprado = compras.reduce((s,h) => s + h.total, 0);
+    return `
+    <div class="card" style="padding:20px;cursor:pointer" onclick="goTo('pedidos',document.querySelectorAll('.nav-item')[1]);selectProv('${p.nombre}')">
+      <div style="font-size:36px;margin-bottom:12px">${p.emoji}</div>
+      <div style="font-size:16px;font-weight:800;margin-bottom:4px">${p.nombre}</div>
+      <div style="font-size:12px;color:var(--g3);margin-bottom:12px">${p.cat}</div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="font-size:12px;color:var(--g3)">📦 ${prods} productos</div>
+        <div style="font-size:12px;color:var(--g3)">📅 Cond: ${p.condicion}</div>
+        <div style="font-size:12px;color:var(--g3)">💰 Mín pedido: ${fmt(p.minPedido)}</div>
+        ${totalComprado > 0 ? `<div style="font-size:12px;font-weight:700;color:var(--gr);margin-top:4px">✅ Comprado: ${fmt(totalComprado)}</div>` : ''}
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:14px;padding:9px" onclick="event.stopPropagation();goTo('pedidos',document.querySelectorAll('.nav-item')[1]);selectProv('${p.nombre}')">Hacer pedido →</button>
+    </div>`;
+  }).join('');
+}
+
+function exportStock() {
+  const lines = ['Codigo,Nombre,Categoria,Proveedor,Stock,Minimo,PrecioVenta,PrecioCosto,Unidad',
+    ...productos.map(p => `${p.cod},${p.nombre},${p.cat},${p.prov},${p.stock},${p.minimo},${p.precioVenta},${p.precioCosto},${p.unit}`)];
+  const blob = new Blob([lines.join('\n')], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `stock_alpaso_${new Date().toLocaleDateString('es-AR').replace(/\//g,'-')}.csv`;
+  a.click();
+  toast('⬇️ Stock exportado como CSV');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+renderStock();
+</script>
+</body>
+</html>
