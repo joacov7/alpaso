@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Al Paso — Lector de Stock</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+:root{
+  --do:#C9A84C;--do2:#E8C96A;--do3:#A07830;
+  --n:#1A1A1A;--w:#fff;--g:#F8F5EE;--g2:#EDE0C0;--g3:#A07830;
+  --r:#C0392B;--gr:#27AE60;--am:#F39C12;--bl:#2563EB;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Nunito',sans-serif;background:var(--g);min-height:100vh;color:var(--n)}
+
+/* TOPBAR */
+.topbar{background:var(--n);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid var(--do)}
+.tb-logo{font-family:'Bebas Neue';font-size:20px;color:var(--do);letter-spacing:2px}
+.tb-back{color:var(--do);font-size:13px;font-weight:700;cursor:pointer;text-decoration:none;display:flex;align-items:center;gap:4px}
+
+/* MODE SELECTOR */
+.mode-sel{padding:16px;display:flex;gap:10px}
+.mode-btn{flex:1;padding:14px 10px;border-radius:14px;border:2px solid var(--g2);background:var(--w);text-align:center;cursor:pointer;transition:all .15s}
+.mode-btn.active{border-color:var(--n);background:var(--n)}
+.mode-btn .mb-icon{font-size:28px;margin-bottom:6px}
+.mode-btn .mb-title{font-size:13px;font-weight:800;color:var(--n)}
+.mode-btn .mb-desc{font-size:10px;color:var(--g3);margin-top:2px}
+.mode-btn.active .mb-title{color:var(--do)}
+.mode-btn.active .mb-desc{color:rgba(201,168,76,.6)}
+
+/* SCANNER */
+.scanner-wrap{position:relative;margin:0 16px;border-radius:16px;overflow:hidden;background:#000}
+#scanner-container{width:100%}
+#scanner-container video{width:100%;border-radius:16px}
+.scan-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.scan-frame{width:200px;height:200px;position:relative}
+.scan-frame::before,.scan-frame::after{content:'';position:absolute;width:40px;height:40px;border-color:var(--do);border-style:solid}
+.scan-frame::before{top:0;left:0;border-width:3px 0 0 3px;border-radius:4px 0 0 4px}
+.scan-frame::after{bottom:0;right:0;border-width:0 3px 3px 0;border-radius:0 0 4px 4px}
+.scan-corners-tr{position:absolute;top:0;right:0;width:40px;height:40px;border-top:3px solid var(--do);border-right:3px solid var(--do);border-radius:0 4px 0 0}
+.scan-corners-bl{position:absolute;bottom:0;left:0;width:40px;height:40px;border-bottom:3px solid var(--do);border-left:3px solid var(--do);border-radius:0 0 0 4px}
+.scan-line{position:absolute;left:10px;right:10px;height:2px;background:linear-gradient(90deg,transparent,var(--do),transparent);animation:scanline 2s ease-in-out infinite}
+@keyframes scanline{0%{top:10px;opacity:0}20%{opacity:1}80%{opacity:1}100%{top:calc(100% - 10px);opacity:0}}
+.scan-hint{text-align:center;padding:10px;font-size:12px;color:var(--g3);font-weight:600}
+
+/* MANUAL INPUT */
+.manual-wrap{padding:0 16px;margin-top:10px}
+.manual-row{display:flex;gap:8px}
+.manual-input{flex:1;border:2px solid var(--g2);border-radius:10px;padding:11px 14px;font-family:'Nunito';font-size:14px;font-weight:600;color:var(--n);outline:none;background:var(--w)}
+.manual-input:focus{border-color:var(--do)}
+.manual-btn{background:var(--n);color:var(--do);border:none;border-radius:10px;padding:11px 16px;font-family:'Nunito';font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap}
+
+/* RESULT */
+.result-card{margin:14px 16px;background:var(--w);border-radius:16px;overflow:hidden;box-shadow:0 4px 16px rgba(201,168,76,.1);border:1px solid var(--g2)}
+.rc-header{padding:14px 16px;border-bottom:1px solid var(--g2);display:flex;align-items:center;gap:12px}
+.rc-emoji{font-size:36px}
+.rc-info{flex:1}
+.rc-nombre{font-size:16px;font-weight:800;color:var(--n)}
+.rc-cat{font-size:11px;color:var(--g3)}
+.rc-cod{font-size:10px;color:#CCC;font-family:monospace;margin-top:2px}
+.rc-stock-actual{text-align:right}
+.rc-stock-actual .rsa-label{font-size:9px;font-weight:700;color:var(--g3);text-transform:uppercase;letter-spacing:.5px}
+.rc-stock-actual .rsa-val{font-size:22px;font-weight:900;color:var(--n);line-height:1}
+.rc-stock-actual .rsa-unit{font-size:10px;color:var(--g3)}
+
+.rc-body{padding:16px}
+.rc-mode-label{font-size:10px;font-weight:800;color:var(--g3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.qty-control{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.qty-btn{width:44px;height:44px;border-radius:12px;border:2px solid var(--g2);background:var(--w);font-size:22px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--n);transition:all .15s}
+.qty-btn:active{background:var(--n);color:var(--do);border-color:var(--n)}
+.qty-input{flex:1;border:2px solid var(--do);border-radius:12px;padding:10px;font-family:'Nunito';font-size:28px;font-weight:900;color:var(--n);text-align:center;outline:none}
+.qty-unit{font-size:12px;color:var(--g3);font-weight:700;min-width:24px}
+
+.rc-preview{background:var(--g);border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+.rcp-label{font-size:11px;color:var(--g3);font-weight:600}
+.rcp-val{font-size:15px;font-weight:800;color:var(--n)}
+.rcp-arrow{font-size:18px;color:var(--do)}
+
+.rc-btns{display:flex;gap:8px}
+.btn-confirm{flex:1;background:var(--n);color:var(--do);border:none;border-radius:12px;padding:13px;font-family:'Nunito';font-size:14px;font-weight:800;cursor:pointer}
+.btn-cancel{background:var(--g);color:var(--n);border:none;border-radius:12px;padding:13px 16px;font-family:'Nunito';font-size:13px;font-weight:700;cursor:pointer}
+
+/* NOT FOUND */
+.notfound-card{margin:14px 16px;background:var(--w);border-radius:16px;padding:18px;border:2px dashed var(--g2)}
+.nf-title{font-size:14px;font-weight:800;color:var(--n);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.nf-cod{font-size:11px;color:var(--g3);font-family:monospace;margin-bottom:14px}
+.form-group{margin-bottom:10px}
+.form-group label{display:block;font-size:10px;font-weight:800;color:var(--g3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.form-input{width:100%;border:2px solid var(--g2);border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:13px;font-weight:600;color:var(--n);outline:none}
+.form-input:focus{border-color:var(--do)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn-add-new{width:100%;background:var(--do);color:var(--n);border:none;border-radius:10px;padding:12px;font-family:'Nunito';font-size:13px;font-weight:800;cursor:pointer;margin-top:4px}
+
+/* HISTORIAL SESSION */
+.hist-session{padding:0 16px;margin-top:16px}
+.hs-title{font-size:11px;font-weight:800;color:var(--g3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.hs-clear{font-size:10px;font-weight:700;color:var(--r);cursor:pointer;background:none;border:none}
+.hs-item{background:var(--w);border-radius:10px;padding:10px 12px;margin-bottom:7px;display:flex;align-items:center;gap:10px;border:1px solid var(--g2)}
+.hi-emoji{font-size:22px;width:32px;text-align:center}
+.hi-info{flex:1}
+.hi-name{font-size:12px;font-weight:700;color:var(--n)}
+.hi-detail{font-size:10px;color:var(--g3)}
+.hi-change{font-size:13px;font-weight:800}
+.hi-plus{color:var(--gr)}
+.hi-set{color:var(--bl)}
+
+/* RESUMEN */
+.resumen-btn{margin:14px 16px;width:calc(100% - 32px);background:var(--gr);color:#fff;border:none;border-radius:12px;padding:13px;font-family:'Nunito';font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:16px;right:16px;background:var(--n);color:var(--do);padding:12px 16px;border-radius:12px;font-size:13px;font-weight:700;transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);z-index:999;display:flex;align-items:center;gap:8px;border:1px solid rgba(201,168,76,.2)}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* SUCCESS FLASH */
+.success-flash{position:fixed;inset:0;background:rgba(39,174,96,.15);pointer-events:none;opacity:0;transition:opacity .15s;z-index:998}
+.success-flash.show{opacity:1}
+
+.empty-state{text-align:center;padding:24px;color:var(--g3);font-size:12px;font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="tb-logo">◆ AL PASO — Stock</div>
+  <a href="./alpaso-proveedores.html" class="tb-back">← Volver</a>
+</div>
+
+<!-- MODO -->
+<div class="mode-sel">
+  <div class="mode-btn active" id="btn-modo-suma" onclick="setModo('suma')">
+    <div class="mb-icon">📥</div>
+    <div class="mb-title">Ingreso mercadería</div>
+    <div class="mb-desc">Suma al stock actual</div>
+  </div>
+  <div class="mode-btn" id="btn-modo-inv" onclick="setModo('inventario')">
+    <div class="mb-icon">📋</div>
+    <div class="mb-title">Inventario góndola</div>
+    <div class="mb-desc">Reemplaza el stock</div>
+  </div>
+</div>
+
+<!-- SCANNER -->
+<div class="scanner-wrap" id="scanner-wrap">
+  <div id="scanner-container"></div>
+  <div class="scan-overlay">
+    <div class="scan-frame">
+      <div class="scan-corners-tr"></div>
+      <div class="scan-corners-bl"></div>
+      <div class="scan-line"></div>
+    </div>
+  </div>
+</div>
+<div class="scan-hint" id="scan-hint">📷 Apuntá la cámara al código de barras</div>
+
+<!-- INPUT MANUAL -->
+<div class="manual-wrap">
+  <div class="manual-row">
+    <input class="manual-input" id="manual-cod" placeholder="O ingresá el código manualmente..." type="number" inputmode="numeric">
+    <button class="manual-btn" onclick="buscarCodigo($('manual-cod').value)">Buscar</button>
+  </div>
+</div>
+
+<!-- RESULTADO PRODUCTO ENCONTRADO -->
+<div id="result-found" style="display:none">
+  <div class="result-card">
+    <div class="rc-header">
+      <div class="rc-emoji" id="rc-emoji">📦</div>
+      <div class="rc-info">
+        <div class="rc-nombre" id="rc-nombre">—</div>
+        <div class="rc-cat" id="rc-cat">—</div>
+        <div class="rc-cod" id="rc-cod">—</div>
+      </div>
+      <div class="rc-stock-actual">
+        <div class="rsa-label">Stock actual</div>
+        <div class="rsa-val" id="rc-stock-actual">0</div>
+        <div class="rsa-unit" id="rc-unit">u</div>
+      </div>
+    </div>
+    <div class="rc-body">
+      <div class="rc-mode-label" id="rc-mode-label">Cantidad a ingresar</div>
+      <div class="qty-control">
+        <button class="qty-btn" onclick="cambiarQty(-1)">−</button>
+        <input class="qty-input" id="qty-input" type="number" inputmode="decimal" value="1" min="0.1" step="0.1" onchange="actualizarPreview()">
+        <div class="qty-unit" id="qty-unit-label">kg</div>
+        <button class="qty-btn" onclick="cambiarQty(1)">+</button>
+      </div>
+      <div class="rc-preview" id="rc-preview">
+        <div>
+          <div class="rcp-label">Stock actual</div>
+          <div class="rcp-val" id="prev-actual">0</div>
+        </div>
+        <div class="rcp-arrow" id="prev-arrow">→</div>
+        <div>
+          <div class="rcp-label" id="prev-label">Stock nuevo</div>
+          <div class="rcp-val" id="prev-nuevo" style="color:var(--gr)">0</div>
+        </div>
+      </div>
+      <div class="rc-btns">
+        <button class="btn-cancel" onclick="cancelarScan()">Cancelar</button>
+        <button class="btn-confirm" onclick="confirmarCambio()">✅ Confirmar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRODUCTO NO ENCONTRADO -->
+<div id="result-notfound" style="display:none">
+  <div class="notfound-card">
+    <div class="nf-title">❓ Producto no encontrado</div>
+    <div class="nf-cod" id="nf-cod">Código: —</div>
+    <div class="form-group">
+      <label>Nombre del producto</label>
+      <input class="form-input" id="nf-nombre" placeholder="Ej: Arroz Largo Fino 1kg">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Categoría</label>
+        <select class="form-input" id="nf-cat">
+          <option>Almacén</option><option>Carnicería</option><option>Carne al Vacío</option>
+          <option>Fiambres</option><option>Lácteos</option><option>Panadería</option>
+          <option>Bebidas</option><option>Limpieza</option><option>Empanadas</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Unidad</label>
+        <select class="form-input" id="nf-unit">
+          <option value="u">Unidades (u)</option>
+          <option value="kg">Kilogramos (kg)</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Precio venta ($)</label>
+        <input class="form-input" id="nf-pventa" type="number" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Stock inicial</label>
+        <input class="form-input" id="nf-stock" type="number" placeholder="0">
+      </div>
+    </div>
+    <button class="btn-add-new" onclick="agregarNuevo()">+ Agregar producto al sistema</button>
+    <button style="width:100%;background:none;border:none;padding:10px;font-family:'Nunito';font-size:12px;color:var(--g3);cursor:pointer;margin-top:4px" onclick="cancelarScan()">Cancelar</button>
+  </div>
+</div>
+
+<!-- HISTORIAL DE SESIÓN -->
+<div class="hist-session" id="hist-section" style="display:none">
+  <div class="hs-title">
+    <span id="hist-title">Esta sesión</span>
+    <button class="hs-clear" onclick="limpiarHistorial()">Limpiar</button>
+  </div>
+  <div id="hist-items"></div>
+  <button class="resumen-btn" onclick="guardarSesion()">
+    💾 Guardar todo en Supabase (<span id="hist-count">0</span> productos)
+  </button>
+</div>
+
+<div style="height:24px"></div>
+
+<div class="success-flash" id="success-flash"></div>
+<div class="toast" id="toast"><span id="toast-msg"></span></div>
+
+<script>
+// ══ SUPABASE ══
+const SB_URL = 'https://tlsyakbhceolczjzadpc.supabase.co';
+const SB_KEY = 'sb_publishable_pdCPXmVa47gh3rSURJsgaQ_axezH12Z';
+const { createClient } = supabase;
+const db = createClient(SB_URL, SB_KEY);
+
+// ══ STATE ══
+let modo = 'suma'; // 'suma' | 'inventario'
+let productos = [];
+let productoActual = null;
+let codigoActual = null;
+let historial = []; // cambios de esta sesión
+let scanner = null;
+let scannerActivo = false;
+
+const CAT_EMOJI = {
+  'Carnicería':'🥩','Carne al Vacío':'🥩','Fiambres':'🧀','Lácteos':'🥛',
+  'Panadería':'🍞','Bebidas':'🥤','Almacén':'🌾','Limpieza':'🧹',
+  'Empanadas':'🫓','Kiosco':'🍬'
+};
+
+const $ = id => document.getElementById(id);
+function toast(msg, dur=2500) {
+  $('toast-msg').textContent = msg;
+  $('toast').classList.add('show');
+  setTimeout(() => $('toast').classList.remove('show'), dur);
+}
+function flash() {
+  $('success-flash').classList.add('show');
+  setTimeout(() => $('success-flash').classList.remove('show'), 300);
+}
+
+// ══ CARGAR PRODUCTOS ══
+async function cargarProductos() {
+  try {
+    const { data } = await db.from('productos').select('*').eq('activo', true);
+    productos = data || [];
+    toast(`✅ ${productos.length} productos cargados`);
+  } catch(e) {
+    toast('⚠️ Sin conexión — modo local');
+    productos = [];
+  }
+}
+
+// ══ MODO ══
+function setModo(m) {
+  modo = m;
+  $('btn-modo-suma').classList.toggle('active', m === 'suma');
+  $('btn-modo-inv').classList.toggle('active', m === 'inventario');
+  if (productoActual) actualizarPreview();
+}
+
+// ══ SCANNER ══
+async function iniciarScanner() {
+  try {
+    scanner = new Html5Qrcode('scanner-container');
+    await scanner.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.5 },
+      onScanSuccess,
+      () => {} // ignore errors silently
+    );
+    scannerActivo = true;
+    $('scan-hint').textContent = '📷 Apuntá la cámara al código de barras';
+  } catch(e) {
+    $('scanner-wrap').style.display = 'none';
+    $('scan-hint').textContent = '⚠️ Cámara no disponible — usá el campo manual';
+    console.warn('Scanner error:', e);
+  }
+}
+
+function detenerScanner() {
+  if (scanner && scannerActivo) {
+    scanner.stop().catch(() => {});
+    scannerActivo = false;
+  }
+}
+
+function onScanSuccess(codigo) {
+  // Vibrar si está disponible
+  if (navigator.vibrate) navigator.vibrate(100);
+  detenerScanner();
+  $('scan-hint').textContent = '✅ Código leído: ' + codigo;
+  buscarCodigo(codigo);
+}
+
+// ══ BUSCAR PRODUCTO ══
+function buscarCodigo(codigo) {
+  codigo = String(codigo).trim();
+  if (!codigo) return;
+  codigoActual = codigo;
+
+  // Buscar en productos por código
+  const prod = productos.find(p =>
+    String(p.cod).trim() === codigo ||
+    String(p.id) === codigo
+  );
+
+  $('result-found').style.display   = 'none';
+  $('result-notfound').style.display = 'none';
+
+  if (prod) {
+    mostrarProducto(prod);
+  } else {
+    mostrarNoEncontrado(codigo);
+  }
+}
+
+function mostrarProducto(prod) {
+  productoActual = prod;
+  const emoji = CAT_EMOJI[prod.cat] || '📦';
+
+  $('rc-emoji').textContent         = emoji;
+  $('rc-nombre').textContent        = prod.nombre;
+  $('rc-cat').textContent           = prod.cat + ' · por ' + prod.unit;
+  $('rc-cod').textContent           = 'Cód: ' + prod.cod;
+  $('rc-stock-actual').textContent  = prod.stock;
+  $('rc-unit').textContent          = prod.unit;
+  $('qty-unit-label').textContent   = prod.unit;
+  $('qty-input').value              = prod.unit === 'kg' ? '1.0' : '1';
+  $('qty-input').step               = prod.unit === 'kg' ? '0.5' : '1';
+
+  actualizarPreview();
+  $('result-found').style.display = 'block';
+  $('result-found').scrollIntoView({ behavior: 'smooth' });
+}
+
+function actualizarPreview() {
+  if (!productoActual) return;
+  const qty     = parseFloat($('qty-input').value) || 0;
+  const actual  = parseFloat(productoActual.stock) || 0;
+  const nuevo   = modo === 'suma' ? actual + qty : qty;
+  const unit    = productoActual.unit;
+
+  $('rc-mode-label').textContent = modo === 'suma' ? 'Cantidad a ingresar' : 'Stock real en góndola';
+  $('prev-actual').textContent   = actual + ' ' + unit;
+  $('prev-nuevo').textContent    = nuevo.toFixed(unit==='kg'?1:0) + ' ' + unit;
+  $('prev-label').textContent    = modo === 'suma' ? 'Nuevo total' : 'Reemplazar por';
+  $('prev-arrow').textContent    = modo === 'suma' ? '+' : '=';
+  $('prev-nuevo').style.color    = modo === 'suma' ? 'var(--gr)' : 'var(--bl)';
+}
+
+function cambiarQty(delta) {
+  const step = productoActual?.unit === 'kg' ? 0.5 : 1;
+  const actual = parseFloat($('qty-input').value) || 0;
+  const nuevo  = Math.max(0, actual + delta * step);
+  $('qty-input').value = productoActual?.unit === 'kg' ? nuevo.toFixed(1) : nuevo;
+  actualizarPreview();
+}
+
+async function confirmarCambio() {
+  if (!productoActual) return;
+  const qty    = parseFloat($('qty-input').value) || 0;
+  const actual = parseFloat(productoActual.stock) || 0;
+  const nuevo  = modo === 'suma' ? actual + qty : qty;
+
+  // Guardar en historial local
+  historial.push({
+    id:      productoActual.id,
+    nombre:  productoActual.nombre,
+    cat:     productoActual.cat,
+    unit:    productoActual.unit,
+    stockAntes: actual,
+    stockNuevo: nuevo,
+    cambio:  modo === 'suma' ? '+' + qty : '=' + qty,
+    modo,
+    ts: new Date().toISOString(),
+  });
+
+  // Actualizar local
+  productoActual.stock = nuevo;
+  const idx = productos.findIndex(p => p.id === productoActual.id);
+  if (idx >= 0) productos[idx].stock = nuevo;
+
+  flash();
+  toast(`✅ ${productoActual.nombre}: ${actual} → ${nuevo} ${productoActual.unit}`);
+
+  // Reset para siguiente escaneo
+  cancelarScan();
+  renderHistorial();
+}
+
+function cancelarScan() {
+  productoActual = null;
+  codigoActual   = null;
+  $('result-found').style.display    = 'none';
+  $('result-notfound').style.display = 'none';
+  $('manual-cod').value = '';
+  $('scan-hint').textContent = '📷 Apuntá la cámara al siguiente código';
+
+  // Reiniciar scanner
+  if (!scannerActivo) iniciarScanner();
+}
+
+// ══ NO ENCONTRADO ══
+function mostrarNoEncontrado(codigo) {
+  $('nf-cod').textContent = 'Código: ' + codigo;
+  $('nf-nombre').value = '';
+  $('nf-pventa').value = '';
+  $('nf-stock').value  = '';
+  $('result-notfound').style.display = 'block';
+  $('result-notfound').scrollIntoView({ behavior: 'smooth' });
+  $('nf-nombre').focus();
+}
+
+async function agregarNuevo() {
+  const nombre = $('nf-nombre').value.trim();
+  if (!nombre) { toast('⚠️ Escribí el nombre del producto'); return; }
+
+  const nuevo = {
+    cod:          codigoActual,
+    nombre,
+    cat:          $('nf-cat').value,
+    unit:         $('nf-unit').value,
+    precio_venta: parseFloat($('nf-pventa').value) || 0,
+    precio_costo: 0,
+    stock:        parseFloat($('nf-stock').value) || 0,
+    minimo:       3,
+    activo:       true,
+  };
+
+  try {
+    const { data, error } = await db.from('productos').insert(nuevo).select().single();
+    if (error) throw error;
+    productos.push(data);
+    toast(`✅ ${nombre} agregado al sistema`);
+    $('result-notfound').style.display = 'none';
+    mostrarProducto(data);
+  } catch(e) {
+    toast('⚠️ Error al guardar — verificá la conexión');
+  }
+}
+
+// ══ HISTORIAL DE SESIÓN ══
+function renderHistorial() {
+  if (!historial.length) {
+    $('hist-section').style.display = 'none';
+    return;
+  }
+  $('hist-section').style.display = 'block';
+  $('hist-count').textContent = historial.length;
+  $('hist-title').textContent = `Esta sesión · ${modo === 'suma' ? 'Ingreso' : 'Inventario'}`;
+
+  $('hist-items').innerHTML = [...historial].reverse().map(h => `
+    <div class="hs-item">
+      <div class="hi-emoji">${CAT_EMOJI[h.cat]||'📦'}</div>
+      <div class="hi-info">
+        <div class="hi-name">${h.nombre}</div>
+        <div class="hi-detail">${h.stockAntes} → ${h.stockNuevo} ${h.unit}</div>
+      </div>
+      <div class="hi-change ${h.modo==='suma'?'hi-plus':'hi-set'}">${h.cambio} ${h.unit}</div>
+    </div>`).join('');
+}
+
+async function guardarSesion() {
+  if (!historial.length) return;
+  toast('🔄 Guardando en Supabase...');
+  let ok = 0;
+  for (const h of historial) {
+    try {
+      await db.from('productos').update({
+        stock:      h.stockNuevo,
+        updated_at: h.ts
+      }).eq('id', h.id);
+      ok++;
+    } catch(e) { console.warn(e) }
+  }
+  toast(`✅ ${ok} productos actualizados en Supabase`, 3000);
+  historial = [];
+  renderHistorial();
+}
+
+function limpiarHistorial() {
+  if (!confirm('¿Descartás los cambios de esta sesión?')) return;
+  historial = [];
+  renderHistorial();
+  toast('🗑️ Sesión limpiada');
+}
+
+// ══ INIT ══
+cargarProductos().then(() => iniciarScanner());
+</script>
+</body>
+</html>
