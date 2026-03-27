@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Al Paso — Gestión de Proveedores y Stock</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{--r:#E31E24;--rd:#B71518;--rp:#FFF0F0;--n:#1A1A1A;--g:#F5F5F5;--g2:#E8E8E8;--g3:#888;--w:#fff;--gr:#27AE60;--am:#F39C12;--bl:#2563EB;--blp:#EFF6FF;--pur:#7C3AED;--purp:#F5F3FF}
@@ -552,37 +553,61 @@ function openAddProduct() {
 function openEditProduct(id) {
   editingId = id;
   const p = productos.find(x => x.id === id);
+  if (!p) return;
   $('modal-title').textContent = 'Editar producto';
-  $('f-cod').value = p.cod;
-  $('f-nombre').value = p.nombre;
-  $('f-cat').value = p.cat;
-  $('f-prov').value = p.prov;
-  $('f-pventa').value = p.precioVenta;
-  $('f-pcosto').value = p.precioCosto;
-  $('f-stock').value = p.stock;
-  $('f-min').value = p.minimo;
-  $('f-unit').value = p.unit;
+  $('f-cod').value    = p.cod || '';
+  $('f-nombre').value = p.nombre || '';
+  $('f-cat').value    = p.cat || '';
+  $('f-prov').value   = p.prov || '';
+  $('f-pventa').value = p.precioVenta || p.precio_venta || 0;
+  $('f-pcosto').value = p.precioCosto || p.precio_costo || 0;
+  $('f-stock').value  = p.stock || 0;
+  $('f-min').value    = p.minimo || 0;
+  $('f-unit').value   = p.unit || 'u';
   $('modal-product').classList.add('show');
 }
 
-function saveProduct() {
+async function saveProduct() {
+  const nombre = $('f-nombre').value.trim();
+  if (!nombre) { toast('⚠️ Completá el nombre del producto'); return; }
+
+  // Campos con nombres correctos para Supabase
   const data = {
-    cod: $('f-cod').value, nombre: $('f-nombre').value, cat: $('f-cat').value,
-    prov: $('f-prov').value, precioVenta: +$('f-pventa').value, precioCosto: +$('f-pcosto').value,
-    stock: +$('f-stock').value, minimo: +$('f-min').value, unit: $('f-unit').value
+    cod:          $('f-cod').value.trim() || null,
+    nombre:       nombre,
+    cat:          $('f-cat').value,
+    prov:         $('f-prov').value || null,
+    precio_venta: parseFloat($('f-pventa').value) || 0,
+    precio_costo: parseFloat($('f-pcosto').value) || 0,
+    stock:        parseFloat($('f-stock').value) || 0,
+    minimo:       parseFloat($('f-min').value) || 0,
+    unit:         $('f-unit').value || 'u',
+    activo:       true,
+    updated_at:   new Date().toISOString(),
   };
-  if (!data.nombre) { toast('⚠️ Completá el nombre'); return; }
-  if (editingId !== null) {
-    const idx = productos.findIndex(p => p.id === editingId);
-    productos[idx] = { ...productos[idx], ...data };
-    toast(`✅ ${data.nombre} actualizado`);
-  } else {
-    data.id = Date.now();
-    productos.push(data);
-    toast(`✅ ${data.nombre} agregado`);
+
+  try {
+    if (editingId !== null) {
+      // EDITAR — actualizar en Supabase
+      const { error } = await db.from('productos').update(data).eq('id', editingId);
+      if (error) throw error;
+      // Actualizar en memoria local también
+      const idx = productos.findIndex(p => p.id === editingId);
+      if (idx >= 0) productos[idx] = { ...productos[idx], ...data, id: editingId };
+      toast(`✅ ${nombre} actualizado`);
+    } else {
+      // NUEVO — insertar en Supabase
+      const { data: inserted, error } = await db.from('productos').insert(data).select().single();
+      if (error) throw error;
+      productos.push(inserted);
+      toast(`✅ ${nombre} agregado al sistema`);
+    }
+    closeModal();
+    renderStock();
+  } catch(e) {
+    console.error('Error guardando producto:', e);
+    toast('⚠️ Error al guardar: ' + (e.message || 'verificá la conexión'));
   }
-  closeModal();
-  renderStock();
 }
 
 function closeModal() { $('modal-product').classList.remove('show'); }
@@ -1232,8 +1257,54 @@ function abrirScanner(modo) {
   window.open(url, '_blank');
 }
 
+// ── SUPABASE ──────────────────────────────────────────────────────────────────
+const SB_URL = 'https://tlsyakbhceolczjzadpc.supabase.co';
+const SB_KEY = 'sb_publishable_pdCPXmVa47gh3rSURJsgaQ_axezH12Z';
+const { createClient } = window.supabase || {};
+let db = null;
+try { db = createClient(SB_URL, SB_KEY); } catch(e) { console.warn('Supabase not loaded'); }
+
+// Normaliza campos de Supabase (precio_venta) al formato interno (precioVenta)
+function normalizarProducto(p) {
+  return {
+    id:          p.id,
+    cod:         p.cod || '',
+    nombre:      p.nombre || '',
+    cat:         p.cat || '',
+    prov:        p.prov || '',
+    stock:       parseFloat(p.stock) || 0,
+    minimo:      parseFloat(p.minimo) || 0,
+    precioVenta: parseFloat(p.precio_venta) || 0,
+    precioCosto: parseFloat(p.precio_costo) || 0,
+    unit:        p.unit || 'u',
+    activo:      p.activo !== false,
+  };
+}
+
 // ── INIT ──────────────────────────────────────────────────────────────────────
-initGoogleSheets();
+async function init() {
+  showSyncBanner('🔄 Conectando con Supabase...');
+  try {
+    if (!db) throw new Error('Supabase no disponible');
+    const { data, error } = await db.from('productos').select('*').eq('activo', true).order('cat').order('nombre');
+    if (error) throw error;
+    if (data && data.length > 0) {
+      productos = data.map(normalizarProducto);
+      showSyncBanner('✅ ' + productos.length + ' productos cargados desde Supabase', 'green');
+    } else {
+      // Supabase vacío — usar datos locales
+      showSyncBanner('⚠️ Supabase vacío — usando datos locales. Ejecutá el SQL de setup.', 'amber');
+      productos = JSON.parse(JSON.stringify(PRODUCTOS_STOCK));
+    }
+  } catch(e) {
+    console.warn('Error Supabase:', e);
+    showSyncBanner('⚠️ Sin conexión — modo local', 'amber');
+    productos = JSON.parse(JSON.stringify(PRODUCTOS_STOCK));
+  }
+  renderStock();
+}
+
+init();
 </script>
 </body>
 </html>
