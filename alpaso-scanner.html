@@ -6,7 +6,6 @@
 <title>Al Paso — Lector de Stock</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
 <style>
 :root{
   --do:#C9A84C;--do2:#E8C96A;--do3:#A07830;
@@ -278,7 +277,6 @@ let productoActual = null;
 let codigoActual = null;
 let historial = []; // cambios de esta sesión
 let scanner = null;
-let scannerActivo = false;
 
 const CAT_EMOJI = {
   'Carnicería':'🥩','Carne al Vacío':'🥩','Fiambres':'🧀','Lácteos':'🥛',
@@ -317,137 +315,94 @@ function setModo(m) {
   if (productoActual) actualizarPreview();
 }
 
-// ══ SCANNER CON ZXING (EAN-13, CODE-128, QR) ══════════════════════════════
-let codeReader = null;
+// ══ SCANNER NATIVO — sin librerías externas ═══════════════════════════════
 let scannerActivo = false;
-let selectedDeviceId = null;
+let videoStream = null;
+let scanLoop = null;
+let barcodeDetector = null;
 
 async function iniciarScanner() {
   try {
-    // Usar BarcodeDetector nativo si está disponible (Chrome Android - más rápido)
+    // 1. Obtener stream de la cámara trasera
+    videoStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: 'environment' },
+        width:  { ideal: 1280 },
+        height: { ideal: 720 },
+      }
+    });
+
+    // 2. Crear elemento video y mostrarlo
+    const container = $('scanner-container');
+    container.innerHTML = '';
+    const video = document.createElement('video');
+    video.id = 'scan-video';
+    video.srcObject = videoStream;
+    video.autoplay = true;
+    video.playsInline = true;
+    video.muted = true;
+    video.style.cssText = 'width:100%;max-height:260px;object-fit:cover;display:block;border-radius:16px';
+    container.appendChild(video);
+
+    await new Promise(resolve => { video.onloadedmetadata = resolve; });
+    await video.play();
+    scannerActivo = true;
+    $('scan-hint').textContent = '📷 Apuntá al código de barras del producto';
+
+    // 3. Iniciar detección
     if ('BarcodeDetector' in window) {
-      await iniciarScannerNativo();
+      // Chrome Android — detección nativa, la más rápida
+      barcodeDetector = new BarcodeDetector({
+        formats: ['ean_13','ean_8','code_128','code_39','upc_a','upc_e','itf','qr_code']
+      });
+      detectarNativo(video);
+    } else {
+      // Safari iOS y otros — usar canvas + input manual
+      $('scan-hint').innerHTML = '📷 Cámara activa<br><small style="color:#888">Tu navegador no soporta detección automática — ingresá el código manualmente</small>';
+    }
+
+  } catch(e) {
+    console.warn('Scanner error:', e.name, e.message);
+    if (e.name === 'NotAllowedError') {
+      $('scan-hint').textContent = '⚠️ Permiso de cámara denegado — usá el campo manual';
+    } else if (e.name === 'NotFoundError') {
+      $('scan-hint').textContent = '⚠️ No se encontró cámara — usá el campo manual';
+    } else {
+      $('scan-hint').textContent = '⚠️ Error de cámara — usá el campo manual';
+    }
+    $('scanner-wrap').style.display = 'none';
+  }
+}
+
+async function detectarNativo(video) {
+  if (!scannerActivo || !barcodeDetector) return;
+  try {
+    const codes = await barcodeDetector.detect(video);
+    if (codes && codes.length > 0) {
+      const codigo = codes[0].rawValue;
+      if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
+      detenerScanner();
+      onScanSuccess(codigo);
       return;
     }
-    // Fallback: ZXing
-    await iniciarScannerZXing();
-  } catch(e) {
-    console.warn('Scanner error:', e);
-    $('scanner-wrap').style.display = 'none';
-    $('scan-hint').textContent = '⚠️ Cámara no disponible — usá el campo manual';
-  }
-}
-
-// OPCIÓN A: BarcodeDetector nativo (Chrome en Android — muy rápido)
-async function iniciarScannerNativo() {
-  const detector = new BarcodeDetector({
-    formats: ['ean_13','ean_8','code_128','code_39','upc_a','upc_e','qr_code']
-  });
-
-  const stream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: 'environment', width: {ideal:1280}, height: {ideal:720} }
-  });
-
-  const video = document.createElement('video');
-  video.srcObject = stream;
-  video.autoplay = true;
-  video.playsInline = true;
-  video.style.cssText = 'width:100%;border-radius:16px';
-  $('scanner-container').innerHTML = '';
-  $('scanner-container').appendChild(video);
-  scannerActivo = true;
-
-  $('scan-hint').textContent = '📷 Apuntá al código de barras';
-
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-
-  async function detectLoop() {
-    if (!scannerActivo) return;
-    if (video.readyState === video.HAVE_ENOUGH_DATA) {
-      canvas.width  = video.videoWidth;
-      canvas.height = video.videoHeight;
-      ctx.drawImage(video, 0, 0);
-      try {
-        const codes = await detector.detect(canvas);
-        if (codes.length > 0) {
-          const codigo = codes[0].rawValue;
-          stream.getTracks().forEach(t => t.stop());
-          scannerActivo = false;
-          onScanSuccess(codigo);
-          return;
-        }
-      } catch(e) {}
-    }
-    requestAnimationFrame(detectLoop);
-  }
-  video.addEventListener('play', detectLoop);
-}
-
-// OPCIÓN B: ZXing (fallback para Safari iOS y otros)
-async function iniciarScannerZXing() {
-  const hints = new Map();
-  const formats = [
-    ZXing.BarcodeFormat.EAN_13,
-    ZXing.BarcodeFormat.EAN_8,
-    ZXing.BarcodeFormat.CODE_128,
-    ZXing.BarcodeFormat.CODE_39,
-    ZXing.BarcodeFormat.UPC_A,
-    ZXing.BarcodeFormat.UPC_E,
-    ZXing.BarcodeFormat.QR_CODE,
-  ];
-  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
-  hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
-
-  codeReader = new ZXing.BrowserMultiFormatReader(hints, {
-    delayBetweenScanAttempts: 150,
-    delayBetweenScanSuccess: 500,
-  });
-
-  const devices = await ZXing.BrowserCodeReader.listVideoInputDevices();
-  // Preferir cámara trasera
-  const backCam = devices.find(d =>
-    d.label.toLowerCase().includes('back') ||
-    d.label.toLowerCase().includes('rear') ||
-    d.label.toLowerCase().includes('trasera') ||
-    d.label.toLowerCase().includes('environment')
-  );
-  selectedDeviceId = backCam ? backCam.deviceId : (devices[devices.length - 1]?.deviceId);
-
-  $('scanner-container').innerHTML = '<video id="zxing-video" style="width:100%;border-radius:16px" autoplay playsinline muted></video>';
-
-  await codeReader.decodeFromVideoDevice(
-    selectedDeviceId,
-    'zxing-video',
-    (result, err) => {
-      if (result) {
-        detenerScanner();
-        onScanSuccess(result.getText());
-      }
-      // Ignorar errores de frame sin código
-    }
-  );
-  scannerActivo = true;
-  $('scan-hint').textContent = '📷 Apuntá al código de barras — mantené firme';
+  } catch(e) { /* frame sin código, continuar */ }
+  scanLoop = requestAnimationFrame(() => detectarNativo(video));
 }
 
 function detenerScanner() {
   scannerActivo = false;
-  if (codeReader) {
-    codeReader.reset();
-    codeReader = null;
+  if (scanLoop) { cancelAnimationFrame(scanLoop); scanLoop = null; }
+  if (videoStream) {
+    videoStream.getTracks().forEach(t => t.stop());
+    videoStream = null;
   }
-  // Detener stream nativo si existe
-  const video = $('scanner-container')?.querySelector('video');
-  if (video?.srcObject) {
-    video.srcObject.getTracks().forEach(t => t.stop());
-  }
+  const v = document.getElementById('scan-video');
+  if (v) v.srcObject = null;
 }
 
 function onScanSuccess(codigo) {
-  if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-  $('scan-hint').textContent = '✅ Código leído: ' + codigo;
-  buscarCodigo(codigo);
+  $('scan-hint').textContent = '✅ Leído: ' + codigo;
+  buscarCodigo(String(codigo).trim());
 }
 
 // ══ BUSCAR PRODUCTO ══
