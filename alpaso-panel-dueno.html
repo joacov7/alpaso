@@ -200,10 +200,12 @@ select.form-input{cursor:pointer}
     <!-- ══ DASHBOARD ══ -->
     <div class="screen active" id="s-dashboard">
       <div class="kpi-grid">
-        <div class="kpi gold"><div class="kpi-icon">💰</div><div class="kpi-label">Ventas hoy</div><div class="kpi-value">$48.200</div><div class="kpi-sub">↑ 12% vs ayer</div></div>
-        <div class="kpi green"><div class="kpi-icon">🛒</div><div class="kpi-label">Pedidos hoy</div><div class="kpi-value">14</div><div class="kpi-sub">8 delivery · 6 retiro</div></div>
-        <div class="kpi blue"><div class="kpi-icon">💳</div><div class="kpi-label">Clientes activos</div><div class="kpi-value">312</div><div class="kpi-sub">+3 nuevos hoy</div></div>
-        <div class="kpi red"><div class="kpi-icon">⚠️</div><div class="kpi-label">Stock crítico</div><div class="kpi-value">4</div><div class="kpi-sub">productos bajo mínimo</div></div>
+        <div class="kpi gold"><div class="kpi-icon">💰</div><div class="kpi-label">Ventas hoy</div><div class="kpi-value"><span id="kpi-ventas">—</span></div><div class="kpi-sub"><span id="kpi-ventas-sub">cargando...</span></div></div>
+        <div class="kpi green"><div class="kpi-icon">🛒</div><div class="kpi-label">Pedidos hoy</div><div class="kpi-value" id="kpi-pedidos">—</div><div class="kpi-sub"><span id="kpi-pedidos-sub">cargando...</span></div></div>
+        <div class="kpi blue"><div class="kpi-icon">💳</div><div class="kpi-label">Clientes activos</div><div class="kpi-value" id="kpi-clientes">—</div>
+        <div class="kpi-sub" id="kpi-clientes-sub">cargando...</div></div>
+        <div class="kpi red"><div class="kpi-icon">⚠️</div><div class="kpi-label">Stock crítico</div><div class="kpi-value" id="kpi-stock">—</div>
+        <div class="kpi-sub" id="kpi-stock-sub">cargando...</div></div>
       </div>
 
       <div class="two-col">
@@ -212,7 +214,7 @@ select.form-input{cursor:pointer}
           <div class="table-box">
             <table>
               <thead><tr><th>Pedido</th><th>Cliente</th><th>Total</th><th>Estado</th><th>Tipo</th></tr></thead>
-              <tbody>
+              <tbody id="tbody-pedidos">
                 <tr><td style="font-weight:800;color:var(--do)">#AP-2847</td><td>Martín G.</td><td style="font-weight:700">$28.500</td><td><span class="pill pill-am">⏳ Prep.</span></td><td><span class="pill pill-blue">🛵 Delivery</span></td></tr>
                 <tr><td style="font-weight:800;color:var(--do)">#AP-2846</td><td>Laura P.</td><td style="font-weight:700">$7.500</td><td><span class="pill pill-green">✅ Listo</span></td><td><span class="pill pill-gold">🏪 Retiro</span></td></tr>
                 <tr><td style="font-weight:800;color:var(--do)">#AP-2845</td><td>Carlos M.</td><td style="font-weight:700">$59.900</td><td><span class="pill pill-green">✅ Entregado</span></td><td><span class="pill pill-blue">🛵 Delivery</span></td></tr>
@@ -226,7 +228,7 @@ select.form-input{cursor:pointer}
           <div class="table-box">
             <table>
               <thead><tr><th>Producto</th><th>Unidades</th><th>Ingreso</th></tr></thead>
-              <tbody>
+              <tbody id="tbody-top">
                 <tr><td>🫓 Empanadas Carne x6</td><td style="color:var(--do);font-weight:700">12 cajas</td><td style="font-weight:700">$69.600</td></tr>
                 <tr><td>🥩 Combo Viernes</td><td style="color:var(--do);font-weight:700">5</td><td style="font-weight:700">$142.500</td></tr>
                 <tr><td>🥩 Costeleta al Vacío</td><td style="color:var(--do);font-weight:700">8 kg</td><td style="font-weight:700">$148.000</td></tr>
@@ -236,7 +238,7 @@ select.form-input{cursor:pointer}
           </div>
           <div class="sec-title" style="margin-top:18px">◆ Clientes sin comprar hace +14 días</div>
           <div class="table-box">
-            <div style="padding:14px 16px;display:flex;flex-direction:column;gap:0">
+            <div id="lista-inactivos" style="padding:14px 16px;display:flex;flex-direction:column;gap:0">
               <div class="client-row"><div class="client-avatar">👤</div><div class="client-info"><h4>Roberto S.</h4><p>Último pedido: hace 18 días · $45.000</p></div><button class="btn btn-gold" onclick="toast('Enviando promo a Roberto...')" style="font-size:10px;padding:5px 9px">Enviar promo</button></div>
               <div class="client-row"><div class="client-avatar">👤</div><div class="client-info"><h4>Sandra V.</h4><p>Último pedido: hace 21 días · $28.000</p></div><button class="btn btn-gold" onclick="toast('Enviando promo a Sandra...')" style="font-size:10px;padding:5px 9px">Enviar promo</button></div>
               <div class="client-row"><div class="client-avatar">👤</div><div class="client-info"><h4>Diego M.</h4><p>Último pedido: hace 16 días · $67.000</p></div><button class="btn btn-gold" onclick="toast('Enviando promo a Diego...')" style="font-size:10px;padding:5px 9px">Enviar promo</button></div>
@@ -249,14 +251,15 @@ select.form-input{cursor:pointer}
     <!-- ══ PEDIDOS EN VIVO ══ -->
     <div class="screen" id="s-pedidos">
       <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
-        <div class="kpi red"><div class="kpi-icon">🔴</div><div class="kpi-label">Nuevos</div><div class="kpi-value">2</div><div class="kpi-sub">Esperando preparación</div></div>
-        <div class="kpi gold"><div class="kpi-icon">🟡</div><div class="kpi-label">En preparación</div><div class="kpi-value">3</div><div class="kpi-sub">Cocina + carnicero</div></div>
-        <div class="kpi green"><div class="kpi-icon">🟢</div><div class="kpi-label">Listos</div><div class="kpi-value">1</div><div class="kpi-sub">Esperando retiro/delivery</div></div>
+        <div class="kpi red"><div class="kpi-icon">🔴</div><div class="kpi-label">Nuevos</div><div class="kpi-value" id="kpi-nuevos">—</div><div class="kpi-sub">Esperando preparación</div></div>
+        <div class="kpi gold"><div class="kpi-icon">🟡</div><div class="kpi-label">En preparación</div><div class="kpi-value" id="kpi-preparando">—</div><div class="kpi-sub">Cocina + carnicero</div></div>
+        <div class="kpi green"><div class="kpi-icon">🟢</div><div class="kpi-label">Listos</div><div class="kpi-value" id="kpi-listos">—</div><div class="kpi-sub">Esperando retiro/delivery</div></div>
       </div>
 
       <div class="two-col">
         <div>
           <div class="sec-title">◆ Pedidos activos</div>
+          <div id="lista-pedidos">
           <div class="pedido-card nuevo">
             <div class="pd-top">
               <div><div class="pd-num">🔴 #AP-2848 — NUEVO</div><div class="pd-time">Hace 2 min · 🛵 Delivery · 30-45 min</div></div>
@@ -385,9 +388,9 @@ select.form-input{cursor:pointer}
     <!-- ══ CLIENTES ══ -->
     <div class="screen" id="s-clientes">
       <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
-        <div class="kpi gold"><div class="kpi-icon">👥</div><div class="kpi-label">Total clientes</div><div class="kpi-value">312</div><div class="kpi-sub">Con tarjeta fidelidad</div></div>
-        <div class="kpi green"><div class="kpi-icon">🥇</div><div class="kpi-label">Clientes Gold</div><div class="kpi-value">48</div><div class="kpi-sub">500+ puntos</div></div>
-        <div class="kpi red"><div class="kpi-icon">😴</div><div class="kpi-label">Inactivos</div><div class="kpi-value">23</div><div class="kpi-sub">Sin comprar +14 días</div></div>
+        <div class="kpi gold"><div class="kpi-icon">👥</div><div class="kpi-label">Total clientes</div><div class="kpi-value" id="kpi-total-cli">—</div><div class="kpi-sub">Con tarjeta fidelidad</div></div>
+        <div class="kpi green"><div class="kpi-icon">🥇</div><div class="kpi-label">Clientes Gold</div><div class="kpi-value" id="kpi-gold-cli">—</div><div class="kpi-sub">500+ puntos</div></div>
+        <div class="kpi red"><div class="kpi-icon">😴</div><div class="kpi-label">Inactivos</div><div class="kpi-value" id="kpi-inact-cli">—</div><div class="kpi-sub">Sin comprar +14 días</div></div>
       </div>
 
       <div class="table-box">
@@ -460,9 +463,9 @@ select.form-input{cursor:pointer}
               <div class="fs-title">📊 PROGRESO DE MIGRACIÓN</div>
               <div style="margin-bottom:8px">
                 <div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,.4);margin-bottom:4px"><span>Clientes migrados</span><span>47 / 200</span></div>
-                <div style="height:6px;background:rgba(255,255,255,.08);border-radius:3px"><div style="height:100%;width:23.5%;background:linear-gradient(90deg,var(--do),var(--do2));border-radius:3px"></div></div>
+                <div style="height:6px;background:rgba(255,255,255,.08);border-radius:3px"><div style="height:100%;id="prog-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--do),var(--do2));border-radius:3px"></div></div>
               </div>
-              <div style="font-size:10px;color:rgba(255,255,255,.25)">23.5% completado · Faltan 153 clientes</div>
+              <div style="font-size:10px;color:rgba(255,255,255,.25)"></div>
             </div>
           </div>
         </div>
@@ -485,7 +488,7 @@ select.form-input{cursor:pointer}
             <label class="toggle"><input type="checkbox" checked onchange="toggleRol('cocina',this)"><div class="toggle-slider"></div></label>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Número WhatsApp</label><input class="form-input" id="tel-cocina" placeholder="54911XXXXXXXX" value="54911XXXXXXXX"></div>
+            <div class="form-group"><label>Número WhatsApp</label><input class="form-input" id="tel-cocina" placeholder="54911XXXXXXXX"></div>
             <div class="form-group"><label>Nombre del rol</label><input class="form-input" placeholder="Ej: Cocina · María" value="Cocina"></div>
           </div>
           <div class="form-group" style="margin-top:8px"><label>Categorías que recibe</label>
@@ -519,7 +522,7 @@ select.form-input{cursor:pointer}
             <label class="toggle"><input type="checkbox" checked onchange="toggleRol('carnicero',this)"><div class="toggle-slider"></div></label>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Número WhatsApp</label><input class="form-input" id="tel-carnicero" placeholder="54911XXXXXXXX" value="54911XXXXXXXX"></div>
+            <div class="form-group"><label>Número WhatsApp</label><input class="form-input" id="tel-carnicero" placeholder="54911XXXXXXXX"></div>
             <div class="form-group"><label>Nombre del rol</label><input class="form-input" placeholder="Ej: Carnicero · Pedro" value="Carnicero"></div>
           </div>
           <div class="form-group" style="margin-top:8px"><label>Categorías que recibe</label>
@@ -554,7 +557,7 @@ select.form-input{cursor:pointer}
             <label class="toggle"><input type="checkbox" checked onchange="toggleRol('caja',this)"><div class="toggle-slider"></div></label>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Número WhatsApp</label><input class="form-input" id="tel-caja" placeholder="54911XXXXXXXX" value="54911XXXXXXXX"></div>
+            <div class="form-group"><label>Número WhatsApp</label><input class="form-input" id="tel-caja" placeholder="54911XXXXXXXX"></div>
             <div class="form-group"><label>Nombre del rol</label><input class="form-input" placeholder="Ej: Caja · Ana" value="Caja"></div>
           </div>
           <div class="form-group" style="margin-top:10px"><label>Preview del mensaje (recibe el pedido completo)</label>
@@ -589,8 +592,8 @@ Cada cuota: $23.760
         <div class="config-card">
           <div class="cc-hdr"><h3>🛵 Delivery</h3></div>
           <div class="cc-body">
-            <div class="form-group"><label>Monto mínimo delivery gratis ($)</label><input class="form-input" value="10000" type="number"></div>
-            <div class="form-group"><label>Costo de envío si no alcanza ($)</label><input class="form-input" value="1500" type="number"></div>
+            <div class="form-group"><label>Monto mínimo delivery gratis ($)</label><input class="form-input" id="cfg-delivery-min" value="10000" type="number"></div>
+            <div class="form-group"><label>Costo de envío si no alcanza ($)</label><input class="form-input" id="cfg-delivery-costo" value="1500" type="number"></div>
             <div class="form-group"><label>Tiempo estimado delivery (min)</label><input class="form-input" value="30-45"></div>
             <div class="form-group"><label>Tiempo estimado retiro (min)</label><input class="form-input" value="15"></div>
           </div>
@@ -609,10 +612,10 @@ Cada cuota: $23.760
         <div class="config-card">
           <div class="cc-hdr"><h3>💛 Fidelidad</h3></div>
           <div class="cc-body">
-            <div class="form-group"><label>Puntos por cada $100 gastados</label><input class="form-input" value="1" type="number"></div>
-            <div class="form-group"><label>Puntos para canjear premio</label><input class="form-input" value="500" type="number"></div>
+            <div class="form-group"><label>Puntos por cada $100 gastados</label><input class="form-input" id="cfg-puntos" value="1" type="number"></div>
+            <div class="form-group"><label>Puntos para canjear premio</label><input class="form-input" id="cfg-puntos-canje" value="500" type="number"></div>
             <div class="form-group"><label>Valor del premio ($)</label><input class="form-input" value="500" type="number"></div>
-            <div class="form-group"><label>Descuento cumpleaños (%)</label><input class="form-input" value="10" type="number"></div>
+            <div class="form-group"><label>Descuento cumpleaños (%)</label><input class="form-input" id="cfg-cumple" value="10" type="number"></div>
           </div>
         </div>
         <div class="config-card">
@@ -640,49 +643,426 @@ Cada cuota: $23.760
 <!-- TOAST -->
 <div class="toast" id="toast"><span id="toast-msg"></span></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const $=id=>document.getElementById(id);
-function toast(msg,dur=2800){$('toast-msg').textContent=msg;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),dur)}
+// ══ SUPABASE ══════════════════════════════════════════════════════════════════
+const SB_URL = 'https://tlsyakbhceolczjzadpc.supabase.co';
+const SB_KEY = 'sb_publishable_pdCPXmVa47gh3rSURJsgaQ_axezH12Z';
+const { createClient } = supabase;
+const db = createClient(SB_URL, SB_KEY);
 
-function goTo(s,el){
-  document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
+// ══ UTILS ═════════════════════════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const fmt = n => '$' + Math.round(n||0).toLocaleString('es-AR');
+const fmtFecha = d => new Date(d).toLocaleDateString('es-AR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+const hoy = () => new Date().toISOString().split('T')[0];
+const ayer = () => { const d=new Date(); d.setDate(d.getDate()-1); return d.toISOString().split('T')[0]; };
+
+function toast(msg, dur=2800) {
+  $('toast-msg').textContent = msg;
+  $('toast').classList.add('show');
+  setTimeout(() => $('toast').classList.remove('show'), dur);
+}
+
+function goTo(s, el) {
+  document.querySelectorAll('.screen').forEach(x => x.classList.remove('active'));
   $('s-'+s).classList.add('active');
-  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
-  if(el)el.classList.add('active');
-  const titles={dashboard:'📊 Dashboard',pedidos:'🛒 Pedidos en vivo',prediccion:'🔮 Predicción de demanda',clientes:'👥 Clientes',alta:'➕ Alta rápida de cliente',config:'⚙️ Configuración'};
-  $('topbar-title').textContent=titles[s]||s;
+  document.querySelectorAll('.ni').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const titles = {
+    dashboard:'📊 Dashboard', pedidos:'🛒 Pedidos en vivo',
+    prediccion:'🔮 Predicción', clientes:'👥 Clientes',
+    alta:'➕ Alta rápida', config:'⚙️ Configuración'
+  };
+  $('topbar-title').textContent = titles[s] || s;
+  // Cargar datos de la sección
+  if (s==='dashboard')  loadDashboard();
+  if (s==='pedidos')    loadPedidos();
+  if (s==='clientes')   loadClientes();
+  if (s==='prediccion') renderPrediccion();
+  if (s==='config')     loadConfig();
 }
 
-function avisarEmpleados(num){
-  const tel_cocina=$('tel-cocina')?.value||'';
-  const tel_carnicero=$('tel-carnicero')?.value||'';
-  const tel_caja=$('tel-caja')?.value||'';
-  // Simular apertura de WP para cada rol
-  toast(`📲 Avisos enviados: Cocina ✓ · Carnicero ✓ · Caja ✓ — Pedido #${num}`);
+// ══ DASHBOARD ═════════════════════════════════════════════════════════════════
+async function loadDashboard() {
+  try {
+    const todayStr = hoy();
+    const ayerStr  = ayer();
+
+    // Pedidos de hoy
+    const { data: pedidosHoy } = await db.from('pedidos')
+      .select('*').gte('created_at', todayStr+'T00:00:00').order('created_at',{ascending:false});
+
+    // Pedidos de ayer (para comparar)
+    const { data: pedidosAyer } = await db.from('pedidos')
+      .select('total').gte('created_at', ayerStr+'T00:00:00').lt('created_at', todayStr+'T00:00:00');
+
+    // Clientes
+    const { count: totalClientes } = await db.from('clientes').select('*',{count:'exact',head:true});
+    const { count: clientesHoy }   = await db.from('clientes').select('*',{count:'exact',head:true}).gte('created_at',todayStr+'T00:00:00');
+
+    // Stock crítico
+    const { data: prods } = await db.from('productos').select('id,nombre,stock,minimo,cat').eq('activo',true);
+    const criticos = (prods||[]).filter(p => parseFloat(p.stock) <= parseFloat(p.minimo));
+
+    // Calcular KPIs
+    const ventasHoy  = (pedidosHoy||[]).reduce((s,p)=>s+parseFloat(p.total||0),0);
+    const ventasAyer = (pedidosAyer||[]).reduce((s,p)=>s+parseFloat(p.total||0),0);
+    const pctVentas  = ventasAyer>0 ? Math.round(((ventasHoy-ventasAyer)/ventasAyer)*100) : 0;
+    const delivery   = (pedidosHoy||[]).filter(p=>p.entrega==='Delivery').length;
+    const retiro     = (pedidosHoy||[]).filter(p=>p.entrega!=='Delivery').length;
+
+    // Actualizar KPIs
+    $('kpi-ventas').textContent  = fmt(ventasHoy);
+    $('kpi-ventas-sub').textContent = (pctVentas>=0?'↑':'↓')+Math.abs(pctVentas)+'% vs ayer';
+    $('kpi-pedidos').textContent = pedidosHoy?.length||0;
+    $('kpi-pedidos-sub').textContent = delivery+' delivery · '+retiro+' retiro';
+    $('kpi-clientes').textContent = totalClientes||0;
+    $('kpi-clientes-sub').textContent = '+'+clientesHoy+' nuevos hoy';
+    $('kpi-stock').textContent   = criticos.length;
+    $('kpi-stock-sub').textContent = criticos.length>0 ? criticos.slice(0,2).map(p=>p.nombre).join(', ')+'...' : 'Todo en orden';
+
+    // Tabla últimos pedidos
+    const pillEstado = e => {
+      if (e==='nuevo')      return '<span class="pill pill-red">🔴 Nuevo</span>';
+      if (e==='preparando') return '<span class="pill pill-am">⏳ Prep.</span>';
+      if (e==='listo')      return '<span class="pill pill-green">✅ Listo</span>';
+      return '<span class="pill pill-green">✅ Entregado</span>';
+    };
+    $('tbody-pedidos').innerHTML = (pedidosHoy||[]).slice(0,6).map(p=>`
+      <tr>
+        <td style="font-weight:800;color:var(--do)">${p.numero||'—'}</td>
+        <td>${p.cliente_nombre||'—'}</td>
+        <td style="font-weight:700">${fmt(p.total)}</td>
+        <td>${pillEstado(p.estado)}</td>
+        <td><span class="pill ${p.entrega==='Delivery'?'pill-blue':'pill-gold'}">${p.entrega==='Delivery'?'🛵':'🏪'} ${p.entrega||'—'}</span></td>
+      </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--g3);padding:20px">Sin pedidos hoy</td></tr>';
+
+    // Top productos (por items vendidos hoy)
+    const { data: items } = await db.from('pedido_items')
+      .select('nombre,cantidad,subtotal,pedidos!inner(created_at)')
+      .gte('pedidos.created_at', todayStr+'T00:00:00');
+
+    const topProds = {};
+    (items||[]).forEach(i => {
+      if (!topProds[i.nombre]) topProds[i.nombre] = {cant:0, ingreso:0};
+      topProds[i.nombre].cant   += parseFloat(i.cantidad||0);
+      topProds[i.nombre].ingreso += parseFloat(i.subtotal||0);
+    });
+    const topSorted = Object.entries(topProds).sort((a,b)=>b[1].ingreso-a[1].ingreso).slice(0,5);
+    $('tbody-top').innerHTML = topSorted.map(([nombre,v])=>`
+      <tr>
+        <td>${nombre}</td>
+        <td style="color:var(--do);font-weight:700">${v.cant.toFixed(1)}</td>
+        <td style="font-weight:700">${fmt(v.ingreso)}</td>
+      </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--g3);padding:20px">Sin ventas hoy</td></tr>';
+
+    // Clientes inactivos (+14 días)
+    const hace14 = new Date(); hace14.setDate(hace14.getDate()-14);
+    const { data: inactivos } = await db.from('clientes')
+      .select('*').lt('ultima_compra', hace14.toISOString()).not('ultima_compra','is',null).order('ultima_compra').limit(5);
+
+    $('lista-inactivos').innerHTML = (inactivos||[]).map(c=>`
+      <div class="client-row">
+        <div class="client-avatar">👤</div>
+        <div class="client-info">
+          <h4>${c.nombre} ${c.apellido||''}</h4>
+          <p>Último pedido: ${c.ultima_compra ? new Date(c.ultima_compra).toLocaleDateString('es-AR') : 'nunca'} · ${c.puntos||0} pts</p>
+        </div>
+        <button class="btn btn-gold" onclick="enviarPromo('${c.telefono}','${c.nombre}')" style="font-size:10px;padding:5px 9px">💬 Promo</button>
+      </div>`).join('') || '<div style="padding:14px;color:var(--g3);font-size:12px;text-align:center">✅ Todos los clientes compraron recientemente</div>';
+
+  } catch(e) {
+    console.warn('Error dashboard:', e);
+    toast('⚠️ Error cargando dashboard: ' + e.message);
+  }
 }
 
-function toggleRol(rol,cb){
-  const card=$('rol-'+rol);
-  if(cb.checked){card.classList.add('active-rol');toast(`✅ Rol ${rol} activado`)}
-  else{card.classList.remove('active-rol');toast(`⚠️ Rol ${rol} desactivado`)}
+// ══ PEDIDOS EN VIVO ════════════════════════════════════════════════════════════
+async function loadPedidos() {
+  try {
+    const { data: pedidos } = await db.from('pedidos')
+      .select('*, pedido_items(*)')
+      .in('estado',['nuevo','preparando','listo'])
+      .order('created_at',{ascending:false});
+
+    const nuevos    = (pedidos||[]).filter(p=>p.estado==='nuevo').length;
+    const preparando= (pedidos||[]).filter(p=>p.estado==='preparando').length;
+    const listos    = (pedidos||[]).filter(p=>p.estado==='listo').length;
+
+    $('kpi-nuevos').textContent     = nuevos;
+    $('kpi-preparando').textContent = preparando;
+    $('kpi-listos').textContent     = listos;
+
+    const minutos = d => Math.floor((Date.now()-new Date(d).getTime())/60000);
+
+    $('lista-pedidos').innerHTML = (pedidos||[]).length ? (pedidos||[]).map(p=>{
+      const min = minutos(p.created_at);
+      const tiempoStr = min < 60 ? `Hace ${min} min` : `Hace ${Math.floor(min/60)}h`;
+      const cls = p.estado==='nuevo'?'nuevo':p.estado==='preparando'?'prep':'listo';
+      const items = (p.pedido_items||[]).map(i=>`• ${i.nombre} × ${i.cantidad}`).join('<br>');
+      return `<div class="pedido-card ${cls}">
+        <div class="pd-top">
+          <div>
+            <div class="pd-num">${p.estado==='nuevo'?'🔴':p.estado==='preparando'?'🟡':'🟢'} ${p.numero}</div>
+            <div class="pd-time">${tiempoStr} · ${p.entrega==='Delivery'?'🛵 Delivery':'🏪 Retiro'}</div>
+          </div>
+          <span class="pill ${p.estado==='nuevo'?'pill-red':p.estado==='preparando'?'pill-am':'pill-green'}">${p.estado}</span>
+        </div>
+        <div class="pd-items">${items || '—'}<br><span style="color:var(--do);font-size:11px">💳 ${p.pago_tipo==='efectivo'?'Efectivo':p.pago_tipo==='c1'?'Crédito 1c':'Crédito 3c'}${p.canje_puntos>0?' · Canje pts':''}</span></div>
+        <div class="pd-footer">
+          <div class="pd-total">${fmt(p.total)}</div>
+          <div class="pd-actions">
+            ${p.estado==='nuevo'?`<button class="pd-btn" style="background:rgba(243,156,18,.15);color:var(--am)" onclick="cambiarEstado('${p.id}','preparando')">Aceptar</button>`:''}
+            ${p.estado==='preparando'?`<button class="pd-btn btn-gold" onclick="cambiarEstado('${p.id}','listo')">✅ Listo</button>`:''}
+            ${p.estado==='listo'?`<button class="pd-btn" style="background:rgba(39,174,96,.15);color:var(--gr)" onclick="cambiarEstado('${p.id}','entregado')">Entregar</button>`:''}
+            <button class="pd-btn btn-gold" onclick="avisarEmpleados('${p.numero}','${p.entrega}',\`${items.replace(/`/g,"'")}\`,${p.total})">📲 Avisar</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('') : '<div style="text-align:center;padding:40px;color:var(--g3)">✅ Sin pedidos activos</div>';
+
+  } catch(e) {
+    console.warn('Error pedidos:', e);
+    toast('⚠️ Error cargando pedidos');
+  }
 }
 
-function guardarConfig(){
-  toast('💾 Configuración guardada correctamente');
+async function cambiarEstado(id, estado) {
+  const { error } = await db.from('pedidos').update({estado, updated_at:new Date().toISOString()}).eq('id',id);
+  if (error) { toast('⚠️ Error: '+error.message); return; }
+  toast('✅ Estado actualizado: '+estado);
+  loadPedidos();
 }
 
-function probarAvisos(){
-  toast('📲 Mensajes de prueba enviados a Cocina, Carnicero y Caja');
+// ══ CLIENTES ══════════════════════════════════════════════════════════════════
+async function loadClientes(busqueda='') {
+  try {
+    let q = db.from('clientes').select('*').order('created_at',{ascending:false}).limit(50);
+    if (busqueda) q = q.or(`nombre.ilike.%${busqueda}%,telefono.ilike.%${busqueda}%`);
+    const { data } = await q;
+
+    const { count: total }  = await db.from('clientes').select('*',{count:'exact',head:true});
+    const { count: gold }   = await db.from('clientes').select('*',{count:'exact',head:true}).gte('puntos',500);
+    const hace14 = new Date(); hace14.setDate(hace14.getDate()-14);
+    const { count: inact }  = await db.from('clientes').select('*',{count:'exact',head:true}).lt('ultima_compra',hace14.toISOString());
+
+    $('kpi-total-cli').textContent = total||0;
+    $('kpi-gold-cli').textContent  = gold||0;
+    $('kpi-inact-cli').textContent = inact||0;
+
+    const nivel = p => p>=500?'🥇 Gold':p>=200?'🥈 Silver':'🥉 Bronze';
+    const pillNivel = p => `<span class="pill ${p>=500?'pill-gold':p>=200?'pill-am':'pill-blue'}">${nivel(p)}</span>`;
+
+    $('tbody-clientes').innerHTML = (data||[]).map(c=>`
+      <tr>
+        <td style="font-weight:700">${c.nombre} ${c.apellido||''}</td>
+        <td style="color:var(--g3);font-size:11px">${c.telefono||'—'}</td>
+        <td style="color:var(--do);font-weight:700">${c.puntos||0}</td>
+        <td>${pillNivel(c.puntos||0)}</td>
+        <td style="font-size:11px;color:var(--g3)">${c.ultima_compra?new Date(c.ultima_compra).toLocaleDateString('es-AR'):'Sin compras'}</td>
+        <td>
+          <button class="btn btn-ghost" style="font-size:10px;padding:4px 8px" onclick="window.open('https://wa.me/54${c.telefono?.replace(/\D/g,'')}','_blank')">💬 WP</button>
+        </td>
+      </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--g3);padding:20px">Sin clientes</td></tr>';
+  } catch(e) {
+    toast('⚠️ Error cargando clientes');
+  }
 }
 
-function darDeAlta(){
-  const pts=parseInt($('pts-iniciales')?.value||50);
-  toast(`✅ Tarjeta creada con ${pts} puntos de bienvenida — enviando mensaje de bienvenida por WhatsApp`);
+// ══ ALTA RÁPIDA ═══════════════════════════════════════════════════════════════
+async function darDeAlta() {
+  const nombre   = $('r-nombre')?.value?.trim();
+  const apellido = $('r-apellido')?.value?.trim()||'';
+  const tel      = $('r-tel')?.value?.trim();
+  const cumple   = $('r-cumple')?.value;
+  const anterior = $('r-anterior')?.value==='true';
+  const ptsBase  = parseInt($('pts-iniciales')?.value||50);
+
+  if (!nombre||!tel) { toast('⚠️ Completá nombre y WhatsApp'); return; }
+
+  try {
+    const { data, error } = await db.from('clientes').insert({
+      nombre, apellido, telefono: tel,
+      cumpleanos: cumple||null,
+      puntos: ptsBase, nivel:'Bronze',
+      cliente_anterior: anterior,
+      bv_activa: true, bv_usada: false,
+    }).select().single();
+
+    if (error) {
+      if (error.code==='23505') { toast('⚠️ Ya existe un cliente con ese WhatsApp'); return; }
+      throw error;
+    }
+
+    toast(`✅ ${nombre} registrado con ${ptsBase} puntos — enviando bienvenida por WP`);
+
+    // Abrir WhatsApp con mensaje de bienvenida
+    const msg = `¡Hola ${nombre}! 🛒 Te damos la bienvenida a Al Paso.\n\nTu tarjeta fidelidad está activa con ${ptsBase} puntos de regalo.\nAccedé a la app: https://mercadoalpaso.com.ar\n\nTenés un 10% off en tu primera compra. ¡Gracias por elegirnos!`;
+    window.open(`https://wa.me/54${tel.replace(/\D/g,'')}?text=${encodeURIComponent(msg)}`, '_blank');
+
+    // Limpiar form
+    ['r-nombre','r-apellido','r-tel','r-cumple'].forEach(id => { if($(id)) $(id).value=''; });
+
+    // Actualizar progreso migración
+    loadProgresoCli();
+
+  } catch(e) {
+    toast('⚠️ Error: '+e.message);
+  }
 }
 
-// Fecha hoy
-const d=new Date();
-$('fecha-hoy').textContent=d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+async function loadProgresoCli() {
+  const { count } = await db.from('clientes').select('*',{count:'exact',head:true});
+  const meta = 200;
+  const pct  = Math.min(100, Math.round(((count||0)/meta)*100));
+  if ($('prog-bar')) $('prog-bar').style.width = pct+'%';
+  if ($('prog-text')) $('prog-text').textContent = `${count||0} / ${meta} clientes · ${pct}% completado`;
+}
+
+// ══ AVISAR EMPLEADOS ══════════════════════════════════════════════════════════
+function avisarEmpleados(numero, entrega, items, total) {
+  const cfg = cargarConfigLocal();
+  const msgs = [
+    { rol:'Cocina',     tel: cfg.tel_cocina,     msg: `🔔 NUEVO PEDIDO Al Paso\n📋 ${numero}\n\n👨‍🍳 Tu parte:\n${items}\n\n📦 ${entrega}\n⏰ Preparar ahora` },
+    { rol:'Carnicero',  tel: cfg.tel_carnicero,  msg: `🔔 NUEVO PEDIDO Al Paso\n📋 ${numero}\n\n🥩 Tu parte:\n${items}\n\n📦 ${entrega}\n⏰ Preparar ahora` },
+    { rol:'Caja',       tel: cfg.tel_caja,       msg: `🔔 NUEVO PEDIDO Al Paso\n📋 ${numero}\n\n💰 Total: $${Math.round(total).toLocaleString('es-AR')}\n📦 ${entrega}\nPago: pendiente` },
+  ];
+  let enviados = 0;
+  msgs.forEach(m => {
+    if (m.tel && m.tel.length > 7) {
+      window.open(`https://wa.me/54${m.tel.replace(/\D/g,'')}?text=${encodeURIComponent(m.msg)}`, '_blank');
+      enviados++;
+    }
+  });
+  toast(enviados>0 ? `📲 ${enviados} avisos enviados` : '⚠️ Configurá los números en ⚙️ Configuración');
+}
+
+function enviarPromo(tel, nombre) {
+  const msg = `¡Hola ${nombre}! 👋 Te extrañamos en Al Paso.\n\nTenemos novedades y combos especiales esta semana. Vení a visitarnos o pedí por la app:\nhttps://mercadoalpaso.com.ar`;
+  window.open(`https://wa.me/54${(tel||'').replace(/\D/g,'')}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+// ══ CONFIGURACIÓN ═════════════════════════════════════════════════════════════
+function cargarConfigLocal() {
+  try { return JSON.parse(localStorage.getItem('alpaso_config')||'{}'); } catch { return {}; }
+}
+
+async function loadConfig() {
+  try {
+    const { data } = await db.from('configuracion').select('*');
+    const cfg = {};
+    (data||[]).forEach(c => cfg[c.clave] = c.valor);
+
+    // Rellenar campos de configuración
+    const campos = {
+      'tel_cocina':       'tel-cocina',
+      'tel_carnicero':    'tel-carnicero',
+      'tel_caja':         'tel-caja',
+      'delivery_minimo':  'cfg-delivery-min',
+      'delivery_costo':   'cfg-delivery-costo',
+      'recargo_credito3': 'cfg-recargo',
+      'puntos_x_peso':    'cfg-puntos',
+      'puntos_canje':     'cfg-puntos-canje',
+      'descuento_cumple': 'cfg-cumple',
+      'descuento_bv':     'cfg-bv',
+    };
+    Object.entries(campos).forEach(([clave, id]) => {
+      const el = $(id);
+      if (el && cfg[clave] !== undefined) el.value = cfg[clave];
+    });
+
+    // Guardar en localStorage para uso offline
+    localStorage.setItem('alpaso_config', JSON.stringify(cfg));
+  } catch(e) {
+    // Cargar desde localStorage si Supabase falla
+    const cfg = cargarConfigLocal();
+    toast('⚠️ Cargando configuración local');
+  }
+}
+
+async function guardarConfig() {
+  const campos = {
+    'tel_cocina':       $('tel-cocina')?.value||'',
+    'tel_carnicero':    $('tel-carnicero')?.value||'',
+    'tel_caja':         $('tel-caja')?.value||'',
+    'delivery_minimo':  $('cfg-delivery-min')?.value||'10000',
+    'delivery_costo':   $('cfg-delivery-costo')?.value||'1500',
+    'recargo_credito3': $('cfg-recargo')?.value||'20',
+    'puntos_x_peso':    $('cfg-puntos')?.value||'100',
+    'puntos_canje':     $('cfg-puntos-canje')?.value||'500',
+    'descuento_cumple': $('cfg-cumple')?.value||'10',
+    'descuento_bv':     $('cfg-bv')?.value||'10',
+  };
+
+  try {
+    for (const [clave, valor] of Object.entries(campos)) {
+      await db.from('configuracion').upsert({clave, valor}, {onConflict:'clave'});
+    }
+    localStorage.setItem('alpaso_config', JSON.stringify(campos));
+    toast('💾 Configuración guardada en Supabase');
+  } catch(e) {
+    toast('⚠️ Error guardando: '+e.message);
+  }
+}
+
+async function probarAvisos() {
+  const cfg = cargarConfigLocal();
+  const roles = [
+    {nombre:'Cocina',    tel:cfg.tel_cocina},
+    {nombre:'Carnicero', tel:cfg.tel_carnicero},
+    {nombre:'Caja',      tel:cfg.tel_caja},
+  ];
+  let ok = 0;
+  roles.forEach(r => {
+    if (r.tel && r.tel.length > 7) {
+      const msg = `🔔 TEST — Al Paso\n\nEste es un mensaje de prueba del sistema.\nRol: ${r.nombre}\n✅ Todo configurado correctamente.`;
+      window.open(`https://wa.me/54${r.tel.replace(/\D/g,'')}?text=${encodeURIComponent(msg)}`, '_blank');
+      ok++;
+    }
+  });
+  toast(ok>0 ? `📲 ${ok} mensajes de prueba abiertos` : '⚠️ Configurá los números primero');
+}
+
+function toggleRol(rol, cb) {
+  const card = $('rol-'+rol);
+  if (card) card.classList.toggle('active-rol', cb.checked);
+  toast(cb.checked ? `✅ Rol ${rol} activado` : `⚠️ Rol ${rol} desactivado`);
+}
+
+// ══ PREDICCIÓN ════════════════════════════════════════════════════════════════
+function renderPrediccion() {
+  // Datos basados en análisis real de marzo 2026
+  // (ya los tenemos del análisis de ventas que hicimos)
+}
+
+// ══ AUTO-REFRESH ══════════════════════════════════════════════════════════════
+let refreshInterval = null;
+
+function iniciarAutoRefresh() {
+  refreshInterval = setInterval(() => {
+    const screen = document.querySelector('.screen.active')?.id;
+    if (screen==='s-dashboard') loadDashboard();
+    if (screen==='s-pedidos')   loadPedidos();
+  }, 30000); // cada 30 segundos
+}
+
+// ══ INIT ══════════════════════════════════════════════════════════════════════
+const d = new Date();
+$('fecha-hoy').textContent = d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+
+// Botón actualizar
+document.querySelector('.btn-gold')?.addEventListener('click', () => {
+  const screen = document.querySelector('.screen.active')?.id;
+  if (screen==='s-dashboard') loadDashboard();
+  if (screen==='s-pedidos')   loadPedidos();
+  if (screen==='s-clientes')  loadClientes();
+  toast('🔄 Actualizando...');
+});
+
+loadDashboard();
+loadProgresoCli();
+iniciarAutoRefresh();
 </script>
 </body>
 </html>
