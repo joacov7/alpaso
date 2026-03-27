@@ -2,29 +2,42 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1A1A1A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Al Paso">
+<meta name="description" content="Tu mercado de proximidad — Empanadas artesanales, carne al vacío, combos y delivery">
+<meta property="og:title" content="Al Paso — Mercado de Proximidad">
+<meta property="og:description" content="Empanadas artesanales, carne al vacío y más. Pedí online con delivery gratis.">
+<meta property="og:url" content="https://mercadoalpaso.com.ar">
 <title>Al Paso — Mercado de Proximidad</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' fill='%231A1A1A' rx='40'/><text y='125' x='50%' text-anchor='middle' font-size='100'>👣</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--r:#E31E24;--rp:#FFF0F0;--n:#1A1A1A;--g:#F5F5F5;--g2:#E8E8E8;--g3:#999;--w:#fff;--gr:#27AE60;--am:#F39C12;--do:#C9A84C;--do2:#E8C96A;--sh2:0 2px 12px rgba(0,0,0,.08)}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{font-family:'Nunito',sans-serif;background:#E0E0E0;display:flex;justify-content:center;min-height:100vh;padding:20px 0}
-.phone{width:390px;height:844px;background:var(--w);border-radius:44px;box-shadow:0 30px 80px rgba(0,0,0,.3);overflow:hidden;position:relative;display:flex;flex-direction:column}
-.statusbar{height:44px;background:var(--n);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0}
-.statusbar span{color:var(--do);font-size:11px;font-weight:700;font-family:'Bebas Neue';letter-spacing:1px}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Nunito',sans-serif;background:var(--w);color:var(--n)}
+/* WEB RESPONSIVE — sin frame de celular */
+.phone{width:100%;height:100dvh;background:var(--w);display:flex;flex-direction:column;position:relative;max-width:480px;margin:0 auto}
+@media(min-width:480px){body{background:#E8E0D0}.phone{box-shadow:0 0 60px rgba(0,0,0,.15)}}
+.statusbar{display:none} /* Ocultar barra simulada */
 .screen{display:none;flex-direction:column;flex:1;overflow:hidden}
 .screen.active{display:flex;animation:fi .22s ease}
 @keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .scroll-area::-webkit-scrollbar{display:none}
-.bnav{height:72px;background:#fff;border-top:1px solid var(--g2);display:flex;align-items:center;justify-content:space-around;flex-shrink:0;padding-bottom:8px}
+.bnav{height:calc(60px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--g2);display:flex;align-items:flex-start;justify-content:space-around;flex-shrink:0;padding-top:8px;padding-bottom:env(safe-area-inset-bottom)}
 .ni{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:6px 10px;position:relative}
 .ni .ic{font-size:20px}.ni .lb{font-size:9px;font-weight:700;color:var(--g3)}
 .ni.active .lb{color:var(--n)}
 .badge{position:absolute;top:2px;right:2px;background:var(--r);color:#fff;font-size:9px;font-weight:800;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center}
 /* HDR */
-.hdr{background:var(--n);padding:16px 20px 24px;position:relative;overflow:hidden}
+.hdr{background:var(--n);padding:env(safe-area-inset-top,16px) 20px 24px;padding-top:max(env(safe-area-inset-top),16px);position:relative;overflow:hidden}
 .hdr-bot{position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--do),transparent)}
 .hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .logo-area{display:flex;align-items:center;gap:8px}
@@ -244,8 +257,51 @@ body{font-family:'Nunito',sans-serif;background:#E0E0E0;display:flex;justify-con
 </style>
 </head>
 <body>
+<!-- PWA MANIFEST inline -->
+<script>
+// Registrar service worker para PWA
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    // SW inline — cachea los assets principales
+    const swCode = `
+const CACHE='alpaso-v1';
+const ASSETS=['/','/index.html'];
+self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS))));
+self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));
+    `;
+    const blob = new Blob([swCode],{type:'application/javascript'});
+    navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
+  });
+}
+// Capturar evento de instalación PWA
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  deferredPrompt=e;
+  document.getElementById('pwa-banner').style.display='flex';
+});
+function instalarPWA(){
+  if(deferredPrompt){deferredPrompt.prompt();deferredPrompt=null;}
+  document.getElementById('pwa-banner').style.display='none';
+}
+</script>
+
+<!-- BANNER PWA -->
+<div id="pwa-banner" style="display:none;background:var(--n);color:#fff;padding:10px 16px;align-items:center;justify-content:space-between;gap:12px;font-size:12px;font-weight:700;position:fixed;bottom:0;left:0;right:0;z-index:9999;border-top:2px solid var(--do)">
+  <div style="display:flex;align-items:center;gap:10px">
+    <span style="font-size:24px">👣</span>
+    <div>
+      <div style="color:var(--do);font-size:13px;font-weight:800">Instalá Al Paso</div>
+      <div style="color:rgba(255,255,255,.5);font-size:10px;font-weight:600">Agregá la app a tu pantalla de inicio</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button onclick="document.getElementById('pwa-banner').style.display='none'" style="background:rgba(255,255,255,.1);color:#fff;border:none;border-radius:8px;padding:8px 12px;font-family:'Nunito';font-size:11px;font-weight:700;cursor:pointer">Ahora no</button>
+    <button onclick="instalarPWA()" style="background:var(--do);color:var(--n);border:none;border-radius:8px;padding:8px 14px;font-family:'Nunito';font-size:12px;font-weight:800;cursor:pointer">Instalar</button>
+  </div>
+</div>
+
 <div class="phone">
-  <div class="statusbar"><span>9:41</span><span>◆ AL PASO</span><span>🔋</span></div>
 
   <!-- LOADING -->
   <div class="loading-screen" id="loading">
