@@ -171,9 +171,11 @@ tr:hover td{background:#FAFAFA}
     <div class="sb-nav">
       <div class="nav-item active" onclick="goTo('stock',this)"><span class="nic">📦</span> Stock</div>
       <div class="nav-item" onclick="goTo('pedidos',this)"><span class="nic">📋</span> Armar Pedido</div>
-      <div class="nav-item" onclick="goTo('facturas',this)"><span class="nic">📸</span> Cargar Factura</div>
       <div class="nav-item" onclick="goTo('historial',this)"><span class="nic">📊</span> Historial</div>
       <div class="nav-item" onclick="goTo('proveedores',this)"><span class="nic">🏭</span> Proveedores</div>
+      <div style="height:1px;background:rgba(255,255,255,.08);margin:8px 4px"></div>
+      <div class="nav-item" onclick="abrirScanner('suma')" style="background:rgba(39,174,96,.12);color:#6EE7B7"><span class="nic">📥</span> Ingresar mercadería</div>
+      <div class="nav-item" onclick="abrirScanner('inventario')" style="background:rgba(37,99,235,.1);color:#93C5FD"><span class="nic">📋</span> Inventario góndola</div>
     </div>
     <div class="sb-bottom">
       <div class="nav-item" onclick="toast('⚙️ Configuración próximamente')"><span class="nic">⚙️</span> Configuración</div>
@@ -186,6 +188,8 @@ tr:hover td{background:#FAFAFA}
       <h1 id="topbar-title">📦 Stock de Productos</h1>
       <div class="actions" id="topbar-actions">
         <button class="btn btn-secondary" onclick="exportStock()">⬇️ Exportar</button>
+        <button class="btn btn-green" onclick="abrirScanner('suma')">📥 Ingresar mercadería</button>
+        <button class="btn btn-blue" onclick="abrirScanner('inventario')">📋 Inventario</button>
         <button class="btn btn-primary" onclick="openAddProduct()">+ Agregar producto</button>
       </div>
     </div>
@@ -1220,6 +1224,13 @@ document.querySelector('.sb-bottom').innerHTML += `
   <div style="padding:8px 12px;font-size:10px;color:rgba(255,255,255,.3);font-weight:600">
     📊 Conectado a Google Sheets
   </div>`;
+
+// ── SCANNER ───────────────────────────────────────────────────────────────────
+function abrirScanner(modo) {
+  // Abre el scanner en nueva pestaña con el modo preseleccionado
+  const url = './alpaso-scanner.html?modo=' + modo;
+  window.open(url, '_blank');
+}
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 initGoogleSheets();

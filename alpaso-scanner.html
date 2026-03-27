@@ -545,6 +545,15 @@ function limpiarHistorial() {
 }
 
 // ══ INIT ══
+// Leer modo desde URL si viene del sistema de proveedores
+const urlParams = new URLSearchParams(window.location.search);
+const modoURL = urlParams.get('modo');
+if (modoURL === 'inventario') {
+  setModo('inventario');
+} else {
+  setModo('suma');
+}
+
 cargarProductos().then(() => iniciarScanner());
 </script>
 </body>
