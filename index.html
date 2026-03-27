@@ -359,11 +359,52 @@ function instalarPWA(){
 
   <!-- CATALOGO -->
   <div class="screen" id="s-catalogo">
-    <div class="cat-hdr"><span class="back" onclick="goTo('home')">←</span><h1>Catálogo</h1></div>
+    <div class="cat-hdr">
+      <span class="back" onclick="goTo('home')">←</span>
+      <h1>Catálogo</h1>
+      <button onclick="abrirListas()" style="background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);color:var(--do);border-radius:9px;padding:6px 12px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;margin-left:auto;display:flex;align-items:center;gap:5px">📋 Mis listas</button>
+    </div>
     <div class="sinput-wrap"><span>🔍</span><input id="sinput" placeholder="Buscá productos..." oninput="renderCat()"></div>
     <div class="ftabs" id="ftabs"></div>
     <div class="scroll-area"><div id="cat-grid"></div><div style="height:14px"></div></div>
     <div class="bnav" id="bn-catalogo"></div>
+  </div>
+
+  <!-- MODAL LISTAS -->
+  <div class="wmodal" id="modal-listas">
+    <div class="wm-box" style="max-height:85vh;overflow-y:auto;padding-bottom:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div style="font-family:'Playfair Display';font-size:20px;color:#fff;font-weight:700">📋 Mis listas</div>
+        <button onclick="cerrarListas()" style="background:rgba(255,255,255,.08);border:none;color:#888;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px">✕</button>
+      </div>
+
+      <!-- Crear nueva lista -->
+      <div style="background:rgba(255,255,255,.05);border-radius:12px;padding:12px;margin-bottom:14px">
+        <div style="font-size:10px;font-weight:800;color:var(--do);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Nueva lista</div>
+        <div style="display:flex;gap:8px">
+          <input id="nueva-lista-nombre" placeholder="Ej: Asado del domingo..." style="flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
+          <button onclick="crearLista()" style="background:var(--do);color:var(--n);border:none;border-radius:9px;padding:9px 14px;font-family:'Nunito';font-size:12px;font-weight:800;cursor:pointer">+ Crear</button>
+        </div>
+      </div>
+
+      <!-- Lista de listas guardadas -->
+      <div id="listas-container">
+        <div style="text-align:center;padding:24px;color:rgba(255,255,255,.3);font-size:12px">Cargando listas...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DETALLE LISTA -->
+  <div class="wmodal" id="modal-lista-detalle">
+    <div class="wm-box" style="max-height:85vh;overflow-y:auto;padding-bottom:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div id="lista-detalle-titulo" style="font-family:'Playfair Display';font-size:18px;color:#fff;font-weight:700">Lista</div>
+        <button onclick="cerrarDetalleListа()" style="background:rgba(255,255,255,.08);border:none;color:#888;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px">✕</button>
+      </div>
+      <div id="lista-detalle-items" style="margin-bottom:14px"></div>
+      <button onclick="agregarListaAlCarrito()" style="width:100%;background:var(--n);color:var(--do);border:none;border-radius:12px;padding:13px;font-family:'Nunito';font-size:14px;font-weight:800;cursor:pointer;margin-bottom:8px">🛒 Agregar todo al carrito</button>
+      <button onclick="cerrarDetalleListа()" style="width:100%;background:rgba(255,255,255,.06);color:rgba(255,255,255,.5);border:none;border-radius:12px;padding:11px;font-family:'Nunito';font-size:12px;font-weight:700;cursor:pointer">Cerrar</button>
+    </div>
   </div>
 
   <!-- CARRITO -->
@@ -1014,7 +1055,10 @@ function pc(p) {
     <div class="pimg" style="background:${bg};${style}">${emoji}${badge}</div>
     <div class="pinfo"><h4>${p.nombre}</h4><div class="pbrand">${p.cat} · por ${p.unit}</div>
     <div class="prow"><div class="price">${fmt(p.precio_venta)}</div>
-    <button class="addbtn" onclick="event.stopPropagation();addById(${p.id})">+</button></div></div></div>`;
+    <div style="display:flex;gap:4px">
+      <button class="addbtn" title="Guardar en lista" onclick="event.stopPropagation();guardarEnLista(${p.id})" style="background:rgba(201,168,76,.15);color:var(--do);font-size:12px">📋</button>
+      <button class="addbtn" onclick="event.stopPropagation();addById(${p.id})">+</button>
+    </div></div></div></div>`;
 }
 
 // ══════════════════════════════════════════════════════
@@ -1331,6 +1375,308 @@ const PRODS_FALLBACK = [
   {id:51,nombre:'Nalga Premium al Vacío',cat:'Carne al Vacío',precio_venta:23500,precio_costo:16450,stock:0,minimo:0,unit:'kg'},
   {id:52,nombre:'Cuadril Premium al Vacío',cat:'Carne al Vacío',precio_venta:23500,precio_costo:16450,stock:0,minimo:0,unit:'kg'},
 ];
+
+// ══════════════════════════════════════════════════════
+// LISTAS DE COMPRAS RECURRENTES
+// ══════════════════════════════════════════════════════
+let listaActual = null; // lista seleccionada para ver detalle
+
+// Abrir modal de listas
+async function abrirListas() {
+  $('modal-listas').classList.add('show');
+  await cargarListas();
+}
+function cerrarListas() { $('modal-listas').classList.remove('show'); }
+
+// Cerrar detalle (fix typo en el nombre de la función del HTML)
+function cerrarDetalleListа() { $('modal-lista-detalle').classList.remove('show'); }
+
+// Cargar listas desde Supabase (o localStorage si no hay cliente)
+async function cargarListas() {
+  const container = $('listas-container');
+  if (!container) return;
+
+  let listas = [];
+
+  if (clienteActual) {
+    try {
+      const { data } = await db
+        .from('listas_compra')
+        .select('*, lista_items(*)')
+        .eq('cliente_id', clienteActual.id)
+        .order('updated_at', { ascending: false });
+      listas = data || [];
+    } catch(e) {
+      // Tabla puede no existir aún — usar localStorage
+      listas = cargarListasLocal();
+    }
+  } else {
+    listas = cargarListasLocal();
+  }
+
+  if (!listas.length) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:28px 16px">
+        <div style="font-size:40px;margin-bottom:10px">📋</div>
+        <div style="font-size:13px;font-weight:700;color:rgba(255,255,255,.5);margin-bottom:6px">No tenés listas todavía</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.25)">Creá una lista para agregar productos al carrito de una sola vez</div>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = listas.map(lista => {
+    const items = lista.lista_items || lista.items || [];
+    const cant  = items.length;
+    const preview = items.slice(0,3).map(i => i.nombre?.split(' ')[0]).join(', ');
+    return `
+      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:13px;margin-bottom:9px;cursor:pointer" onclick="verDetalleLista(${JSON.stringify(lista).replace(/"/g,'&quot;')})">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div style="font-size:14px;font-weight:800;color:#fff">${lista.nombre}</div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <span style="font-size:10px;background:rgba(201,168,76,.15);color:var(--do);padding:2px 8px;border-radius:20px;font-weight:700">${cant} productos</span>
+            <button onclick="event.stopPropagation();eliminarLista('${lista.id}')" style="background:rgba(227,30,36,.15);color:var(--r);border:none;border-radius:7px;padding:4px 8px;font-size:10px;cursor:pointer">🗑</button>
+          </div>
+        </div>
+        ${preview ? `<div style="font-size:10px;color:rgba(255,255,255,.3)">${preview}${cant>3?'...':''}</div>` : ''}
+        <div style="display:flex;gap:7px;margin-top:10px">
+          <button onclick="event.stopPropagation();agregarListaRapido('${lista.id}')" style="flex:1;background:var(--do);color:var(--n);border:none;border-radius:9px;padding:9px;font-family:'Nunito';font-size:12px;font-weight:800;cursor:pointer">🛒 Agregar al carrito</button>
+          <button onclick="event.stopPropagation();verDetalleLista(${JSON.stringify(lista).replace(/"/g,'&quot;')})" style="background:rgba(255,255,255,.07);color:rgba(255,255,255,.6);border:none;border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:11px;font-weight:700;cursor:pointer">Ver</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// Crear nueva lista
+async function crearLista() {
+  const nombre = $('nueva-lista-nombre')?.value?.trim();
+  if (!nombre) { toast('⚠️ Escribí un nombre para la lista'); return; }
+
+  const nuevaLista = {
+    id: Date.now(),
+    nombre,
+    items: [],
+    lista_items: [],
+    updated_at: new Date().toISOString(),
+  };
+
+  if (clienteActual) {
+    try {
+      const { data, error } = await db.from('listas_compra').insert({
+        cliente_id: clienteActual.id,
+        nombre,
+        updated_at: new Date().toISOString(),
+      }).select('*, lista_items(*)').single();
+      if (!error && data) {
+        $('nueva-lista-nombre').value = '';
+        toast(`✅ Lista "${nombre}" creada`);
+        await cargarListas();
+        return;
+      }
+    } catch(e) { /* usar localStorage */ }
+  }
+
+  // Fallback localStorage
+  const listas = cargarListasLocal();
+  listas.unshift(nuevaLista);
+  guardarListasLocal(listas);
+  $('nueva-lista-nombre').value = '';
+  toast(`✅ Lista "${nombre}" creada`);
+  await cargarListas();
+}
+
+// Ver detalle de una lista
+function verDetalleLista(lista) {
+  if (typeof lista === 'string') lista = JSON.parse(lista.replace(/&quot;/g,'"'));
+  listaActual = lista;
+  const items = lista.lista_items || lista.items || [];
+
+  $('lista-detalle-titulo').textContent = '📋 ' + lista.nombre;
+  $('lista-detalle-items').innerHTML = items.length ? `
+    <div style="font-size:10px;font-weight:800;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">${items.length} productos</div>
+    ${items.map(i => {
+      const prod = PRODS.find(p => p.id === i.producto_id || p.nombre === i.nombre);
+      const emoji = prod ? getEmojiProd(prod) : '📦';
+      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+        <span style="font-size:22px">${emoji}</span>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:700;color:#fff">${i.nombre}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.3)">${i.cantidad || 1} ${i.unit || 'u'}</div>
+        </div>
+        <button onclick="quitarDeListaDetalle(${i.id || i.producto_id})" style="background:rgba(227,30,36,.1);color:var(--r);border:none;border-radius:7px;padding:4px 8px;font-size:10px;cursor:pointer">✕</button>
+      </div>`;
+    }).join('')}
+    <div style="margin-top:12px;font-size:10px;color:rgba(255,255,255,.2);text-align:center">Tocá un producto del catálogo y elegí "Guardar en lista" para agregar más</div>
+  ` : `<div style="text-align:center;padding:20px;color:rgba(255,255,255,.3);font-size:12px">Lista vacía — agregá productos desde el catálogo</div>`;
+
+  $('modal-lista-detalle').classList.add('show');
+}
+
+// Agregar lista completa al carrito (desde detalle)
+function agregarListaAlCarrito() {
+  if (!listaActual) return;
+  const items = listaActual.lista_items || listaActual.items || [];
+  if (!items.length) { toast('⚠️ La lista está vacía'); return; }
+
+  let agregados = 0;
+  items.forEach(i => {
+    const prod = PRODS.find(p => p.id === i.producto_id || p.nombre === i.nombre);
+    if (prod) {
+      if (!cart[prod.id]) cart[prod.id] = { ...prod, qty: 0 };
+      cart[prod.id].qty += parseInt(i.cantidad) || 1;
+      agregados++;
+    }
+  });
+
+  updateBadges();
+  $('modal-lista-detalle').classList.remove('show');
+  $('modal-listas').classList.remove('show');
+  toast(`✅ ${agregados} productos de "${listaActual.nombre}" agregados al carrito`);
+  goTo('carrito');
+}
+
+// Agregar lista al carrito rápido (sin abrir detalle)
+async function agregarListaRapido(listaId) {
+  let lista = null;
+
+  if (clienteActual) {
+    try {
+      const { data } = await db.from('listas_compra')
+        .select('*, lista_items(*)')
+        .eq('id', listaId).single();
+      lista = data;
+    } catch(e) {}
+  }
+
+  if (!lista) {
+    const listas = cargarListasLocal();
+    lista = listas.find(l => String(l.id) === String(listaId));
+  }
+
+  if (!lista) { toast('⚠️ Lista no encontrada'); return; }
+
+  listaActual = lista;
+  agregarListaAlCarrito();
+}
+
+// Eliminar lista
+async function eliminarLista(listaId) {
+  if (!confirm('¿Eliminás esta lista?')) return;
+
+  if (clienteActual) {
+    try {
+      await db.from('lista_items').delete().eq('lista_id', listaId);
+      await db.from('listas_compra').delete().eq('id', listaId);
+    } catch(e) {}
+  }
+
+  const listas = cargarListasLocal();
+  guardarListasLocal(listas.filter(l => String(l.id) !== String(listaId)));
+  toast('🗑 Lista eliminada');
+  await cargarListas();
+}
+
+// Guardar producto en lista desde el catálogo
+async function guardarEnLista(prodId) {
+  const prod = PRODS.find(p => p.id === prodId);
+  if (!prod) return;
+
+  // Cargar listas disponibles
+  let listas = [];
+  if (clienteActual) {
+    try {
+      const { data } = await db.from('listas_compra')
+        .select('id, nombre').eq('cliente_id', clienteActual.id);
+      listas = data || [];
+    } catch(e) {}
+  }
+  if (!listas.length) listas = cargarListasLocal().map(l => ({id: l.id, nombre: l.nombre}));
+
+  if (!listas.length) {
+    toast('⚠️ Primero creá una lista desde el catálogo');
+    abrirListas();
+    return;
+  }
+
+  // Si hay una sola lista, agregar directo
+  if (listas.length === 1) {
+    await agregarProdALista(listas[0].id, prod);
+    return;
+  }
+
+  // Si hay varias, mostrar opciones
+  const nombres = listas.map(l => l.nombre).join('\n');
+  const idx = listas.findIndex(l =>
+    l.nombre === prompt(`¿A cuál lista agregás "${prod.nombre}"?\n\n${listas.map((l,i)=>`${i+1}. ${l.nombre}`).join('\n')}\n\nEscribí el número:`)?.replace(/\D/g,'')
+    ? listas[parseInt(prompt)-1]
+    : null
+  );
+
+  // Alternativa más simple: agregar a la primera lista
+  await agregarProdALista(listas[0].id, prod);
+}
+
+async function agregarProdALista(listaId, prod) {
+  const item = {
+    lista_id:   listaId,
+    producto_id: prod.id,
+    nombre:     prod.nombre,
+    cantidad:   1,
+    unit:       prod.unit,
+  };
+
+  if (clienteActual) {
+    try {
+      await db.from('lista_items').insert(item);
+      toast(`✅ ${prod.nombre} guardado en la lista`);
+      return;
+    } catch(e) {}
+  }
+
+  // localStorage fallback
+  const listas = cargarListasLocal();
+  const lista  = listas.find(l => String(l.id) === String(listaId));
+  if (lista) {
+    if (!lista.items) lista.items = [];
+    if (!lista.items.find(i => i.producto_id === prod.id)) {
+      lista.items.push(item);
+      lista.lista_items = lista.items;
+      guardarListasLocal(listas);
+    }
+  }
+  toast(`✅ ${prod.nombre} guardado en la lista`);
+}
+
+function quitarDeListaDetalle(itemId) {
+  if (!listaActual) return;
+  const items = listaActual.lista_items || listaActual.items || [];
+  listaActual.lista_items = items.filter(i => (i.id||i.producto_id) !== itemId);
+  listaActual.items       = listaActual.lista_items;
+  if (clienteActual) db.from('lista_items').delete().eq('id', itemId).then(()=>{});
+  verDetalleLista(listaActual);
+  toast('Producto quitado de la lista');
+}
+
+// Helper emoji por producto
+function getEmojiProd(p) {
+  if (!p) return '📦';
+  if (p.nombre?.includes('Empanada')) return '🫓';
+  if (p.cat==='Carnicería'||p.cat==='Carne al Vacío') return '🥩';
+  if (p.cat==='Fiambres') return '🧀';
+  if (p.cat==='Lácteos') return '🥛';
+  if (p.cat==='Bebidas') return '🥤';
+  if (p.cat==='Panadería') return '🍞';
+  if (p.cat==='Almacén') return '🌾';
+  if (p.cat==='Limpieza') return '🧹';
+  return '📦';
+}
+
+// localStorage helpers
+function cargarListasLocal() {
+  try { return JSON.parse(localStorage.getItem('alpaso_listas')||'[]'); } catch { return []; }
+}
+function guardarListasLocal(listas) {
+  localStorage.setItem('alpaso_listas', JSON.stringify(listas));
+}
 
 // ══════════════════════════════════════════════════════
 // INIT
