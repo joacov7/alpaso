@@ -753,20 +753,37 @@ async function procesarFactura() {
             },
             {
               type: "text",
-              text: `Sos un asistente de un supermercado argentino llamado "Al Paso". Analizá esta factura/remito de proveedor y extraé la información en formato JSON estricto, sin texto adicional, sin markdown.
+              text: `Sos el sistema de gestión del supermercado "Al Paso" en Argentina. Tu tarea es leer esta factura/remito de proveedor y extraer los datos en JSON.
 
-Devolvé SOLO este JSON:
+PRODUCTOS QUE MANEJA AL PASO (usá estos nombres exactos para el campo "nombre_sistema"):
+${productos.map(p => `- ID:${p.id} | "${p.nombre}" | ${p.cat} | ${p.unit}`).join('\n')}
+
+INSTRUCCIONES:
+1. Leé la factura con atención
+2. Para cada ítem de la factura, buscá el producto más parecido en la lista de arriba
+3. Si encontrás una coincidencia clara, usá el nombre_sistema del producto de la lista
+4. Si no encontrás coincidencia, poné null en id_sistema y nombre_sistema
+
+Devolvé SOLO este JSON sin texto adicional ni markdown:
 {
-  "proveedor": "nombre del proveedor",
+  "proveedor": "nombre del proveedor tal como aparece en la factura",
   "fecha": "dd/mm/yyyy",
-  "nro_factura": "número",
+  "nro_factura": "número de factura",
   "items": [
-    {"nombre": "nombre del producto", "cantidad": número, "unit": "u o kg", "precio_unitario": número, "subtotal": número}
+    {
+      "nombre_factura": "nombre exacto como aparece en la factura",
+      "nombre_sistema": "nombre del producto en Al Paso o null",
+      "id_sistema": número o null,
+      "cantidad": número,
+      "unit": "kg o u",
+      "precio_unitario": número,
+      "subtotal": número
+    }
   ],
   "total": número
 }
 
-Si no podés leer algún campo, ponés null. Si no es una factura, devolvé {"error": "No es una factura válida"}.`
+Si la imagen no es una factura o no se puede leer, devolvé: {"error": "descripción del problema"}`
             }
           ]
         }]
@@ -814,26 +831,52 @@ function demoFactura() {
 }
 
 function renderFacturaResult(data) {
+  // Matching mejorado: primero usa id_sistema de la IA, después busca por nombre
   const matchItem = item => {
-    const n = item.nombre.toLowerCase();
-    return productos.find(p => p.nombre.toLowerCase().includes(n.split(' ')[0]) || n.includes(p.nombre.toLowerCase().split(' ')[0]));
+    // Si la IA ya identificó el id del producto en el sistema
+    if (item.id_sistema != null) {
+      const byId = productos.find(p => p.id === item.id_sistema);
+      if (byId) return byId;
+    }
+    // Si la IA sugirió un nombre del sistema
+    if (item.nombre_sistema) {
+      const byName = productos.find(p => p.nombre.toLowerCase() === item.nombre_sistema.toLowerCase());
+      if (byName) return byName;
+    }
+    // Fallback: búsqueda por palabras clave
+    const n = (item.nombre_factura || item.nombre || '').toLowerCase();
+    return productos.find(p => {
+      const pn = p.nombre.toLowerCase();
+      const palabras = n.split(' ').filter(w => w.length > 3);
+      return palabras.some(w => pn.includes(w)) || pn.split(' ').some(w => w.length > 3 && n.includes(w));
+    });
   };
+
+  const matchedCount  = data.items.filter(i => matchItem(i)).length;
+  const totalItems    = data.items.length;
 
   $('factura-result').innerHTML = `
     <div style="background:var(--g);border-radius:10px;padding:12px;margin-bottom:14px">
       <div style="font-size:12px;font-weight:700;color:var(--g3)">PROVEEDOR</div>
       <div style="font-size:15px;font-weight:800">${data.proveedor || 'No identificado'}</div>
       <div style="font-size:12px;color:var(--g3);margin-top:2px">Factura ${data.nro_factura || '—'} · ${data.fecha || '—'}</div>
+      <div style="margin-top:8px;font-size:11px;font-weight:700;color:${matchedCount===totalItems?'var(--gr)':'var(--am)'}">
+        ✓ ${matchedCount} de ${totalItems} productos identificados en tu sistema
+      </div>
     </div>
     ${data.items.map(item => {
       const match = matchItem(item);
+      const nombreMostrar = item.nombre_factura || item.nombre || '—';
       return `<div class="factura-item">
         <div class="fi-emoji">${match ? CAT_EMOJI[match.cat]||'📦' : '❓'}</div>
         <div class="fi-info">
-          <div class="fin">${item.nombre}</div>
-          <div class="fic">${match ? `→ ${match.nombre}` : '⚠️ No encontrado en stock'}</div>
+          <div class="fin">${nombreMostrar}</div>
+          <div class="fic" style="color:${match?'var(--gr)':'#999'}">
+            ${match ? `✓ ${match.nombre}` : '⚠️ No encontrado — revisá manualmente'}
+          </div>
+          ${item.precio_unitario ? `<div style="font-size:10px;color:#888">Precio unitario: ${fmt(item.precio_unitario)}/${item.unit}</div>` : ''}
         </div>
-        <div class="fi-qty">${item.cantidad} ${item.unit}</div>
+        <div class="fi-qty" style="color:var(--bl);font-weight:800">+${item.cantidad} ${item.unit}</div>
         <div class="fi-price">${fmt(item.subtotal||0)}</div>
         <div class="fi-check ${match?'fi-ok':'fi-warn'}">${match?'✓':'?'}</div>
       </div>`;
@@ -850,18 +893,27 @@ function renderFacturaResult(data) {
 function aplicarFactura() {
   if (!facturaData) return;
   let actualizados = 0;
+
   facturaData.items.forEach(item => {
-    const n = item.nombre.toLowerCase();
-    const match = productos.find(p =>
-      p.nombre.toLowerCase().includes(n.split(' ')[0]) ||
-      n.includes(p.nombre.toLowerCase().split(' ')[0])
-    );
+    // Matching con prioridad: id_sistema > nombre_sistema > búsqueda
+    let match = null;
+    if (item.id_sistema != null) match = productos.find(p => p.id === item.id_sistema);
+    if (!match && item.nombre_sistema) match = productos.find(p => p.nombre.toLowerCase() === item.nombre_sistema.toLowerCase());
+    if (!match) {
+      const n = (item.nombre_factura || item.nombre || '').toLowerCase();
+      match = productos.find(p => {
+        const pn = p.nombre.toLowerCase();
+        const palabras = n.split(' ').filter(w => w.length > 3);
+        return palabras.some(w => pn.includes(w)) || pn.split(' ').some(w => w.length > 3 && n.includes(w));
+      });
+    }
     if (match) {
       match.stock += item.cantidad;
       if (item.precio_unitario) match.precioCosto = item.precio_unitario;
       actualizados++;
     }
   });
+
   HISTORIAL.unshift({
     id: Date.now(),
     fecha: facturaData.fecha || new Date().toLocaleDateString('es-AR'),
@@ -870,7 +922,11 @@ function aplicarFactura() {
     total: facturaData.total || 0,
     estado: 'recibido'
   });
-  toast(`✅ Stock actualizado: ${actualizados} productos ingresados`, 3000);
+
+  const noMatch = facturaData.items.length - actualizados;
+  let msg = `✅ Stock actualizado: ${actualizados} productos ingresados`;
+  if (noMatch > 0) msg += ` · ⚠️ ${noMatch} sin coincidencia — revisá manualmente`;
+  toast(msg, 4000);
   resetFactura();
   goTo('stock', document.querySelector('.nav-item'));
 }
@@ -951,8 +1007,222 @@ function exportStock() {
   toast('⬇️ Stock exportado como CSV');
 }
 
+// ── GOOGLE SHEETS INTEGRATION ─────────────────────────────────────────────────
+const GS_URL = 'https://script.google.com/macros/s/AKfycbyq9msvL5heL8jmyVhZNvf4xvZh1VBPl4RNCRQdBEcHbjLLTVUOrZB9Zi8FNKXyepOP/exec';
+let gsConectado = false;
+
+async function gsGet(params) {
+  try {
+    const url = GS_URL + '?' + new URLSearchParams(params);
+    const res = await fetch(url);
+    return await res.json();
+  } catch(e) {
+    console.warn('GS GET error:', e);
+    return null;
+  }
+}
+
+async function gsPost(body) {
+  try {
+    const res = await fetch(GS_URL, {
+      method: 'POST',
+      body: JSON.stringify(body)
+    });
+    return await res.json();
+  } catch(e) {
+    console.warn('GS POST error:', e);
+    return null;
+  }
+}
+
+// Inicializar stock en Google Sheets (primera vez)
+async function initGoogleSheets() {
+  showSyncBanner('🔄 Conectando con Google Sheets...');
+  try {
+    // Intentar leer datos existentes
+    const data = await gsGet({action: 'getStock'});
+    if (data && Array.isArray(data) && data.length > 1) {
+      // Hay datos en Sheets — cargarlos
+      const headers = data[0];
+      const rows = data.slice(1).filter(r => r[0] !== '' && r[0] !== null);
+      if (rows.length > 0) {
+        productos = rows.map(r => ({
+          id:         Number(r[0]),
+          cod:        String(r[1]),
+          nombre:     String(r[2]),
+          cat:        String(r[3]),
+          prov:       String(r[4]),
+          stock:      Number(r[5]),
+          minimo:     Number(r[6]),
+          precioVenta:Number(r[7]),
+          precioCosto:Number(r[8]),
+          unit:       String(r[9]),
+        }));
+        gsConectado = true;
+        showSyncBanner('✅ Conectado a Google Sheets — datos cargados', 'green');
+        renderStock();
+        return;
+      }
+    }
+    // No hay datos — inicializar con los productos base
+    const res = await gsPost({action: 'initStock', productos: PRODUCTOS_STOCK});
+    if (res && res.ok) {
+      gsConectado = true;
+      showSyncBanner('✅ Google Sheets inicializado con ' + PRODUCTOS_STOCK.length + ' productos', 'green');
+    } else {
+      throw new Error('No se pudo inicializar');
+    }
+  } catch(e) {
+    showSyncBanner('⚠️ Sin conexión a Sheets — modo local', 'amber');
+    gsConectado = false;
+  }
+  renderStock();
+}
+
+// Guardar cambio de stock en Sheets
+async function gsUpdateStock(id, nuevoStock) {
+  if (!gsConectado) return;
+  showSyncBanner('🔄 Guardando en Google Sheets...');
+  const res = await gsPost({action: 'updateStock', id, stock: nuevoStock});
+  if (res && res.ok) {
+    showSyncBanner('✅ Stock guardado en Google Sheets', 'green');
+  } else {
+    showSyncBanner('⚠️ No se pudo guardar en Sheets', 'amber');
+  }
+}
+
+// Guardar pedido en historial de Sheets
+async function gsAddPedido(pedidoData) {
+  if (!gsConectado) return;
+  await gsPost({action: 'addPedido', ...pedidoData});
+}
+
+// Sincronizar todo el stock a Sheets
+async function syncAllStock() {
+  showSyncBanner('🔄 Sincronizando todo el stock...');
+  const res = await gsPost({action: 'initStock', productos, forzar: true});
+  if (res && res.ok) {
+    showSyncBanner('✅ Stock sincronizado en Google Sheets', 'green');
+  }
+}
+
+// Banner de sincronización
+function showSyncBanner(msg, tipo='info') {
+  let banner = document.getElementById('sync-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'sync-banner';
+    banner.style.cssText = 'position:fixed;top:60px;right:20px;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;z-index:999;transition:all .3s;box-shadow:0 4px 12px rgba(0,0,0,.15)';
+    document.body.appendChild(banner);
+  }
+  const colors = {
+    green: {bg:'#E2EFDA', color:'#375623'},
+    amber: {bg:'#FFF2CC', color:'#7F6000'},
+    info:  {bg:'#EFF6FF', color:'#1D4ED8'},
+  };
+  const c = colors[tipo] || colors.info;
+  banner.style.background = c.bg;
+  banner.style.color = c.color;
+  banner.textContent = msg;
+  banner.style.opacity = '1';
+  if (tipo !== 'info') {
+    setTimeout(() => { banner.style.opacity = '0'; }, 3000);
+  }
+}
+
+// Override ajustarStock para guardar en Sheets
+const _ajustarStockOriginal = ajustarStock;
+window.ajustarStock = async function(id) {
+  const p = productos.find(x => x.id === id);
+  const v = prompt(`Stock actual de "${p.nombre}": ${p.stock} ${p.unit}\n\nIngresá el nuevo stock:`);
+  if (v !== null && !isNaN(v) && v >= 0) {
+    p.stock = parseInt(v);
+    renderStock();
+    toast(`✅ Stock de ${p.nombre} actualizado a ${v} ${p.unit}`);
+    await gsUpdateStock(id, parseInt(v));
+  }
+};
+
+// Override enviarPedidoWsp para guardar en Sheets
+const _enviarOriginal = enviarPedidoWsp;
+window.enviarPedidoWsp = async function() {
+  const items = Object.values(pedido);
+  if (!items.length) { toast('⚠️ El pedido está vacío'); return; }
+  const total = items.reduce((s,i) => s + i.precioCosto * i.qty, 0);
+  const lines = items.map(i => `• ${i.nombre}: ${i.qty} ${i.unit} — ${fmt(i.precioCosto * i.qty)}`).join('\n');
+  const prov = PROVEEDORES.find(p => p.nombre === selectedProv);
+  const msg = `📋 *Pedido Al Paso — ${selectedProv}*\n\n${lines}\n\n💰 *Total estimado: ${fmt(total)}*\n\n📅 ${new Date().toLocaleDateString('es-AR')}\nGracias!`;
+  const tel = prov?.tel || '';
+  window.open(`https://wa.me/54${tel}?text=${encodeURIComponent(msg)}`, '_blank');
+
+  const pedidoData = {
+    fecha: new Date().toLocaleDateString('es-AR'),
+    proveedor: selectedProv,
+    productos: items.length,
+    total,
+    estado: 'pendiente'
+  };
+  HISTORIAL.unshift({id: Date.now(), ...pedidoData});
+  await gsAddPedido(pedidoData);
+  toast('✅ Pedido enviado y guardado en Google Sheets');
+};
+
+// Override aplicarFactura para guardar stock en Sheets
+const _aplicarOriginal = aplicarFactura;
+window.aplicarFactura = async function() {
+  if (!facturaData) return;
+  let actualizados = 0;
+  const updates = [];
+  facturaData.items.forEach(item => {
+    const n = item.nombre.toLowerCase();
+    const match = productos.find(p =>
+      p.nombre.toLowerCase().includes(n.split(' ')[0]) ||
+      n.includes(p.nombre.toLowerCase().split(' ')[0])
+    );
+    if (match) {
+      match.stock += item.cantidad;
+      if (item.precio_unitario) match.precioCosto = item.precio_unitario;
+      updates.push({id: match.id, stock: match.stock});
+      actualizados++;
+    }
+  });
+  HISTORIAL.unshift({
+    id: Date.now(),
+    fecha: facturaData.fecha || new Date().toLocaleDateString('es-AR'),
+    prov: facturaData.proveedor || 'Proveedor',
+    productos: facturaData.items.length,
+    total: facturaData.total || 0,
+    estado: 'recibido'
+  });
+
+  // Guardar en Sheets
+  for (const u of updates) {
+    await gsUpdateStock(u.id, u.stock);
+  }
+  await gsAddPedido({
+    fecha: facturaData.fecha || new Date().toLocaleDateString('es-AR'),
+    proveedor: facturaData.proveedor,
+    productos: facturaData.items.length,
+    total: facturaData.total || 0,
+    estado: 'recibido'
+  });
+
+  toast(`✅ Stock actualizado: ${actualizados} productos — guardado en Google Sheets`, 3000);
+  resetFactura();
+  goTo('stock', document.querySelector('.nav-item'));
+};
+
+// Agregar botón sync en sidebar
+document.querySelector('.sb-bottom').innerHTML += `
+  <div class="nav-item" onclick="syncAllStock()" style="margin-top:4px">
+    <span class="nic">🔄</span> Sincronizar Sheets
+  </div>
+  <div style="padding:8px 12px;font-size:10px;color:rgba(255,255,255,.3);font-weight:600">
+    📊 Conectado a Google Sheets
+  </div>`;
+
 // ── INIT ──────────────────────────────────────────────────────────────────────
-renderStock();
+initGoogleSheets();
 </script>
 </body>
 </html>
