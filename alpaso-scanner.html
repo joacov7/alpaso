@@ -6,7 +6,7 @@
 <title>Al Paso — Lector de Stock</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
 <style>
 :root{
   --do:#C9A84C;--do2:#E8C96A;--do3:#A07830;
@@ -32,9 +32,9 @@ body{font-family:'Nunito',sans-serif;background:var(--g);min-height:100vh;color:
 .mode-btn.active .mb-desc{color:rgba(201,168,76,.6)}
 
 /* SCANNER */
-.scanner-wrap{position:relative;margin:0 16px;border-radius:16px;overflow:hidden;background:#000}
-#scanner-container{width:100%}
-#scanner-container video{width:100%;border-radius:16px}
+.scanner-wrap{position:relative;margin:0 16px;border-radius:16px;overflow:hidden;background:#000;min-height:200px}
+#scanner-container{width:100%;min-height:200px;display:flex;align-items:center;justify-content:center}
+#scanner-container video{width:100%;max-height:260px;object-fit:cover;border-radius:16px;display:block}
 .scan-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
 .scan-frame{width:200px;height:200px;position:relative}
 .scan-frame::before,.scan-frame::after{content:'';position:absolute;width:40px;height:40px;border-color:var(--do);border-style:solid}
@@ -317,36 +317,135 @@ function setModo(m) {
   if (productoActual) actualizarPreview();
 }
 
-// ══ SCANNER ══
+// ══ SCANNER CON ZXING (EAN-13, CODE-128, QR) ══════════════════════════════
+let codeReader = null;
+let scannerActivo = false;
+let selectedDeviceId = null;
+
 async function iniciarScanner() {
   try {
-    scanner = new Html5Qrcode('scanner-container');
-    await scanner.start(
-      { facingMode: 'environment' },
-      { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.5 },
-      onScanSuccess,
-      () => {} // ignore errors silently
-    );
-    scannerActivo = true;
-    $('scan-hint').textContent = '📷 Apuntá la cámara al código de barras';
+    // Usar BarcodeDetector nativo si está disponible (Chrome Android - más rápido)
+    if ('BarcodeDetector' in window) {
+      await iniciarScannerNativo();
+      return;
+    }
+    // Fallback: ZXing
+    await iniciarScannerZXing();
   } catch(e) {
+    console.warn('Scanner error:', e);
     $('scanner-wrap').style.display = 'none';
     $('scan-hint').textContent = '⚠️ Cámara no disponible — usá el campo manual';
-    console.warn('Scanner error:', e);
   }
 }
 
+// OPCIÓN A: BarcodeDetector nativo (Chrome en Android — muy rápido)
+async function iniciarScannerNativo() {
+  const detector = new BarcodeDetector({
+    formats: ['ean_13','ean_8','code_128','code_39','upc_a','upc_e','qr_code']
+  });
+
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: 'environment', width: {ideal:1280}, height: {ideal:720} }
+  });
+
+  const video = document.createElement('video');
+  video.srcObject = stream;
+  video.autoplay = true;
+  video.playsInline = true;
+  video.style.cssText = 'width:100%;border-radius:16px';
+  $('scanner-container').innerHTML = '';
+  $('scanner-container').appendChild(video);
+  scannerActivo = true;
+
+  $('scan-hint').textContent = '📷 Apuntá al código de barras';
+
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+
+  async function detectLoop() {
+    if (!scannerActivo) return;
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      canvas.width  = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
+      try {
+        const codes = await detector.detect(canvas);
+        if (codes.length > 0) {
+          const codigo = codes[0].rawValue;
+          stream.getTracks().forEach(t => t.stop());
+          scannerActivo = false;
+          onScanSuccess(codigo);
+          return;
+        }
+      } catch(e) {}
+    }
+    requestAnimationFrame(detectLoop);
+  }
+  video.addEventListener('play', detectLoop);
+}
+
+// OPCIÓN B: ZXing (fallback para Safari iOS y otros)
+async function iniciarScannerZXing() {
+  const hints = new Map();
+  const formats = [
+    ZXing.BarcodeFormat.EAN_13,
+    ZXing.BarcodeFormat.EAN_8,
+    ZXing.BarcodeFormat.CODE_128,
+    ZXing.BarcodeFormat.CODE_39,
+    ZXing.BarcodeFormat.UPC_A,
+    ZXing.BarcodeFormat.UPC_E,
+    ZXing.BarcodeFormat.QR_CODE,
+  ];
+  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
+  hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+
+  codeReader = new ZXing.BrowserMultiFormatReader(hints, {
+    delayBetweenScanAttempts: 150,
+    delayBetweenScanSuccess: 500,
+  });
+
+  const devices = await ZXing.BrowserCodeReader.listVideoInputDevices();
+  // Preferir cámara trasera
+  const backCam = devices.find(d =>
+    d.label.toLowerCase().includes('back') ||
+    d.label.toLowerCase().includes('rear') ||
+    d.label.toLowerCase().includes('trasera') ||
+    d.label.toLowerCase().includes('environment')
+  );
+  selectedDeviceId = backCam ? backCam.deviceId : (devices[devices.length - 1]?.deviceId);
+
+  $('scanner-container').innerHTML = '<video id="zxing-video" style="width:100%;border-radius:16px" autoplay playsinline muted></video>';
+
+  await codeReader.decodeFromVideoDevice(
+    selectedDeviceId,
+    'zxing-video',
+    (result, err) => {
+      if (result) {
+        detenerScanner();
+        onScanSuccess(result.getText());
+      }
+      // Ignorar errores de frame sin código
+    }
+  );
+  scannerActivo = true;
+  $('scan-hint').textContent = '📷 Apuntá al código de barras — mantené firme';
+}
+
 function detenerScanner() {
-  if (scanner && scannerActivo) {
-    scanner.stop().catch(() => {});
-    scannerActivo = false;
+  scannerActivo = false;
+  if (codeReader) {
+    codeReader.reset();
+    codeReader = null;
+  }
+  // Detener stream nativo si existe
+  const video = $('scanner-container')?.querySelector('video');
+  if (video?.srcObject) {
+    video.srcObject.getTracks().forEach(t => t.stop());
   }
 }
 
 function onScanSuccess(codigo) {
-  // Vibrar si está disponible
-  if (navigator.vibrate) navigator.vibrate(100);
-  detenerScanner();
+  if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
   $('scan-hint').textContent = '✅ Código leído: ' + codigo;
   buscarCodigo(codigo);
 }
@@ -453,10 +552,10 @@ function cancelarScan() {
   $('result-found').style.display    = 'none';
   $('result-notfound').style.display = 'none';
   $('manual-cod').value = '';
-  $('scan-hint').textContent = '📷 Apuntá la cámara al siguiente código';
-
+  $('scan-hint').textContent = '📷 Apuntá al siguiente código de barras';
   // Reiniciar scanner
-  if (!scannerActivo) iniciarScanner();
+  detenerScanner();
+  setTimeout(() => iniciarScanner(), 300);
 }
 
 // ══ NO ENCONTRADO ══
