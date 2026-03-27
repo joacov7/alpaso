@@ -13,6 +13,7 @@
 <meta property="og:description" content="Empanadas artesanales, carne al vacío y más. Pedí online con delivery gratis.">
 <meta property="og:url" content="https://mercadoalpaso.com.ar">
 <title>Al Paso — Mercado de Proximidad</title>
+<!-- v2.1 - listas, sugerencias, puntos -->
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' fill='%231A1A1A' rx='40'/><text y='125' x='50%' text-anchor='middle' font-size='100'>👣</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
@@ -105,7 +106,8 @@ body{font-family:'Nunito',sans-serif;background:var(--w);color:var(--n)}
 .price{font-size:13px;font-weight:900;color:var(--n)}
 .addbtn{width:26px;height:26px;background:var(--n);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--do);border:none;cursor:pointer;flex-shrink:0}
 /* CATALOGO */
-.cat-hdr{background:var(--n);padding:14px 18px;display:flex;align-items:center;gap:10px;border-bottom:2px solid var(--do)}
+.cat-hdr{background:var(--n);padding:14px 18px;display:flex;align-items:center;gap:10px;border-bottom:2px solid var(--do);width:100%}
+.cat-hdr h1{flex:1}
 .cat-hdr h1{font-family:'Bebas Neue';font-size:22px;color:var(--do);letter-spacing:2px}
 .back{font-size:20px;color:var(--do);cursor:pointer}
 .sinput-wrap{display:flex;align-items:center;gap:8px;margin:10px 14px;background:var(--g);border-radius:11px;padding:9px 12px}
@@ -399,11 +401,11 @@ function instalarPWA(){
     <div class="wm-box" style="max-height:85vh;overflow-y:auto;padding-bottom:24px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
         <div id="lista-detalle-titulo" style="font-family:'Playfair Display';font-size:18px;color:#fff;font-weight:700">Lista</div>
-        <button onclick="cerrarDetalleListа()" style="background:rgba(255,255,255,.08);border:none;color:#888;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px">✕</button>
+        <button onclick="cerrarDetalleLista()" style="background:rgba(255,255,255,.08);border:none;color:#888;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px">✕</button>
       </div>
       <div id="lista-detalle-items" style="margin-bottom:14px"></div>
       <button onclick="agregarListaAlCarrito()" style="width:100%;background:var(--n);color:var(--do);border:none;border-radius:12px;padding:13px;font-family:'Nunito';font-size:14px;font-weight:800;cursor:pointer;margin-bottom:8px">🛒 Agregar todo al carrito</button>
-      <button onclick="cerrarDetalleListа()" style="width:100%;background:rgba(255,255,255,.06);color:rgba(255,255,255,.5);border:none;border-radius:12px;padding:11px;font-family:'Nunito';font-size:12px;font-weight:700;cursor:pointer">Cerrar</button>
+      <button onclick="cerrarDetalleLista()" style="width:100%;background:rgba(255,255,255,.06);color:rgba(255,255,255,.5);border:none;border-radius:12px;padding:11px;font-family:'Nunito';font-size:12px;font-weight:700;cursor:pointer">Cerrar</button>
     </div>
   </div>
 
@@ -1389,7 +1391,7 @@ async function abrirListas() {
 function cerrarListas() { $('modal-listas').classList.remove('show'); }
 
 // Cerrar detalle (fix typo en el nombre de la función del HTML)
-function cerrarDetalleListа() { $('modal-lista-detalle').classList.remove('show'); }
+function cerrarDetalleLista() { $('modal-lista-detalle').classList.remove('show'); }
 
 // Cargar listas desde Supabase (o localStorage si no hay cliente)
 async function cargarListas() {
