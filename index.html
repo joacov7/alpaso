@@ -970,8 +970,8 @@ async function renderSugerencias() {
     </div>`;
   }
 
-  $('sg-title').style.display='none';
-  $('sugerencias-items').innerHTML=html;
+  if ($('sg-title')) $('sg-title').style.display = 'none';
+  $('sugerencias-items').innerHTML = html;
 }
 
 // ══════════════════════════════════════════════════════
