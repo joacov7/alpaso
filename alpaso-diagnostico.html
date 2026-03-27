@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Al Paso — Diagnóstico Supabase</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--do:#C9A84C;--n:#1A1A1A;--w:#fff;--g:#F8F5EE;--g2:#EDE0C0;--gr:#27AE60;--r:#C0392B;--am:#F39C12}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Nunito',sans-serif;background:var(--g);padding:24px;color:var(--n)}
+h1{font-size:20px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.sub{font-size:12px;color:#888;margin-bottom:24px}
+.card{background:var(--w);border-radius:14px;padding:18px;margin-bottom:14px;border:1px solid var(--g2)}
+.card-title{font-size:13px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.test-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--g2);font-size:12px}
+.test-row:last-child{border:none}
+.test-name{font-weight:700;color:var(--n)}
+.test-detail{font-size:11px;color:#888;margin-top:2px}
+.status{font-size:11px;font-weight:800;padding:3px 10px;border-radius:20px;display:flex;align-items:center;gap:4px}
+.s-ok{background:#DCFCE7;color:#166534}
+.s-err{background:#FEE2E2;color:var(--r)}
+.s-warn{background:#FEF9C3;color:#854D0E}
+.s-load{background:#F3F4F6;color:#6B7280}
+.spinner{width:12px;height:12px;border:2px solid #D1D5DB;border-top-color:#6B7280;border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.btn{background:var(--n);color:var(--do);border:none;border-radius:10px;padding:10px 20px;font-family:'Nunito';font-size:13px;font-weight:800;cursor:pointer;margin-right:8px;margin-bottom:8px}
+.btn-gr{background:var(--gr);color:#fff}
+.btn-r{background:var(--r);color:#fff}
+.result-box{background:#F8F8F8;border-radius:8px;padding:10px;font-size:11px;font-family:monospace;color:#333;margin-top:8px;max-height:120px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;display:none}
+.summary{background:var(--n);color:var(--do);border-radius:14px;padding:18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.sum-label{font-size:11px;color:rgba(201,168,76,.6);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.sum-val{font-size:28px;font-weight:900}
+.progress{height:6px;background:rgba(255,255,255,.1);border-radius:3px;margin-top:12px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--do),#E8C96A);border-radius:3px;width:0%;transition:width .5s}
+</style>
+</head>
+<body>
+
+<h1>🔍 Diagnóstico — Al Paso</h1>
+<p class="sub">Verificación completa de Supabase · mercadoalpaso.com.ar</p>
+
+<!-- SUMMARY -->
+<div class="summary">
+  <div>
+    <div class="sum-label">Estado general</div>
+    <div class="sum-val" id="sum-estado">Esperando...</div>
+  </div>
+  <div style="text-align:right">
+    <div class="sum-label">Tests pasados</div>
+    <div class="sum-val" id="sum-count">0 / 0</div>
+  </div>
+  <div style="position:absolute;bottom:18px;left:18px;right:18px" class="progress">
+    <div class="progress-fill" id="progress-fill"></div>
+  </div>
+</div>
+
+<!-- ACTIONS -->
+<div style="margin-bottom:16px">
+  <button class="btn" onclick="runAll()">▶ Ejecutar todos los tests</button>
+  <button class="btn btn-gr" onclick="crearTablasFaltantes()">🔧 Crear tablas faltantes</button>
+  <button class="btn btn-r" onclick="if(confirm('¿Reinsertar datos iniciales?'))insertarDatos()">♻️ Reinsertar datos</button>
+</div>
+
+<!-- TEST: CONEXIÓN -->
+<div class="card">
+  <div class="card-title">🌐 Conexión</div>
+  <div class="test-row">
+    <div><div class="test-name">Supabase URL</div><div class="test-detail">tlsyakbhceolczjzadpc.supabase.co</div></div>
+    <div class="status s-load" id="t-url"><div class="spinner"></div> Pendiente</div>
+  </div>
+  <div class="test-row">
+    <div><div class="test-name">API Key válida</div><div class="test-detail">sb_publishable_...</div></div>
+    <div class="status s-load" id="t-key"><div class="spinner"></div> Pendiente</div>
+  </div>
+</div>
+
+<!-- TEST: TABLAS -->
+<div class="card">
+  <div class="card-title">🗄️ Tablas</div>
+  <div id="tablas-tests">
+    <div class="test-row" id="tr-productos">
+      <div><div class="test-name">productos</div><div class="test-detail" id="td-productos">—</div></div>
+      <div class="status s-load" id="ts-productos"><div class="spinner"></div> Pendiente</div>
+    </div>
+    <div class="test-row" id="tr-clientes">
+      <div><div class="test-name">clientes</div><div class="test-detail" id="td-clientes">—</div></div>
+      <div class="status s-load" id="ts-clientes"><div class="spinner"></div> Pendiente</div>
+    </div>
+    <div class="test-row" id="tr-pedidos">
+      <div><div class="test-name">pedidos</div><div class="test-detail" id="td-pedidos">—</div></div>
+      <div class="status s-load" id="ts-pedidos"><div class="spinner"></div> Pendiente</div>
+    </div>
+    <div class="test-row" id="tr-pedido_items">
+      <div><div class="test-name">pedido_items</div><div class="test-detail" id="td-pedido_items">—</div></div>
+      <div class="status s-load" id="ts-pedido_items"><div class="spinner"></div> Pendiente</div>
+    </div>
+    <div class="test-row" id="tr-proveedores">
+      <div><div class="test-name">proveedores</div><div class="test-detail" id="td-proveedores">—</div></div>
+      <div class="status s-load" id="ts-proveedores"><div class="spinner"></div> Pendiente</div>
+    </div>
+    <div class="test-row" id="tr-configuracion">
+      <div><div class="test-name">configuracion</div><div class="test-detail" id="td-configuracion">—</div></div>
+      <div class="status s-load" id="ts-configuracion"><div class="spinner"></div> Pendiente</div>
+    </div>
+    <div class="test-row" id="tr-compras_proveedor">
+      <div><div class="test-name">compras_proveedor</div><div class="test-detail" id="td-compras_proveedor">—</div></div>
+      <div class="status s-load" id="ts-compras_proveedor"><div class="spinner"></div> Pendiente</div>
+    </div>
+    <div class="test-row" id="tr-canjes">
+      <div><div class="test-name">canjes</div><div class="test-detail" id="td-canjes">—</div></div>
+      <div class="status s-load" id="ts-canjes"><div class="spinner"></div> Pendiente</div>
+    </div>
+  </div>
+</div>
+
+<!-- TEST: DATOS -->
+<div class="card">
+  <div class="card-title">📊 Datos</div>
+  <div class="test-row">
+    <div><div class="test-name">Productos cargados</div><div class="test-detail" id="td-count-prod">—</div></div>
+    <div class="status s-load" id="ts-count-prod"><div class="spinner"></div> Pendiente</div>
+  </div>
+  <div class="test-row">
+    <div><div class="test-name">Configuración cargada</div><div class="test-detail" id="td-count-cfg">—</div></div>
+    <div class="status s-load" id="ts-count-cfg"><div class="spinner"></div> Pendiente</div>
+  </div>
+  <div class="test-row">
+    <div><div class="test-name">Proveedores cargados</div><div class="test-detail" id="td-count-prov">—</div></div>
+    <div class="status s-load" id="ts-count-prov"><div class="spinner"></div> Pendiente</div>
+  </div>
+</div>
+
+<!-- TEST: PERMISOS -->
+<div class="card">
+  <div class="card-title">🔐 Permisos (RLS)</div>
+  <div class="test-row">
+    <div><div class="test-name">Lectura pública de productos</div><div class="test-detail">Sin autenticación</div></div>
+    <div class="status s-load" id="ts-read"><div class="spinner"></div> Pendiente</div>
+  </div>
+  <div class="test-row">
+    <div><div class="test-name">Inserción de pedidos</div><div class="test-detail">Sin autenticación</div></div>
+    <div class="status s-load" id="ts-insert"><div class="spinner"></div> Pendiente</div>
+  </div>
+  <div class="test-row">
+    <div><div class="test-name">Inserción de clientes</div><div class="test-detail">Sin autenticación</div></div>
+    <div class="status s-load" id="ts-client-insert"><div class="spinner"></div> Pendiente</div>
+  </div>
+</div>
+
+<!-- RESULTADO DETALLADO -->
+<div class="card">
+  <div class="card-title">📋 Log detallado</div>
+  <div id="log" style="font-size:11px;font-family:monospace;color:#555;line-height:1.8;max-height:300px;overflow-y:auto"></div>
+</div>
+
+<script>
+const SB_URL = 'https://tlsyakbhceolczjzadpc.supabase.co';
+const SB_KEY = 'sb_publishable_pdCPXmVa47gh3rSURJsgaQ_axezH12Z';
+const { createClient } = supabase;
+const db = createClient(SB_URL, SB_KEY);
+
+const TABLAS = ['productos','clientes','pedidos','pedido_items','proveedores','configuracion','compras_proveedor','canjes'];
+let passed = 0, total = 0;
+
+const $ = id => document.getElementById(id);
+
+function log(msg, tipo='info') {
+  const colors = {ok:'#166534', err:'#991B1B', warn:'#854D0E', info:'#555'};
+  const icons  = {ok:'✅', err:'❌', warn:'⚠️', info:'ℹ️'};
+  $('log').innerHTML += `<div style="color:${colors[tipo]}">${icons[tipo]} ${msg}</div>`;
+  $('log').scrollTop = $('log').scrollHeight;
+}
+
+function setStatus(id, tipo, texto) {
+  const el = $(id);
+  if (!el) return;
+  const classes = {ok:'s-ok', err:'s-err', warn:'s-warn', load:'s-load'};
+  el.className = 'status ' + (classes[tipo] || 's-load');
+  el.innerHTML = texto;
+}
+
+function updateSummary() {
+  const pct = total > 0 ? (passed/total)*100 : 0;
+  $('sum-count').textContent = `${passed} / ${total}`;
+  $('progress-fill').style.width = pct + '%';
+  if (pct === 100) {
+    $('sum-estado').textContent = '✅ Todo OK';
+    $('sum-estado').style.color = '#6EE7B7';
+  } else if (pct >= 50) {
+    $('sum-estado').textContent = '⚠️ Parcial';
+    $('sum-estado').style.color = '#FDE68A';
+  } else {
+    $('sum-estado').textContent = '❌ Con errores';
+    $('sum-estado').style.color = '#FCA5A5';
+  }
+}
+
+async function runAll() {
+  passed = 0; total = 0;
+  $('log').innerHTML = '';
+  log('Iniciando diagnóstico completo...');
+
+  // 1. Conexión
+  total++;
+  try {
+    const { data, error } = await db.from('configuracion').select('clave').limit(1);
+    if (error) throw error;
+    setStatus('t-url', 'ok', '✅ Conectado');
+    setStatus('t-key', 'ok', '✅ Válida');
+    passed++; passed++;  total++;
+    log('Conexión a Supabase: OK', 'ok');
+  } catch(e) {
+    setStatus('t-url', 'err', '❌ Error');
+    setStatus('t-key', 'err', '❌ Inválida');
+    log('Error de conexión: ' + e.message, 'err');
+    updateSummary();
+    return;
+  }
+
+  // 2. Tablas
+  for (const tabla of TABLAS) {
+    total++;
+    try {
+      const { data, error, count } = await db.from(tabla).select('*', {count:'exact',head:true});
+      if (error) throw error;
+      setStatus('ts-' + tabla, 'ok', '✅ Existe');
+      $('td-' + tabla).textContent = (count || 0) + ' registros';
+      passed++;
+      log(`Tabla "${tabla}": OK (${count||0} registros)`, 'ok');
+    } catch(e) {
+      setStatus('ts-' + tabla, 'err', '❌ No existe');
+      $('td-' + tabla).textContent = e.message;
+      log(`Tabla "${tabla}": ERROR — ${e.message}`, 'err');
+    }
+  }
+
+  // 3. Datos
+  total += 3;
+  try {
+    const { count: cp } = await db.from('productos').select('*',{count:'exact',head:true});
+    if (cp > 0) {
+      setStatus('ts-count-prod', 'ok', '✅ ' + cp + ' productos');
+      $('td-count-prod').textContent = cp + ' productos en la base';
+      passed++;
+      log(`Productos: ${cp} registros`, 'ok');
+    } else {
+      setStatus('ts-count-prod', 'warn', '⚠️ Vacía');
+      $('td-count-prod').textContent = 'Tabla vacía — ejecutá el SQL de setup';
+      log('Tabla productos vacía — necesitás ejecutar el SQL de setup', 'warn');
+    }
+  } catch(e) { setStatus('ts-count-prod', 'err', '❌ Error'); }
+
+  try {
+    const { count: cc } = await db.from('configuracion').select('*',{count:'exact',head:true});
+    if (cc > 0) {
+      setStatus('ts-count-cfg', 'ok', '✅ ' + cc + ' claves');
+      $('td-count-cfg').textContent = cc + ' parámetros de configuración';
+      passed++;
+      log(`Configuración: ${cc} parámetros`, 'ok');
+    } else {
+      setStatus('ts-count-cfg', 'warn', '⚠️ Vacía');
+      $('td-count-cfg').textContent = 'Sin configuración — ejecutá el SQL';
+      log('Configuración vacía', 'warn');
+    }
+  } catch(e) { setStatus('ts-count-cfg', 'err', '❌ Error'); }
+
+  try {
+    const { count: cv } = await db.from('proveedores').select('*',{count:'exact',head:true});
+    if (cv > 0) {
+      setStatus('ts-count-prov', 'ok', '✅ ' + cv + ' proveedores');
+      $('td-count-prov').textContent = cv + ' proveedores cargados';
+      passed++;
+      log(`Proveedores: ${cv} registros`, 'ok');
+    } else {
+      setStatus('ts-count-prov', 'warn', '⚠️ Vacía');
+      log('Tabla proveedores vacía', 'warn');
+    }
+  } catch(e) { setStatus('ts-count-prov', 'err', '❌ Error'); }
+
+  // 4. Permisos RLS
+  total += 3;
+
+  // Lectura pública
+  try {
+    const { data, error } = await db.from('productos').select('id,nombre').limit(1);
+    if (error) throw error;
+    setStatus('ts-read', 'ok', '✅ OK');
+    passed++;
+    log('Lectura pública de productos: OK', 'ok');
+  } catch(e) {
+    setStatus('ts-read', 'err', '❌ Bloqueada');
+    log('Lectura bloqueada: ' + e.message, 'err');
+  }
+
+  // Inserción pedido de prueba
+  try {
+    const { data, error } = await db.from('pedidos').insert({
+      numero: 'TEST-' + Date.now(),
+      cliente_nombre: 'Test Diagnóstico',
+      entrega: 'Test',
+      pago_tipo: 'efectivo',
+      subtotal: 0, total: 0,
+      puntos_ganados: 0, canje_puntos: 0,
+      estado: 'test'
+    }).select().single();
+    if (error) throw error;
+    // Limpiar el test
+    await db.from('pedidos').delete().eq('id', data.id);
+    setStatus('ts-insert', 'ok', '✅ OK');
+    passed++;
+    log('Inserción de pedidos: OK', 'ok');
+  } catch(e) {
+    setStatus('ts-insert', 'err', '❌ Bloqueada');
+    log('Inserción bloqueada: ' + e.message, 'err');
+  }
+
+  // Inserción cliente de prueba
+  try {
+    const testTel = 'TEST-' + Date.now();
+    const { data, error } = await db.from('clientes').insert({
+      nombre: 'Test', telefono: testTel, puntos: 0
+    }).select().single();
+    if (error) throw error;
+    await db.from('clientes').delete().eq('id', data.id);
+    setStatus('ts-client-insert', 'ok', '✅ OK');
+    passed++;
+    log('Inserción de clientes: OK', 'ok');
+  } catch(e) {
+    setStatus('ts-client-insert', 'err', '❌ Bloqueada');
+    log('Inserción clientes bloqueada: ' + e.message, 'err');
+  }
+
+  updateSummary();
+  log('--- Diagnóstico completado ---');
+}
+
+async function crearTablasFaltantes() {
+  alert('Para crear tablas faltantes:\n\n1. Abrí supabase.com\n2. Tu proyecto → SQL Editor\n3. Ejecutá el archivo "alpaso-supabase-setup.sql" que te compartí\n\nEso crea todas las tablas y carga los datos iniciales.');
+}
+
+async function insertarDatos() {
+  log('Insertando datos iniciales...');
+  // Configuración mínima
+  const configs = [
+    {clave:'delivery_minimo', valor:'10000'},
+    {clave:'delivery_costo',  valor:'1500'},
+    {clave:'recargo_credito3',valor:'20'},
+    {clave:'puntos_x_peso',   valor:'100'},
+    {clave:'puntos_canje',    valor:'500'},
+    {clave:'descuento_canje', valor:'500'},
+    {clave:'descuento_cumple',valor:'10'},
+    {clave:'descuento_bv',    valor:'10'},
+  ];
+  for (const c of configs) {
+    await db.from('configuracion').upsert(c, {onConflict:'clave'});
+  }
+  log('Configuración insertada', 'ok');
+  runAll();
+}
+
+// Auto-run al cargar
+window.onload = () => runAll();
+</script>
+</body>
+</html>
