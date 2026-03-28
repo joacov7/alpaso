@@ -474,242 +474,185 @@ select.form-input{cursor:pointer}
 
     <!-- ══ CONFIGURACIÓN ══ -->
     <div class="screen" id="s-config">
-      <div class="sec-title">◆ WhatsApp — Números por rol</div>
-      <p style="font-size:12px;color:rgba(255,255,255,.3);margin-bottom:18px;line-height:1.6">Cuando entra un pedido, el sistema envía automáticamente un mensaje a cada rol con solo la información que necesita. Configurá los números acá.</p>
 
-      <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:28px" id="roles-config">
-
-        <!-- ROL: COCINA -->
-        <div class="rol-card active-rol" id="rol-cocina">
-          <div class="rol-top">
-            <div class="rol-name">👨‍🍳 Cocina / Producción
-              <span class="pill pill-green">Activo</span>
-            </div>
-            <label class="toggle"><input type="checkbox" checked onchange="toggleRol('cocina',this)"><div class="toggle-slider"></div></label>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label>Número WhatsApp</label><input class="form-input" id="tel-cocina" placeholder="54911XXXXXXXX"></div>
-            <div class="form-group"><label>Nombre del rol</label><input class="form-input" placeholder="Ej: Cocina · María" value="Cocina"></div>
-          </div>
-          <div class="form-group" style="margin-top:8px"><label>Categorías que recibe</label>
-            <div class="rol-cats" style="margin-top:4px">
-              <span class="rol-cat">🫓 Empanadas</span>
-              <span class="rol-cat">🍱 Comidas listas</span>
-              <span class="rol-cat">🍞 Panadería</span>
-            </div>
-          </div>
-          <div class="form-group" style="margin-top:10px"><label>Preview del mensaje que recibe</label>
-            <div class="wsp-preview" style="margin-top:6px">
-🔔 *NUEVO PEDIDO — Al Paso*
-📋 #AP-2848
-
-👨‍🍳 *Tu parte:*
-• Empanadas Carne x6 — 2 cajas
-• Empanadas Humita x6 — 1 caja
-
-📦 Entrega: 🛵 Delivery (30-45 min)
-⏰ Urgente — cliente esperando
-            </div>
-          </div>
-        </div>
-
-        <!-- ROL: CARNICERO -->
-        <div class="rol-card active-rol" id="rol-carnicero">
-          <div class="rol-top">
-            <div class="rol-name">🥩 Carnicero
-              <span class="pill pill-green">Activo</span>
-            </div>
-            <label class="toggle"><input type="checkbox" checked onchange="toggleRol('carnicero',this)"><div class="toggle-slider"></div></label>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label>Número WhatsApp</label><input class="form-input" id="tel-carnicero" placeholder="54911XXXXXXXX"></div>
-            <div class="form-group"><label>Nombre del rol</label><input class="form-input" placeholder="Ej: Carnicero · Pedro" value="Carnicero"></div>
-          </div>
-          <div class="form-group" style="margin-top:8px"><label>Categorías que recibe</label>
-            <div class="rol-cats" style="margin-top:4px">
-              <span class="rol-cat">🥩 Carnicería</span>
-              <span class="rol-cat">🥩 Carne al Vacío</span>
-              <span class="rol-cat">🍗 Pollo</span>
-            </div>
-          </div>
-          <div class="form-group" style="margin-top:10px"><label>Preview del mensaje</label>
-            <div class="wsp-preview" style="margin-top:6px">
-🔔 *NUEVO PEDIDO — Al Paso*
-📋 #AP-2847
-
-🥩 *Tu parte:*
-• Vacío al Vacío Premium ~1kg
-• Nalga al Vacío Premium ~1kg
-• Cuadril al Vacío Premium ~1kg
-
-📦 Entrega: 🏪 Retiro (15 min)
-⏰ URGENTE — viene a buscar en 15 min
-            </div>
-          </div>
-        </div>
-
-        <!-- ROL: CAJA -->
-        <div class="rol-card active-rol" id="rol-caja">
-          <div class="rol-top">
-            <div class="rol-name">💰 Caja
-              <span class="pill pill-green">Activo</span>
-            </div>
-            <label class="toggle"><input type="checkbox" checked onchange="toggleRol('caja',this)"><div class="toggle-slider"></div></label>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label>Número WhatsApp</label><input class="form-input" id="tel-caja" placeholder="54911XXXXXXXX"></div>
-            <div class="form-group"><label>Nombre del rol</label><input class="form-input" placeholder="Ej: Caja · Ana" value="Caja"></div>
-          </div>
-          <div class="form-group" style="margin-top:10px"><label>Preview del mensaje (recibe el pedido completo)</label>
-            <div class="wsp-preview" style="margin-top:6px">
-🔔 *NUEVO PEDIDO — Al Paso*
-📋 #AP-2847 · 🏪 Retiro
-
-💰 *Resumen financiero:*
-Subtotal: $59.900
-Canje puntos: -$500
-TOTAL: $59.400
-
-💳 Pago: Crédito 3 cuotas (+20%)
-Cada cuota: $23.760
-
-👤 Cliente: Martín G. · 🥈 Silver (312 pts)
-➕ Gana: +599 puntos esta compra
-            </div>
-          </div>
-        </div>
-
+      <!-- TABS DE CONFIGURACIÓN -->
+      <div style="display:flex;gap:6px;margin-bottom:20px;background:rgba(255,255,255,.04);border-radius:12px;padding:5px">
+        <button id="cfg-tab-1" onclick="cfgTab(1)" style="flex:1;padding:8px;border:none;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:var(--do);color:var(--n)">🏪 Local</button>
+        <button id="cfg-tab-2" onclick="cfgTab(2)" style="flex:1;padding:8px;border:none;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:transparent;color:rgba(255,255,255,.4)">📲 WhatsApp</button>
+        <button id="cfg-tab-3" onclick="cfgTab(3)" style="flex:1;padding:8px;border:none;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:transparent;color:rgba(255,255,255,.4)">⚙️ General</button>
       </div>
 
-      <div style="display:flex;gap:10px;margin-bottom:28px">
-        <button class="btn btn-gold" onclick="guardarConfig()">💾 Guardar configuración</button>
-        <button class="btn btn-ghost" onclick="probarAvisos()">📲 Probar avisos</button>
-      </div>
-
-      <!-- OTRAS CONFIGURACIONES -->
-      <div class="sec-title">◆ Identidad y tema visual</div>
-      <div class="config-grid" style="margin-bottom:18px">
-        <div class="config-card">
-          <div class="cc-hdr"><h3>🏪 Datos del local</h3></div>
-          <div class="cc-body">
-            <div class="form-group"><label>Nombre del local</label><input class="form-input" id="cfg-local-nombre" placeholder="Ej: Al Paso"></div>
-            <div class="form-group"><label>Subtítulo (bajo el logo)</label><input class="form-input" id="cfg-local-subtitulo" placeholder="Ej: Tu mercado de proximidad"></div>
-            <div class="form-group"><label>Descripción (para Google)</label><input class="form-input" id="cfg-local-descripcion" placeholder="Descripción del local..."></div>
-            <div class="form-group"><label>Emoji / ícono del logo</label><input class="form-input" id="cfg-local-logo" placeholder="Ej: 👣 🛒 🏪"></div>
-            <div class="form-group"><label>Dirección</label><input class="form-input" id="cfg-local-direccion" placeholder="Ej: Av. Corrientes 1234"></div>
-            <div class="form-group"><label>WhatsApp del local</label><input class="form-input" id="cfg-local-wsp" placeholder="5491100000000"></div>
+      <!-- TAB 1: LOCAL Y TEMA -->
+      <div id="cfg-panel-1">
+        <div class="sec-title">◆ Identidad visual</div>
+        <div class="config-grid" style="margin-bottom:16px">
+          <div class="config-card">
+            <div class="cc-hdr"><h3>🏪 Datos del local</h3></div>
+            <div class="cc-body">
+              <div class="form-group"><label>Nombre del local</label><input class="form-input" id="cfg-local-nombre" placeholder="Ej: Al Paso"></div>
+              <div class="form-group"><label>Subtítulo</label><input class="form-input" id="cfg-local-subtitulo" placeholder="Tu mercado de proximidad"></div>
+              <div class="form-group"><label>Emoji del logo</label><input class="form-input" id="cfg-local-logo" placeholder="👣"></div>
+              <div class="form-group"><label>Dirección</label><input class="form-input" id="cfg-local-direccion" placeholder="Av. Corrientes 1234"></div>
+              <div class="form-group"><label>WhatsApp del local</label><input class="form-input" id="cfg-local-wsp" placeholder="5491100000000"></div>
+              <div class="form-group"><label>Descripción (Google)</label><input class="form-input" id="cfg-local-descripcion" placeholder="Descripción..."></div>
+            </div>
           </div>
-        </div>
-        <div class="config-card">
-          <div class="cc-hdr"><h3>🎨 Colores del tema</h3></div>
-          <div class="cc-body">
-            <div class="form-group">
-              <label>Color principal (header, nav)</label>
-              <div style="display:flex;gap:8px;align-items:center">
-                <input class="form-input" id="cfg-color-header" placeholder="#1A1A1A" value="#1A1A1A" style="flex:1">
-                <input type="color" id="cfg-color-header-picker" value="#1A1A1A" style="width:40px;height:38px;border:none;border-radius:8px;cursor:pointer;padding:2px" onchange="document.getElementById('cfg-color-header').value=this.value">
+          <div class="config-card">
+            <div class="cc-hdr"><h3>🎨 Colores</h3></div>
+            <div class="cc-body">
+              <div class="form-group">
+                <label>Color header / nav</label>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <input class="form-input" id="cfg-color-header" placeholder="#1A1A1A" value="#1A1A1A" style="flex:1" oninput="actualizarPreview()">
+                  <input type="color" value="#1A1A1A" style="width:40px;height:38px;border:none;border-radius:8px;cursor:pointer;padding:2px" onchange="document.getElementById('cfg-color-header').value=this.value;actualizarPreview()">
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Color de acento</label>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <input class="form-input" id="cfg-color-acento" placeholder="#C9A84C" value="#C9A84C" style="flex:1" oninput="actualizarPreview()">
+                  <input type="color" value="#C9A84C" style="width:40px;height:38px;border:none;border-radius:8px;cursor:pointer;padding:2px" onchange="document.getElementById('cfg-color-acento').value=this.value;actualizarPreview()">
+                </div>
+              </div>
+              <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:10px;margin-top:8px">
+                <div style="font-size:10px;color:rgba(255,255,255,.3);margin-bottom:8px;font-weight:700;letter-spacing:1px">PREVIEW</div>
+                <div id="tema-preview" style="background:#1A1A1A;border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:8px">
+                  <div id="prev-logo" style="width:28px;height:28px;background:#C9A84C;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px">👣</div>
+                  <div id="prev-nombre" style="font-family:'Bebas Neue';font-size:18px;color:#C9A84C;letter-spacing:2px">AL PASO</div>
+                </div>
               </div>
             </div>
-            <div class="form-group">
-              <label>Color de acento (dorado, botones)</label>
-              <div style="display:flex;gap:8px;align-items:center">
-                <input class="form-input" id="cfg-color-acento" placeholder="#C9A84C" value="#C9A84C" style="flex:1">
-                <input type="color" id="cfg-color-acento-picker" value="#C9A84C" style="width:40px;height:38px;border:none;border-radius:8px;cursor:pointer;padding:2px" onchange="document.getElementById('cfg-color-acento').value=this.value">
-              </div>
+          </div>
+          <div class="config-card">
+            <div class="cc-hdr"><h3>📢 Banner bienvenida</h3></div>
+            <div class="cc-body">
+              <div class="form-group"><label>Título</label><input class="form-input" id="cfg-banner-titulo" placeholder="10% off en tu primera compra"></div>
+              <div class="form-group"><label>Texto</label><textarea class="form-input" id="cfg-banner-texto" rows="3" placeholder="Para clientes del local anterior..." style="resize:none"></textarea></div>
             </div>
-            <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:10px;margin-top:4px">
-              <div style="font-size:10px;color:rgba(255,255,255,.3);margin-bottom:8px;font-weight:700">PREVIEW</div>
-              <div id="tema-preview" style="background:#1A1A1A;border-radius:8px;padding:10px;display:flex;align-items:center;gap:8px">
-                <div id="prev-logo" style="width:28px;height:28px;background:#C9A84C;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px">👣</div>
-                <div id="prev-nombre" style="font-family:'Bebas Neue';font-size:18px;color:#C9A84C;letter-spacing:2px">AL PASO</div>
+          </div>
+          <div class="config-card">
+            <div class="cc-hdr"><h3>📂 Emojis de categorías</h3></div>
+            <div class="cc-body">
+              <div class="form-row">
+                <div class="form-group"><label>Empanadas</label><input class="form-input" id="cfg-cat-empanadas" placeholder="🫓"></div>
+                <div class="form-group"><label>Carne al Vacío</label><input class="form-input" id="cfg-cat-carne" placeholder="🥩"></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Carnicería</label><input class="form-input" id="cfg-cat-carniceria" placeholder="🥩"></div>
+                <div class="form-group"><label>Fiambres</label><input class="form-input" id="cfg-cat-fiambres" placeholder="🧀"></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Lácteos</label><input class="form-input" id="cfg-cat-lacteos" placeholder="🥛"></div>
+                <div class="form-group"><label>Bebidas</label><input class="form-input" id="cfg-cat-bebidas" placeholder="🥤"></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Almacén</label><input class="form-input" id="cfg-cat-almacen" placeholder="🌾"></div>
+                <div class="form-group"><label>Panadería</label><input class="form-input" id="cfg-cat-panaderia" placeholder="🍞"></div>
               </div>
             </div>
           </div>
         </div>
-        <div class="config-card">
-          <div class="cc-hdr"><h3>📢 Banner de bienvenida</h3></div>
-          <div class="cc-body">
-            <div class="form-group"><label>Título del banner</label><input class="form-input" id="cfg-banner-titulo" placeholder="Ej: 10% off en tu primera compra"></div>
-            <div class="form-group"><label>Texto del banner</label><textarea class="form-input" id="cfg-banner-texto" rows="3" placeholder="Ej: Para clientes del local anterior..." style="resize:none"></textarea></div>
-            <div class="toggle-row" style="margin-top:4px">
-              <span class="toggle-label">Mostrar banner de bienvenida</span>
-              <label class="toggle"><input type="checkbox" id="cfg-banner-activo" checked><div class="toggle-slider"></div></label>
-            </div>
-          </div>
-        </div>
-        <div class="config-card">
-          <div class="cc-hdr"><h3>📂 Emojis de categorías</h3></div>
-          <div class="cc-body">
-            <div class="form-row">
-              <div class="form-group"><label>Empanadas</label><input class="form-input" id="cfg-cat-empanadas" placeholder="🫓"></div>
-              <div class="form-group"><label>Carne al Vacío</label><input class="form-input" id="cfg-cat-carne" placeholder="🥩"></div>
-            </div>
-            <div class="form-row">
-              <div class="form-group"><label>Carnicería</label><input class="form-input" id="cfg-cat-carniceria" placeholder="🥩"></div>
-              <div class="form-group"><label>Fiambres</label><input class="form-input" id="cfg-cat-fiambres" placeholder="🧀"></div>
-            </div>
-            <div class="form-row">
-              <div class="form-group"><label>Lácteos</label><input class="form-input" id="cfg-cat-lacteos" placeholder="🥛"></div>
-              <div class="form-group"><label>Bebidas</label><input class="form-input" id="cfg-cat-bebidas" placeholder="🥤"></div>
-            </div>
-            <div class="form-row">
-              <div class="form-group"><label>Almacén</label><input class="form-input" id="cfg-cat-almacen" placeholder="🌾"></div>
-              <div class="form-group"><label>Panadería</label><input class="form-input" id="cfg-cat-panaderia" placeholder="🍞"></div>
-            </div>
-          </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-gold" onclick="guardarConfig()">💾 Guardar cambios</button>
+          <button class="btn btn-ghost" onclick="actualizarPreview()">👁 Preview</button>
         </div>
       </div>
 
-      <button class="btn btn-gold" style="margin-bottom:20px;padding:11px 22px" onclick="previsualizarTema()">👁 Previsualizar tema</button>
+      <!-- TAB 2: WHATSAPP -->
+      <div id="cfg-panel-2" style="display:none">
+        <div class="sec-title">◆ WhatsApp — Números por rol</div>
+        <p style="font-size:12px;color:rgba(255,255,255,.3);margin-bottom:18px;line-height:1.6">Cuando entra un pedido, el sistema avisa automáticamente a cada rol con solo la info que necesita.</p>
+        <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px" id="roles-config">
 
-      <div class="sec-title">◆ Configuración general</div>
-      <div class="config-grid">
-        <div class="config-card">
-          <div class="cc-hdr"><h3>🛵 Delivery</h3></div>
-          <div class="cc-body">
-            <div class="form-group"><label>Monto mínimo delivery gratis ($)</label><input class="form-input" id="cfg-delivery-min" value="10000" type="number"></div>
-            <div class="form-group"><label>Costo de envío si no alcanza ($)</label><input class="form-input" id="cfg-delivery-costo" value="1500" type="number"></div>
-            <div class="form-group"><label>Tiempo estimado delivery (min)</label><input class="form-input" value="30-45"></div>
-            <div class="form-group"><label>Tiempo estimado retiro (min)</label><input class="form-input" value="15"></div>
-          </div>
-        </div>
-        <div class="config-card">
-          <div class="cc-hdr"><h3>💳 Pagos y recargos</h3></div>
-          <div class="cc-body">
-            <div class="toggle-row"><span class="toggle-label">💵 Efectivo / Débito / Transferencia</span><label class="toggle"><input type="checkbox" checked><div class="toggle-slider"></div></label></div>
-            <div class="toggle-row"><span class="toggle-label">💳 Crédito 1 cuota (sin recargo)</span><label class="toggle"><input type="checkbox" checked><div class="toggle-slider"></div></label></div>
-            <div class="form-row" style="margin-top:4px">
-              <div class="form-group"><label>Recargo 3 cuotas (%)</label><input class="form-input" value="20" type="number"></div>
-              <div class="toggle-row" style="padding-top:18px"><label class="toggle"><input type="checkbox" checked><div class="toggle-slider"></div></label></div>
-            </div>
-          </div>
-        </div>
-        <div class="config-card">
-          <div class="cc-hdr"><h3>💛 Fidelidad</h3></div>
-          <div class="cc-body">
-            <div class="form-group"><label>Puntos por cada $100 gastados</label><input class="form-input" id="cfg-puntos" value="1" type="number"></div>
-            <div class="form-group"><label>Puntos para canjear premio</label><input class="form-input" id="cfg-puntos-canje" value="500" type="number"></div>
-            <div class="form-group"><label>Valor del premio ($)</label><input class="form-input" value="500" type="number"></div>
-            <div class="form-group"><label>Descuento cumpleaños (%)</label><input class="form-input" id="cfg-cumple" value="10" type="number"></div>
-          </div>
-        </div>
-        <div class="config-card">
-          <div class="cc-hdr"><h3>🏪 Horarios</h3></div>
-          <div class="cc-body">
-            <div class="form-row">
-              <div class="form-group"><label>Apertura (Lun–Vie)</label><input class="form-input" value="08:00" type="time"></div>
-              <div class="form-group"><label>Cierre (Lun–Vie)</label><input class="form-input" value="21:00" type="time"></div>
+          <div class="rol-card active-rol" id="rol-cocina">
+            <div class="rol-top">
+              <div class="rol-name">👨‍🍳 Cocina <span class="pill pill-green">Activo</span></div>
+              <label class="toggle"><input type="checkbox" checked onchange="toggleRol('cocina',this)"><div class="toggle-slider"></div></label>
             </div>
             <div class="form-row">
-              <div class="form-group"><label>Apertura (Sáb)</label><input class="form-input" value="08:00" type="time"></div>
-              <div class="form-group"><label>Cierre (Sáb)</label><input class="form-input" value="14:00" type="time"></div>
+              <div class="form-group"><label>Número WhatsApp</label><input class="form-input" id="tel-cocina" placeholder="54911XXXXXXXX"></div>
+              <div class="form-group"><label>Nombre</label><input class="form-input" placeholder="Cocina" value="Cocina"></div>
             </div>
-            <div class="toggle-row"><span class="toggle-label">Abierto domingos</span><label class="toggle"><input type="checkbox"><div class="toggle-slider"></div></label></div>
+            <div class="form-group" style="margin-top:8px"><label>Recibe</label>
+              <div class="rol-cats" style="margin-top:4px"><span class="rol-cat">🫓 Empanadas</span><span class="rol-cat">🍞 Panadería</span></div>
+            </div>
           </div>
+
+          <div class="rol-card active-rol" id="rol-carnicero">
+            <div class="rol-top">
+              <div class="rol-name">🥩 Carnicero <span class="pill pill-green">Activo</span></div>
+              <label class="toggle"><input type="checkbox" checked onchange="toggleRol('carnicero',this)"><div class="toggle-slider"></div></label>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Número WhatsApp</label><input class="form-input" id="tel-carnicero" placeholder="54911XXXXXXXX"></div>
+              <div class="form-group"><label>Nombre</label><input class="form-input" placeholder="Carnicero" value="Carnicero"></div>
+            </div>
+            <div class="form-group" style="margin-top:8px"><label>Recibe</label>
+              <div class="rol-cats" style="margin-top:4px"><span class="rol-cat">🥩 Carnicería</span><span class="rol-cat">🥩 Carne al Vacío</span></div>
+            </div>
+          </div>
+
+          <div class="rol-card active-rol" id="rol-caja">
+            <div class="rol-top">
+              <div class="rol-name">💰 Caja <span class="pill pill-green">Activo</span></div>
+              <label class="toggle"><input type="checkbox" checked onchange="toggleRol('caja',this)"><div class="toggle-slider"></div></label>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Número WhatsApp</label><input class="form-input" id="tel-caja" placeholder="54911XXXXXXXX"></div>
+              <div class="form-group"><label>Nombre</label><input class="form-input" placeholder="Caja" value="Caja"></div>
+            </div>
+          </div>
+
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-gold" onclick="guardarConfig()">💾 Guardar</button>
+          <button class="btn btn-ghost" onclick="probarAvisos()">📲 Probar avisos</button>
         </div>
       </div>
 
-      <button class="btn btn-gold" style="padding:12px 24px" onclick="guardarConfig()">💾 Guardar todos los cambios</button>
+      <!-- TAB 3: GENERAL -->
+      <div id="cfg-panel-3" style="display:none">
+        <div class="sec-title">◆ Configuración general</div>
+        <div class="config-grid">
+          <div class="config-card">
+            <div class="cc-hdr"><h3>🛵 Delivery</h3></div>
+            <div class="cc-body">
+              <div class="form-group"><label>Mínimo para delivery gratis ($)</label><input class="form-input" id="cfg-delivery-min" value="10000" type="number"></div>
+              <div class="form-group"><label>Costo envío si no alcanza ($)</label><input class="form-input" id="cfg-delivery-costo" value="1500" type="number"></div>
+            </div>
+          </div>
+          <div class="config-card">
+            <div class="cc-hdr"><h3>💳 Pagos</h3></div>
+            <div class="cc-body">
+              <div class="form-group"><label>Recargo crédito 3 cuotas (%)</label><input class="form-input" id="cfg-recargo" value="20" type="number"></div>
+            </div>
+          </div>
+          <div class="config-card">
+            <div class="cc-hdr"><h3>💛 Fidelidad</h3></div>
+            <div class="cc-body">
+              <div class="form-group"><label>Puntos por cada $100</label><input class="form-input" id="cfg-puntos" value="1" type="number"></div>
+              <div class="form-group"><label>Puntos para canjear</label><input class="form-input" id="cfg-puntos-canje" value="500" type="number"></div>
+              <div class="form-group"><label>Descuento cumpleaños (%)</label><input class="form-input" id="cfg-cumple" value="10" type="number"></div>
+              <div class="form-group"><label>Descuento bienvenida (%)</label><input class="form-input" id="cfg-bv" value="10" type="number"></div>
+            </div>
+          </div>
+          <div class="config-card">
+            <div class="cc-hdr"><h3>🏪 Horarios</h3></div>
+            <div class="cc-body">
+              <div class="form-row">
+                <div class="form-group"><label>Apertura Lun-Vie</label><input class="form-input" value="08:00" type="time"></div>
+                <div class="form-group"><label>Cierre Lun-Vie</label><input class="form-input" value="21:00" type="time"></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Apertura Sáb</label><input class="form-input" value="08:00" type="time"></div>
+                <div class="form-group"><label>Cierre Sáb</label><input class="form-input" value="14:00" type="time"></div>
+              </div>
+              <div class="toggle-row"><span class="toggle-label">Abierto domingos</span><label class="toggle"><input type="checkbox"><div class="toggle-slider"></div></label></div>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-gold" style="padding:12px 24px;margin-top:4px" onclick="guardarConfig()">💾 Guardar todos los cambios</button>
+      </div>
     </div>
 
   </div>
@@ -1165,7 +1108,17 @@ async function probarAvisos() {
   toast(ok>0 ? `📲 ${ok} mensajes de prueba abiertos` : '⚠️ Configurá los números primero');
 }
 
-function toggleRol(rol, cb) {
+function cfgTab(n) {
+  [1,2,3].forEach(i => {
+    const panel = $('cfg-panel-'+i);
+    const tab   = $('cfg-tab-'+i);
+    if (panel) panel.style.display = i===n ? 'block' : 'none';
+    if (tab) {
+      tab.style.background = i===n ? 'var(--do)' : 'transparent';
+      tab.style.color      = i===n ? 'var(--n)'  : 'rgba(255,255,255,.4)';
+    }
+  });
+}
   const card = $('rol-'+rol);
   if (card) card.classList.toggle('active-rol', cb.checked);
   toast(cb.checked ? `✅ Rol ${rol} activado` : `⚠️ Rol ${rol} desactivado`);
