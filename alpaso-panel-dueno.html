@@ -833,6 +833,8 @@ async function guardarConfig() {
     }
     localStorage.setItem('alpaso_cfg',JSON.stringify(vals));
     toast('💾 Configuración guardada');
+    // Reload para confirmar lo guardado
+    await loadConfig();
   } catch(e) { toast('⚠️ Error: '+e.message); }
 }
 

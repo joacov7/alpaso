@@ -1120,20 +1120,51 @@ let puntosAplicados = false;
 let activeCat = 'Todos', orderN = 0, canjeTimer = null;
 
 // COMBOS estáticos (basados en análisis de ventas)
-const COMBOS = [
-  {id:'alm', nombre:'Combo Almuerzo Rápido', e:'⚡',
-   desc:['Empanadas x6 (a elección)','Gaseosa Coca Cola 2L'],
-   normal:8900, combo:7500, ahorro:1400, pct:'15% off', ids:[40,22]},
-  {id:'sem', nombre:'Combo Semana', e:'📅',
-   desc:['Vacío al Vacío ~1kg','Nalga al Vacío ~1kg','Cuadril al Vacío ~1kg'],
-   normal:70500, combo:59900, ahorro:10600, pct:'15% off', ids:[50,51,52]},
-  {id:'des', nombre:'Combo Desayuno', e:'☕',
-   desc:['Leche Cremigal x2','Pan / Galleta','Cremoso La Varense 300g'],
-   normal:10334, combo:8800, ahorro:1534, pct:'15% off', ids:[25,25,14,16]},
-  {id:'vie', nombre:'Combo Viernes', e:'🎉',
-   desc:['Empanadas Mixtas x12','Gaseosa 2L x2','Vacío al Vacío ~1kg'],
-   normal:33700, combo:28500, ahorro:5200, pct:'15% off', ids:[44,22,22,50]},
+// Combos: usan cats/keywords en vez de IDs hardcodeados
+// Se resuelven dinámicamente contra PRODS real
+const COMBOS_DEF2 = [
+  {id:'alm', nombre:'Combo Almuerzo Rápido', e:'⚡', pct:'15% off',
+   slots:[{cat:'Empanadas',qty:1},{cat:'Bebidas',kw:'Coca',qty:1}]},
+  {id:'sem', nombre:'Combo Semana', e:'📅', pct:'15% off',
+   slots:[{cat:'Carne al Vacío',qty:1},{cat:'Carne al Vacío',qty:1},{cat:'Carne al Vacío',qty:1}]},
+  {id:'des', nombre:'Combo Desayuno', e:'☕', pct:'15% off',
+   slots:[{cat:'Lácteos',kw:'Leche',qty:1},{cat:'Panadería',qty:1},{cat:'Fiambres',qty:1}]},
+  {id:'vie', nombre:'Combo Viernes', e:'🎉', pct:'15% off',
+   slots:[{cat:'Empanadas',qty:2},{cat:'Bebidas',qty:1},{cat:'Carne al Vacío',qty:1}]},
 ];
+
+// Resolver combos contra PRODS dinámicos
+function resolverCombos() {
+  return COMBOS_DEF2.map(def => {
+    const items = [];
+    const desc  = [];
+    let normal  = 0;
+
+    // Para cada slot, buscar el primer producto de esa cat (y keyword si aplica)
+    for (const slot of def.slots) {
+      let prod = PRODS.find(p =>
+        p.cat === slot.cat && p.activo !== false &&
+        (!slot.kw || p.nombre.toLowerCase().includes(slot.kw.toLowerCase()))
+      );
+      if (!prod) prod = PRODS.find(p => p.cat === slot.cat && p.activo !== false);
+      if (!prod) continue;
+      for (let i=0; i<slot.qty; i++) {
+        items.push(prod);
+        normal += prod.precio_venta;
+      }
+      desc.push(slot.qty > 1 ? `${prod.nombre} x${slot.qty}` : prod.nombre);
+    }
+
+    if (!items.length) return null;
+    const combo  = Math.round(normal * 0.85);
+    const ahorro = normal - combo;
+    return { ...def, items, desc, normal, combo, ahorro, ids: items.map(p=>p.id) };
+  }).filter(Boolean);
+}
+
+// COMBOS se recalcula cada vez que PRODS cambia
+let COMBOS = [];
+function refreshCombos() { COMBOS = resolverCombos(); }
 
 const CATS = ['Todos','Empanadas','Carne al Vacío','Carnicería','Fiambres','Lácteos','Panadería','Bebidas','Almacén','Limpieza'];
 const CE = {'Todos':'🏪','Empanadas':'🫓','Carne al Vacío':'🥩','Carnicería':'🥩','Fiambres':'🧀','Lácteos':'🥛','Panadería':'🍞','Bebidas':'🥤','Almacén':'🌾','Limpieza':'🧹'};
@@ -1233,6 +1264,7 @@ async function loadData() {
 
     if (prodsRes.error) throw prodsRes.error;
     PRODS = prodsRes.data || [];
+    refreshCombos();
 
     if (cfgRes.data) cfgRes.data.forEach(c => CONFIG[c.clave] = c.valor);
     applyTheme();
@@ -1271,6 +1303,7 @@ async function loadData() {
     console.warn('Supabase error:', e);
     syncBar('⚠️ Sin conexión — modo local', 'err');
     PRODS = PRODS_FALLBACK;
+    refreshCombos();
     SABORES_ACTIVOS = SABORES;
     return false;
   }
@@ -1791,24 +1824,33 @@ function abrirModalPeso(prodId) {
 
 
 // ── TEMA DE COLORES DINÁMICO ─────────────────────────────────────────────
+function lighten(hex, amt) {
+  try {
+    let c = parseInt((hex||'#000').replace('#',''), 16);
+    let r = Math.min(255, (c>>16)+amt), g = Math.min(255, ((c>>8)&0xff)+amt), b = Math.min(255, (c&0xff)+amt);
+    return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+  } catch(e) { return hex; }
+}
+
 function applyTheme() {
-  const root = document.documentElement.style;
   const brown = CONFIG.color_brown || '#3D2008';
   const gold  = CONFIG.color_gold  || '#D4911A';
 
-  // Derivar variantes oscuras/claras automáticamente
-  function lighten(hex, amt) {
-    let c = parseInt(hex.slice(1), 16);
-    let r = Math.min(255, (c>>16)+amt), g = Math.min(255, ((c>>8)&0xff)+amt), b = Math.min(255, (c&0xff)+amt);
-    return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+  // Inyectar como <style> para pisar el :root con máxima prioridad
+  let styleEl = document.getElementById('theme-override');
+  if (!styleEl) {
+    styleEl = document.createElement('style');
+    styleEl.id = 'theme-override';
+    document.head.appendChild(styleEl);
   }
-
-  root.setProperty('--brown',  brown);
-  root.setProperty('--brown2', lighten(brown, 30));
-  root.setProperty('--brown3', lighten(brown, 70));
-  root.setProperty('--gold',   gold);
-  root.setProperty('--gold2',  lighten(gold, 30));
-  root.setProperty('--gold3',  lighten(gold, 60));
+  styleEl.textContent = `:root {
+    --brown:  ${brown} !important;
+    --brown2: ${lighten(brown, 30)} !important;
+    --brown3: ${lighten(brown, 70)} !important;
+    --gold:   ${gold} !important;
+    --gold2:  ${lighten(gold, 30)} !important;
+    --gold3:  ${lighten(gold, 60)} !important;
+  }`;
 }
 
 function renderHome() {
