@@ -1689,36 +1689,36 @@ let saboresQty = {}; // {id: cantidad}
 // HORARIO DE ATENCIÓN
 // ══════════════════════════════════════════════════════
 function estaAbierto() {
-  // Override manual del dueño
+  // Si el dueño cerró manualmente, respetar eso
   if (CONFIG.acepta_pedidos === 'false') return false;
 
+  // Si no hay horarios configurados en Supabase → asumir abierto
+  // (evita que el default cierre el local sin que el dueño lo sepa)
+  const sinHorarios = !CONFIG.h_lv_desde && !CONFIG.h_sab_desde;
+  if (sinHorarios) return true;
+
   const ahora = new Date();
-  const dia   = ahora.getDay(); // 0=dom, 1=lun...6=sab
+  const dia   = ahora.getDay();
   const hhmm  = ahora.getHours() * 60 + ahora.getMinutes();
+  const toMin = str => { if (!str) return null; const [h,m] = str.split(':').map(Number); return h*60+m; };
 
-  const toMin = str => {
-    if (!str) return null;
-    const [h,m] = str.split(':').map(Number);
-    return h*60+m;
-  };
-
-  if (dia >= 1 && dia <= 5) { // Lun-Vie
-    const desde = toMin(CONFIG.h_lv_desde || CONFIG.horario_lun_vier_desde || '08:00');
-    const hasta = toMin(CONFIG.h_lv_hasta || CONFIG.horario_lun_vier_hasta || '21:00');
+  if (dia >= 1 && dia <= 5) {
+    const desde = toMin(CONFIG.h_lv_desde || '08:00');
+    const hasta = toMin(CONFIG.h_lv_hasta || '21:00');
     return hhmm >= desde && hhmm < hasta;
   }
-  if (dia === 6) { // Sábado
-    const desde = toMin(CONFIG.h_sab_desde || CONFIG.horario_sab_desde || '08:00');
-    const hasta = toMin(CONFIG.h_sab_hasta || CONFIG.horario_sab_hasta || '14:00');
+  if (dia === 6) {
+    const desde = toMin(CONFIG.h_sab_desde || '08:00');
+    const hasta = toMin(CONFIG.h_sab_hasta || '21:00');
     return hhmm >= desde && hhmm < hasta;
   }
-  if (dia === 0) { // Domingo
-    if ((CONFIG.horario_dom_abierto || 'false') === 'false') return false;
-    const desde = toMin(CONFIG.h_dom_desde || CONFIG.horario_dom_desde || '09:00');
-    const hasta = toMin(CONFIG.h_dom_hasta || CONFIG.horario_dom_hasta || '13:00');
+  if (dia === 0) {
+    if (!CONFIG.h_dom_desde) return true; // sin config domingo → abierto
+    const desde = toMin(CONFIG.h_dom_desde);
+    const hasta = toMin(CONFIG.h_dom_hasta || '21:00');
     return hhmm >= desde && hhmm < hasta;
   }
-  return false;
+  return true;
 }
 
 function mostrarBannerCierre() {
@@ -2592,18 +2592,18 @@ async function init() {
   updateBadges();
 
   // Si no tiene cliente, mostrar welcome después de 1 seg
-  if (!clienteActual) {
+  if (!clienteActual && CONFIG.bv_activa !== 'false') {
     setTimeout(() => showWelcome(), 1000);
   } else {
     renderFid();
     actualizarUserBtn();
     // Solo mostrar banner si el descuento está activo globalmente y el cliente no lo usó
+    // Banner bienvenida: solo si está globalmente activo Y el cliente no lo usó
     const bvGlobalOn = CONFIG.bv_activa !== 'false';
     if (bvGlobalOn && bvActiva && !bvUsada) {
       $('wb').style.display = 'block';
       const pct = CONFIG.descuento_bv || '10';
       if ($('wb-btn')) $('wb-btn').textContent = `✓ ${pct}% off — primera compra`;
-      if ($('wb-title')) $('wb-title').textContent = `${pct}% off en tu primera compra`;
     } else {
       $('wb').style.display = 'none';
     }
