@@ -55,7 +55,7 @@ body{font-family:'Nunito',sans-serif;background:#F5F5F5;color:#1A1A1A}
 .badge{position:absolute;top:-2px;right:2px;background:var(--r);color:#fff;font-size:8px;font-weight:800;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;border:2px solid #fff}
 
 /* HEADER */
-.hdr{background:var(--brown);padding:max(env(safe-area-inset-top),14px) 16px 14px;position:relative;overflow:hidden;background-size:cover;background-position:center}
+.hdr{background-color:var(--brown);background-image:url('https://tlsyakbhceolczjzadpc.supabase.co/storage/v1/object/public/productos/alpasoinicio.png') !important;background-size:cover !important;background-position:center !important;padding:max(env(safe-area-inset-top),14px) 16px 14px;position:relative;overflow:hidden}
 .hdr-overlay{position:absolute;inset:0;background:linear-gradient(to bottom, rgba(0,0,0,.55) 0%, rgba(0,0,0,.3) 100%);z-index:0}
 .hdr-top,.greet{position:relative;z-index:1}
 .hdr::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,.2)}
@@ -566,7 +566,7 @@ function instalarPWA(){
   <div class="screen active" id="s-home">
     <div class="scroll-area">
       <div class="hdr" id="app-hdr">
-        <div class="hdr-overlay" id="hdr-overlay" style="display:none"></div>
+        <div class="hdr-overlay" id="hdr-overlay" style="display:block"></div>
         <div class="hdr-bot"></div>
         <div class="hdr-top">
           <div class="logo-area">
@@ -1278,19 +1278,10 @@ function buildNav(cid, active) {
 // ══════════════════════════════════════════════════════
 async function loadData() {
   try {
-    syncBar('🔄 Conectando a mercadoalpaso.com.ar...', 'load');
+    syncBar('🔄 Conectando...', 'load');
 
-    // Cargar productos, config, sabores y banners en paralelo
-    const [prodsRes, cfgRes] = await Promise.all([
-      db.from('productos').select('*').eq('activo', true).order('orden').order('id'),
-      db.from('configuracion').select('*'),
-    ]);
-
-    // Tablas opcionales — no rompen si no existen
-    let saboresRes = {data:[]};
-    let bannersRes = {data:[]};
-    try { saboresRes = await db.from('sabores_empanada').select('*').eq('activo', true).order('orden'); } catch(e) {}
-    try { bannersRes = await db.from('banners').select('*').eq('activo', true).order('orden'); } catch(e) {}
+    const prodsRes = await db.from('productos').select('*').eq('activo', true).order('nombre');
+    const cfgRes   = await db.from('configuracion').select('*');
 
     if (prodsRes.error) throw prodsRes.error;
     PRODS = prodsRes.data || [];
@@ -1299,39 +1290,22 @@ async function loadData() {
     if (cfgRes.data) cfgRes.data.forEach(c => CONFIG[c.clave] = c.valor);
     applyTheme();
 
-    // Sabores desde tabla dedicada (si existe)
-    if (saboresRes.data?.length) {
-      SABORES_ACTIVOS = saboresRes.data.map(s => {
-        const prod = PRODS.find(p => p.id === s.producto_id);
-        return {
-          id:     s.producto_id,
-          nombre: s.nombre,
-          emoji:  s.emoji || '🫓',
-          precio: prod?.precio_venta || 0,
-        };
-      });
-    } else {
-      // Fallback: usar empanadas de PRODS
-      SABORES_ACTIVOS = PRODS
-        .filter(p => p.cat === 'Empanadas')
-        .map(p => ({id: p.id, nombre: p.nombre.replace('Empanadas ','').replace(' x6',''), emoji:'🫓', precio: p.precio_venta}));
-      if (!SABORES_ACTIVOS.length) SABORES_ACTIVOS = SABORES; // fallback hardcoded
-    }
+    // Sabores: usar empanadas de PRODS directamente
+    SABORES_ACTIVOS = PRODS
+      .filter(p => p.cat === 'Empanadas')
+      .map(p => ({
+        id:     p.id,
+        nombre: p.nombre.replace('Empanadas ','').replace(' x6','').replace(' x4',''),
+        emoji:  '🫓',
+        precio: p.precio_venta
+      }));
+    if (!SABORES_ACTIVOS.length) SABORES_ACTIVOS = SABORES;
 
-    // Banners activos
-    if (bannersRes.data?.length) {
-      const hoy = new Date().toISOString().split('T')[0];
-      BANNERS_ACTIVOS = bannersRes.data.filter(b =>
-        (!b.fecha_desde || b.fecha_desde <= hoy) &&
-        (!b.fecha_hasta || b.fecha_hasta >= hoy)
-      );
-    }
-
-    syncBar('✅ Conectado a mercadoalpaso.com.ar', 'ok');
+    syncBar('✅ Conectado', 'ok');
     return true;
   } catch(e) {
-    console.warn('Supabase error:', e);
-    syncBar('⚠️ Sin conexión — modo local', 'err');
+    console.warn('Error:', e.message);
+    syncBar('⚠️ Modo local', 'err');
     PRODS = PRODS_FALLBACK;
     refreshCombos();
     SABORES_ACTIVOS = SABORES;
