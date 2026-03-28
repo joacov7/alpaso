@@ -1546,11 +1546,6 @@ async function loadHistorial() {
       <div class="histpts">+${p.puntos_ganados||0} 👣</div>
     </div>`).join('') + '</div>';
 }
-        <p>${new Date(p.created_at).toLocaleDateString('es-AR')} · ${fmt(p.total)}</p>
-      </div>
-      <div class="histpts">+${p.puntos_ganados} pts</div>
-    </div>`).join('');
-}
 
 function generarCodigo() {
   const cod = 'AP-' + Math.floor(100000+Math.random()*900000);
