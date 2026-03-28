@@ -198,6 +198,12 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
       </div>
     </div>
     <div class="fg">
+      <label>Logo — URL de imagen (reemplaza el emoji)</label>
+      <input id="c-logo-url" placeholder="https://... (logo cuadrado, ej 100x100px)" oninput="previewImg('c-logo-url','prev-logo')">
+      <div class="fg-hint">Si cargás una imagen acá, reemplaza el emoji del logo. Recomendado: imagen cuadrada, fondo transparente.</div>
+      <img id="prev-logo" class="preview-img" style="height:60px;width:60px;object-fit:cover;border-radius:10px">
+    </div>
+    <div class="fg">
       <label>Subtítulo (debajo del nombre)</label>
       <input id="c-subtitulo" placeholder="Tu mercado de proximidad">
     </div>
@@ -206,6 +212,11 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
   <!-- BLOQUE EMPANADAS -->
   <div class="card">
     <div class="card-title">🫓 Bloque Empanadas</div>
+    <div class="fg">
+      <label>Foto de la oferta (reemplaza el emoji 🫓)</label>
+      <input id="c-b1-foto" placeholder="https://... (foto de empanadas, ej 200x180px)" oninput="previewImg('c-b1-foto','prev-b1')">
+      <img id="prev-b1" class="preview-img" style="height:80px;width:100px;object-fit:cover;border-radius:12px">
+    </div>
     <div class="fg"><label>Tag / etiqueta</label><input id="c-b1-tag" placeholder="🔥 OFERTA DEL DÍA"></div>
     <div class="fg"><label>Título (HTML permitido para saltos de línea)</label><input id="c-b1-titulo" placeholder="4 empanadas&lt;br&gt;+ bebida"></div>
     <div class="fg"><label>Precio destacado</label><input id="c-b1-precio" placeholder="$7.500"></div>
@@ -443,6 +454,8 @@ const CFG_MAP = {
   'bloque_carnes_foto':   'c-b2-foto',
   'bloque_carnes_titulo': 'c-b2-titulo',
   'bloque_carnes_sub':    'c-b2-sub',
+  'local_logo_url':       'c-logo-url',
+  'b1_foto':              'c-b1-foto',
   'banner_titulo':        'c-wb-titulo',
   'banner_texto':         'c-wb-texto',
   // Operaciones
@@ -501,6 +514,8 @@ async function loadConfig() {
     // Preview imágenes
     if (configCargado.header_foto)        previewImg('c-header-foto','prev-header');
     if (configCargado.bloque_carnes_foto) previewImg('c-b2-foto','prev-b2');
+    if (configCargado.local_logo_url)     previewImg('c-logo-url','prev-logo');
+    if (configCargado.b1_foto)            previewImg('c-b1-foto','prev-b1');
 
     // Preview cierre
     actualizarPreviewCierre();
@@ -511,7 +526,7 @@ async function loadConfig() {
 async function guardarSeccion(seccion) {
   // Determinar qué claves guardar según la sección
   const clavesPorSeccion = {
-    visual: ['header_foto','local_nombre','local_logo_emoji','local_subtitulo','b1_tag','b1_titulo','b1_precio','bloque_carnes_foto','bloque_carnes_titulo','bloque_carnes_sub','banner_titulo','banner_texto'],
+    visual: ['header_foto','local_nombre','local_logo_emoji','local_logo_url','local_subtitulo','b1_foto','b1_tag','b1_titulo','b1_precio','bloque_carnes_foto','bloque_carnes_titulo','bloque_carnes_sub','banner_titulo','banner_texto'],
     operaciones: ['mensaje_cierre','h_lv_desde','h_lv_hasta','h_sab_desde','h_sab_hasta','h_dom_desde','h_dom_hasta','t_del_min','t_del_max','t_ret_min','t_ret_max','delivery_minimo','delivery_costo','recargo_credito3','mp_link','mp_alias','local_wsp','tel_cocina','empanadas_por_caja','acepta_pedidos'],
     fidelidad: ['descuento_bv','bv_activa','puntos_x_peso','puntos_canje','puntos_val','descuento_cumple'],
   };
