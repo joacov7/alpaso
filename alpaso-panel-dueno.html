@@ -372,51 +372,195 @@ tr:last-child td{border:none}
 
       <!-- TAB OPERACIONES -->
       <div class="cfg-pane" id="ct-ops">
+
+        <!-- ESTADO DEL LOCAL — control rápido arriba -->
+        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:16px;margin-bottom:20px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <div>
+              <div style="font-size:14px;font-weight:800;color:#fff">Estado del local</div>
+              <div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:2px">Controlá si el local acepta pedidos ahora mismo</div>
+            </div>
+            <label class="toggle" style="transform:scale(1.4)"><input type="checkbox" id="tog-acepta-pedidos" checked onchange="toggleAceptaPedidos(this)"><div class="toggle-sl"></div></label>
+          </div>
+          <div class="fg"><label>Mensaje cuando está cerrado</label><input id="c-mensaje-cierre" placeholder="Estamos cerrados. Volvemos mañana a las 8:00hs 🕗"></div>
+        </div>
+
         <div class="cfg-grid">
+
+          <!-- HORARIOS -->
+          <div class="cfg-card">
+            <div class="cfg-card-hdr">🕐 Horarios de atención</div>
+            <div class="cfg-card-body">
+              <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Lunes a Viernes</div>
+              <div class="form-row">
+                <div class="fg"><label>Apertura</label><input id="c-h-lv-desde" type="time" value="08:00"></div>
+                <div class="fg"><label>Cierre</label><input id="c-h-lv-hasta" type="time" value="21:00"></div>
+              </div>
+              <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 8px">Sábado</div>
+              <div class="form-row">
+                <div class="fg"><label>Apertura</label><input id="c-h-sab-desde" type="time" value="08:00"></div>
+                <div class="fg"><label>Cierre</label><input id="c-h-sab-hasta" type="time" value="14:00"></div>
+              </div>
+              <div class="toggle-row" style="margin-top:10px">
+                <span class="toggle-lbl">Abierto domingos</span>
+                <label class="toggle"><input type="checkbox" id="tog-dom" onchange="toggleDomingo(this)"><div class="toggle-sl"></div></label>
+              </div>
+              <div id="horario-dom-wrap" style="display:none;margin-top:8px">
+                <div class="form-row">
+                  <div class="fg"><label>Apertura Dom</label><input id="c-h-dom-desde" type="time" value="09:00"></div>
+                  <div class="fg"><label>Cierre Dom</label><input id="c-h-dom-hasta" type="time" value="13:00"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TIEMPOS DE ENTREGA -->
+          <div class="cfg-card">
+            <div class="cfg-card-hdr">⏱ Tiempos de entrega</div>
+            <div class="cfg-card-body">
+              <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Delivery</div>
+              <div class="form-row">
+                <div class="fg"><label>Mín (min)</label><input id="c-t-del-min" type="number" value="30" min="5" max="120"></div>
+                <div class="fg"><label>Máx (min)</label><input id="c-t-del-max" type="number" value="45" min="5" max="120"></div>
+              </div>
+              <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 8px">Retiro en local</div>
+              <div class="form-row">
+                <div class="fg"><label>Mín (min)</label><input id="c-t-ret-min" type="number" value="10" min="5" max="60"></div>
+                <div class="fg"><label>Máx (min)</label><input id="c-t-ret-max" type="number" value="15" min="5" max="60"></div>
+              </div>
+              <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:10px;margin-top:10px;font-size:11px;color:rgba(255,255,255,.4);line-height:1.5">
+                El cliente ve: <strong style="color:rgba(255,255,255,.7)">Delivery 30-45 min · Retiro 10-15 min</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- DELIVERY -->
           <div class="cfg-card">
             <div class="cfg-card-hdr">🛵 Delivery</div>
             <div class="cfg-card-body">
-              <div class="fg"><label>Monto mínimo gratis ($)</label><input id="c-del-min" type="number" value="10000"></div>
-              <div class="fg"><label>Costo de envío ($)</label><input id="c-del-costo" type="number" value="1500"></div>
+              <div class="fg"><label>Monto mínimo para envío gratis ($)</label><input id="c-del-min" type="number" value="10000"></div>
+              <div class="fg"><label>Costo de envío si no alcanza ($)</label><input id="c-del-costo" type="number" value="1500"></div>
             </div>
           </div>
+
+          <!-- ZONAS DE DELIVERY -->
+          <div class="cfg-card" style="grid-column:1/-1">
+            <div class="cfg-card-hdr">📍 Zonas de delivery</div>
+            <div class="cfg-card-body">
+              <div style="font-size:11px;color:rgba(255,255,255,.3);margin-bottom:12px;line-height:1.5">Precios según la distancia. El cliente elige su zona al confirmar el pedido.</div>
+              <div id="zonas-panel" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
+                <div style="color:rgba(255,255,255,.3);font-size:12px">Cargando zonas...</div>
+              </div>
+              <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="abrirModalZona(null)">+ Agregar zona</button>
+            </div>
+          </div>
+
+          <!-- PAGOS -->
           <div class="cfg-card">
             <div class="cfg-card-hdr">💳 Pagos</div>
             <div class="cfg-card-body">
               <div class="toggle-row"><span class="toggle-lbl">💵 Efectivo / Débito / Transferencia</span><label class="toggle"><input type="checkbox" checked><div class="toggle-sl"></div></label></div>
-              <div class="toggle-row"><span class="toggle-lbl">💳 Crédito 1 cuota (sin recargo)</span><label class="toggle"><input type="checkbox" checked><div class="toggle-sl"></div></label></div>
+              <div class="toggle-row"><span class="toggle-lbl">💙 MercadoPago</span><label class="toggle"><input type="checkbox" checked><div class="toggle-sl"></div></label></div>
+              <div class="toggle-row"><span class="toggle-lbl">💳 Crédito 3 cuotas</span><label class="toggle"><input type="checkbox" checked><div class="toggle-sl"></div></label></div>
               <div class="fg" style="margin-top:8px"><label>Recargo 3 cuotas (%)</label><input id="c-recargo" type="number" value="20"></div>
+              <div class="fg"><label>Link MercadoPago</label><input id="c-mp-link" placeholder="https://mpago.la/tu-link"></div>
+              <div class="fg"><label>Alias / CBU transferencia</label><input id="c-mp-alias" placeholder="alpaso.mp"></div>
             </div>
           </div>
+
+          <!-- FIDELIDAD -->
           <div class="cfg-card">
-            <div class="cfg-card-hdr">💛 Fidelidad</div>
+            <div class="cfg-card-hdr">💛 Fidelidad (Pasos)</div>
             <div class="cfg-card-body">
-              <div class="fg"><label>Puntos por cada $100</label><input id="c-puntos-x" type="number" value="1"></div>
-              <div class="fg"><label>Puntos para canjear</label><input id="c-puntos-canje" type="number" value="500"></div>
+              <div class="fg"><label>Pasos por cada $100 gastados</label><input id="c-puntos-x" type="number" value="1"></div>
+              <div class="fg"><label>Pasos para canjear</label><input id="c-puntos-canje" type="number" value="500"></div>
               <div class="fg"><label>Descuento cumpleaños (%)</label><input id="c-cumple" type="number" value="10"></div>
               <div class="fg"><label>Descuento bienvenida (%)</label><input id="c-bv" type="number" value="10"></div>
             </div>
           </div>
+
+          <!-- EMPANADAS — sabores disponibles hoy -->
           <div class="cfg-card">
-            <div class="cfg-card-hdr">💙 MercadoPago</div>
+            <div class="cfg-card-hdr">🫓 Sabores disponibles hoy</div>
             <div class="cfg-card-body">
-              <div class="fg"><label>Tu link de cobro MP</label><input id="c-mp-link" placeholder="https://mpago.la/tu-link"></div>
-              <div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:4px;line-height:1.5">
-                En MercadoPago → Cobrar → Tu link de pago → Copiá la URL<br>
-                Los clientes que elijan MP van a ir directo a esa página.
+              <div style="font-size:11px;color:rgba(255,255,255,.3);margin-bottom:12px;line-height:1.5">Desactivá los sabores que no tenés hoy. El cliente no los va a ver en el selector.</div>
+              <div id="sabores-panel">
+                <div style="color:rgba(255,255,255,.3);font-size:12px">Cargando sabores...</div>
               </div>
-              <div class="fg" style="margin-top:10px"><label>Alias / CBU para transferencia</label><input id="c-mp-alias" placeholder="alpaso.mp"></div>
+              <button class="btn btn-ghost" style="margin-top:12px;width:100%;justify-content:center" onclick="agregarSabor()">+ Agregar sabor</button>
             </div>
           </div>
-            <div class="cfg-card-body">
-              <div class="form-row"><div class="fg"><label>Apertura Lun–Vie</label><input id="c-h-ap" type="time" value="08:00"></div><div class="fg"><label>Cierre Lun–Vie</label><input id="c-h-ci" type="time" value="21:00"></div></div>
-              <div class="form-row"><div class="fg"><label>Apertura Sáb</label><input id="c-h-sap" type="time" value="08:00"></div><div class="fg"><label>Cierre Sáb</label><input id="c-h-sci" type="time" value="14:00"></div></div>
-              <div class="toggle-row"><span class="toggle-lbl">Abierto domingos</span><label class="toggle"><input type="checkbox"><div class="toggle-sl"></div></label></div>
-            </div>
+
+        </div>
+
+        <!-- BANNERS -->
+        <div style="margin-top:4px">
+          <div class="sec-lbl">◆ Banners y promociones</div>
+          <div id="banners-panel" style="margin-bottom:16px">
+            <div style="color:rgba(255,255,255,.3);font-size:12px">Cargando banners...</div>
+          </div>
+          <button class="btn btn-gold" onclick="abrirModalBanner(null)">+ Nuevo banner</button>
+        </div>
+
+        <!-- PRODUCTOS — toggle rápido -->
+        <div style="margin-top:20px">
+          <div class="sec-lbl">◆ Productos — activar / desactivar</div>
+          <div style="display:flex;gap:8px;margin-bottom:12px">
+            <input id="prod-buscar" placeholder="Buscar producto..." style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none" oninput="filtrarProductosPanel(this.value)">
+            <select id="prod-cat-filter" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 10px;font-family:'Nunito';font-size:12px;color:#fff;outline:none" onchange="filtrarProductosPanel($('prod-buscar').value)">
+              <option value="">Todas las categorías</option>
+              <option>Empanadas</option><option>Carnicería</option><option>Carne al Vacío</option>
+              <option>Fiambres</option><option>Lácteos</option><option>Bebidas</option>
+              <option>Almacén</option><option>Limpieza</option><option>Kiosco</option>
+            </select>
+          </div>
+          <div id="productos-toggle-list" style="display:flex;flex-direction:column;gap:6px;max-height:400px;overflow-y:auto">
+            <div style="color:rgba(255,255,255,.3);font-size:12px;text-align:center;padding:20px">Cargando productos...</div>
           </div>
         </div>
-        <button class="btn btn-gold" style="padding:11px 22px" onclick="guardarConfig()">💾 Guardar cambios</button>
+
+        <button class="btn btn-gold" style="padding:12px 24px;margin-top:20px" onclick="guardarConfig()">💾 Guardar configuración</button>
       </div>
+
+      <!-- MODAL BANNER -->
+      <div id="modal-banner" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;display:none;align-items:center;justify-content:center;padding:20px">
+        <div style="background:#1A1A1A;border-radius:16px;padding:24px;width:100%;max-width:500px;border:1px solid rgba(255,255,255,.1)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+            <h3 style="font-size:16px;font-weight:800" id="modal-banner-title">Nuevo banner</h3>
+            <button onclick="cerrarModalBanner()" style="background:rgba(255,255,255,.1);border:none;color:#fff;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:14px">✕</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div class="fg"><label>Título</label><input id="b-titulo" placeholder="Empanadas + Bebida"></div>
+            <div class="fg"><label>Subtítulo</label><input id="b-subtitulo" placeholder="Artesanales · Horneadas hoy"></div>
+            <div class="fg"><label>Precio destacado</label><input id="b-precio" placeholder="$7.500"></div>
+            <div class="fg"><label>Tag / etiqueta</label><input id="b-tag" placeholder="🔥 OFERTA DEL DÍA"></div>
+            <div class="fg"><label>URL de imagen (opcional)</label><input id="b-imagen" placeholder="https://..."></div>
+            <div class="form-row">
+              <div class="fg"><label>Desde (fecha)</label><input id="b-desde" type="date"></div>
+              <div class="fg"><label>Hasta (fecha)</label><input id="b-hasta" type="date"></div>
+            </div>
+            <div class="form-row">
+              <div class="fg"><label>Acción al tocar</label>
+                <select id="b-accion">
+                  <option value="empanadas">Selector de empanadas</option>
+                  <option value="carnes">Catálogo de carnes</option>
+                  <option value="catalogo">Catálogo general</option>
+                </select>
+              </div>
+              <div class="fg"><label>Orden</label><input id="b-orden" type="number" value="1" min="1"></div>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-lbl">Banner activo</span>
+              <label class="toggle"><input type="checkbox" id="b-activo" checked><div class="toggle-sl"></div></label>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:20px">
+            <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="cerrarModalBanner()">Cancelar</button>
+            <button class="btn btn-gold" style="flex:1;justify-content:center" onclick="guardarBanner()" id="btn-guardar-banner">Guardar banner</button>
+          </div>
+        </div>
+      </div>
+
 
     </div><!-- /p-config -->
   </div><!-- /content -->
@@ -671,6 +815,392 @@ setInterval(()=>{
   if(id==='p-dashboard')loadDashboard();
   if(id==='p-pedidos')loadPedidos();
 },30000);
+
+// ══ OPERACIONES AVANZADAS ══════════════════════════════════════════════════
+
+// ── ESTADO DEL LOCAL ──────────────────────────────────────────────────────
+async function toggleAceptaPedidos(cb) {
+  const acepta = cb.checked;
+  await db.from('configuracion').upsert({clave:'acepta_pedidos', valor: acepta?'true':'false'},{onConflict:'clave'});
+  toast(acepta ? '✅ Local abierto — aceptando pedidos' : '🔴 Local cerrado — no acepta pedidos');
+}
+
+async function toggleDomingo(cb) {
+  const dom = $('horario-dom-wrap');
+  if (dom) dom.style.display = cb.checked ? 'block' : 'none';
+}
+
+// ── SABORES DE EMPANADAS ───────────────────────────────────────────────────
+let todosLosSabores = [];
+
+async function loadSabores() {
+  const panel = $('sabores-panel');
+  if (!panel) return;
+  try {
+    const { data } = await db.from('productos')
+      .select('id,nombre,activo,precio_venta')
+      .eq('cat','Empanadas')
+      .order('nombre');
+    todosLosSabores = data || [];
+    renderSaboresPanel();
+  } catch(e) {
+    panel.innerHTML = '<div style="color:rgba(255,255,255,.3);font-size:12px">Error cargando sabores</div>';
+  }
+}
+
+function renderSaboresPanel() {
+  const panel = $('sabores-panel');
+  if (!panel) return;
+  if (!todosLosSabores.length) {
+    panel.innerHTML = '<div style="color:rgba(255,255,255,.3);font-size:12px">No hay sabores cargados. Agregá empanadas en el sistema de proveedores.</div>';
+    return;
+  }
+  panel.innerHTML = todosLosSabores.map(s => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06)">
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#fff">${s.nombre}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.3)">${fmt(s.precio_venta)} · caja x6</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" ${s.activo?'checked':''} onchange="toggleSabor(${s.id},this)">
+        <div class="toggle-sl"></div>
+      </label>
+    </div>`).join('');
+}
+
+async function toggleSabor(id, cb) {
+  const activo = cb.checked;
+  const { error } = await db.from('productos').update({activo}).eq('id',id);
+  if (error) { toast('⚠️ Error: '+error.message); cb.checked = !activo; return; }
+  const s = todosLosSabores.find(x=>x.id===id);
+  if (s) s.activo = activo;
+  toast(`${activo?'✅':'🔴'} ${s?.nombre||'Sabor'} ${activo?'activado':'desactivado'}`);
+}
+
+async function agregarSabor() {
+  const nombre = prompt('Nombre del nuevo sabor (ej: Carne picante):');
+  if (!nombre) return;
+  const precio = prompt('Precio por caja x6 ($):');
+  if (!precio || isNaN(precio)) return;
+  const { error } = await db.from('productos').insert({
+    nombre: `Empanadas ${nombre} x6`,
+    cat: 'Empanadas',
+    unit: 'caja',
+    precio_venta: parseFloat(precio),
+    precio_costo: parseFloat(precio) * 0.5,
+    stock: 0, minimo: 0, activo: true
+  });
+  if (error) { toast('⚠️ '+error.message); return; }
+  toast(`✅ Sabor "${nombre}" agregado`);
+  loadSabores();
+}
+
+// ── TOGGLE DE PRODUCTOS ────────────────────────────────────────────────────
+let todosLosProductos = [];
+
+async function loadProductosToggle() {
+  const lista = $('productos-toggle-list');
+  if (!lista) return;
+  try {
+    const { data } = await db.from('productos').select('id,nombre,cat,activo,precio_venta').order('cat').order('nombre');
+    todosLosProductos = data || [];
+    filtrarProductosPanel('');
+  } catch(e) {
+    lista.innerHTML = '<div style="color:rgba(255,255,255,.3);font-size:12px;text-align:center;padding:20px">Error cargando productos</div>';
+  }
+}
+
+function filtrarProductosPanel(q) {
+  const cat   = $('prod-cat-filter')?.value || '';
+  const lista = $('productos-toggle-list');
+  if (!lista) return;
+  const prods = todosLosProductos.filter(p =>
+    (!q  || p.nombre.toLowerCase().includes(q.toLowerCase())) &&
+    (!cat || p.cat === cat)
+  );
+  if (!prods.length) {
+    lista.innerHTML = '<div style="color:rgba(255,255,255,.3);font-size:12px;text-align:center;padding:20px">Sin resultados</div>';
+    return;
+  }
+  lista.innerHTML = prods.map(p => `
+    <div style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.03);border-radius:10px;padding:10px 12px;border:1px solid rgba(255,255,255,.06)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:700;color:${p.activo?'#fff':'rgba(255,255,255,.3)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nombre}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.25)">${p.cat} · ${fmt(p.precio_venta)}</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" ${p.activo?'checked':''} onchange="toggleProductoActivo(${p.id},this)">
+        <div class="toggle-sl"></div>
+      </label>
+    </div>`).join('');
+}
+
+async function toggleProductoActivo(id, cb) {
+  const activo = cb.checked;
+  const { error } = await db.from('productos').update({activo}).eq('id',id);
+  if (error) { toast('⚠️ Error: '+error.message); cb.checked = !activo; return; }
+  const p = todosLosProductos.find(x=>x.id===id);
+  if (p) p.activo = activo;
+  toast(`${activo?'✅':'🔴'} ${p?.nombre||'Producto'} ${activo?'activado':'desactivado'}`);
+}
+
+// ── BANNERS ────────────────────────────────────────────────────────────────
+let banners = [];
+let bannerEditId = null;
+
+async function loadBanners() {
+  const panel = $('banners-panel');
+  if (!panel) return;
+  try {
+    const { data } = await db.from('banners').select('*').order('orden');
+    banners = data || [];
+    renderBannersPanel();
+  } catch(e) {
+    // Tabla puede no existir todavía
+    panel.innerHTML = '<div style="color:rgba(255,255,255,.3);font-size:12px">Ejecutá el SQL de banners primero</div>';
+  }
+}
+
+function renderBannersPanel() {
+  const panel = $('banners-panel');
+  if (!panel) return;
+  if (!banners.length) {
+    panel.innerHTML = '<div style="color:rgba(255,255,255,.3);font-size:12px;padding:12px 0">Sin banners. Creá uno con el botón de abajo.</div>';
+    return;
+  }
+  panel.innerHTML = banners.map(b => {
+    const activo = b.activo;
+    const vence  = b.fecha_fin ? `· Hasta ${new Date(b.fecha_fin).toLocaleDateString('es-AR')}` : '';
+    return `
+    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:${activo?'#fff':'rgba(255,255,255,.3)'}">${b.titulo}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.25);margin-top:2px">${b.precio||''} ${vence}</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" ${activo?'checked':''} onchange="toggleBanner(${b.id},this)">
+        <div class="toggle-sl"></div>
+      </label>
+      <button onclick="abrirModalBanner(${b.id})" style="background:rgba(255,255,255,.08);border:none;color:rgba(255,255,255,.6);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:11px;font-weight:700">✏️</button>
+      <button onclick="eliminarBanner(${b.id})" style="background:rgba(227,30,36,.1);border:none;color:#FCA5A5;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:11px">🗑</button>
+    </div>`;
+  }).join('');
+}
+
+function abrirModalBanner(id) {
+  bannerEditId = id;
+  const modal = $('modal-banner');
+  if (!modal) return;
+  if (id) {
+    const b = banners.find(x=>x.id===id);
+    if (b) {
+      $('banner-titulo').value  = b.titulo  || '';
+      $('banner-subtitulo').value = b.subtitulo || '';
+      $('banner-precio').value  = b.precio  || '';
+      $('banner-tag').value     = b.tag     || '';
+      $('banner-fecha-inicio').value = b.fecha_inicio ? b.fecha_inicio.split('T')[0] : '';
+      $('banner-fecha-fin').value    = b.fecha_fin    ? b.fecha_fin.split('T')[0]    : '';
+      $('modal-banner-title').textContent = 'Editar banner';
+    }
+  } else {
+    ['banner-titulo','banner-subtitulo','banner-precio','banner-tag','banner-fecha-inicio','banner-fecha-fin']
+      .forEach(id => { if($(id)) $(id).value=''; });
+    $('modal-banner-title').textContent = 'Nuevo banner';
+  }
+  modal.style.display = 'flex';
+}
+
+function cerrarModalBanner() {
+  const modal = $('modal-banner');
+  if (modal) modal.style.display = 'none';
+  bannerEditId = null;
+}
+
+async function guardarBanner() {
+  const data = {
+    titulo:       $('banner-titulo')?.value?.trim()     || '',
+    subtitulo:    $('banner-subtitulo')?.value?.trim()  || '',
+    precio:       $('banner-precio')?.value?.trim()     || '',
+    tag:          $('banner-tag')?.value?.trim()        || '',
+    fecha_inicio: $('banner-fecha-inicio')?.value       || null,
+    fecha_fin:    $('banner-fecha-fin')?.value          || null,
+    activo:       true,
+    orden:        banners.length,
+  };
+  if (!data.titulo) { toast('⚠️ El título es obligatorio'); return; }
+  try {
+    if (bannerEditId) {
+      await db.from('banners').update(data).eq('id', bannerEditId);
+      toast('✅ Banner actualizado');
+    } else {
+      await db.from('banners').insert(data);
+      toast('✅ Banner creado');
+    }
+    cerrarModalBanner();
+    loadBanners();
+  } catch(e) { toast('⚠️ '+e.message); }
+}
+
+async function toggleBanner(id, cb) {
+  await db.from('banners').update({activo: cb.checked}).eq('id',id);
+  const b = banners.find(x=>x.id===id);
+  if (b) b.activo = cb.checked;
+  renderBannersPanel();
+  toast(cb.checked ? '✅ Banner activado' : '🔴 Banner desactivado');
+}
+
+async function eliminarBanner(id) {
+  if (!confirm('¿Eliminar este banner?')) return;
+  await db.from('banners').delete().eq('id',id);
+  banners = banners.filter(b=>b.id!==id);
+  renderBannersPanel();
+  toast('🗑 Banner eliminado');
+}
+
+// ── HORARIOS & ESTADO ──────────────────────────────────────────────────────
+async function loadEstadoLocal() {
+  try {
+    const { data } = await db.from('configuracion').select('clave,valor')
+      .in('clave',['acepta_pedidos','mensaje_cierre','h_lv_desde','h_lv_hasta','h_sab_desde','h_sab_hasta','h_dom_desde','h_dom_hasta','t_del_min','t_del_max','t_ret_min','t_ret_max']);
+    const cfg = {};
+    (data||[]).forEach(c => cfg[c.clave] = c.valor);
+
+    const togAcepta = $('tog-acepta-pedidos');
+    if (togAcepta) togAcepta.checked = cfg.acepta_pedidos !== 'false';
+    const msgCierre = $('c-mensaje-cierre');
+    if (msgCierre && cfg.mensaje_cierre) msgCierre.value = cfg.mensaje_cierre;
+
+    const mapFields = {
+      'c-h-lv-desde':  'h_lv_desde',  'c-h-lv-hasta':  'h_lv_hasta',
+      'c-h-sab-desde': 'h_sab_desde', 'c-h-sab-hasta': 'h_sab_hasta',
+      'c-h-dom-desde': 'h_dom_desde', 'c-h-dom-hasta': 'h_dom_hasta',
+      'c-t-del-min':   't_del_min',   'c-t-del-max':   't_del_max',
+      'c-t-ret-min':   't_ret_min',   'c-t-ret-max':   't_ret_max',
+    };
+    Object.entries(mapFields).forEach(([id,clave]) => {
+      const el = $(id); if (el && cfg[clave]) el.value = cfg[clave];
+    });
+  } catch(e) { console.warn('Error cargando estado:', e); }
+}
+
+// Guardar horarios y tiempos junto con la config general
+const _guardarConfigOriginal = guardarConfig;
+guardarConfig = async function() {
+  // Guardar campos operativos adicionales
+  const opsCfg = {
+    'mensaje_cierre': $('c-mensaje-cierre')?.value||'',
+    'h_lv_desde':  $('c-h-lv-desde')?.value||'08:00',
+    'h_lv_hasta':  $('c-h-lv-hasta')?.value||'21:00',
+    'h_sab_desde': $('c-h-sab-desde')?.value||'08:00',
+    'h_sab_hasta': $('c-h-sab-hasta')?.value||'14:00',
+    'h_dom_desde': $('c-h-dom-desde')?.value||'',
+    'h_dom_hasta': $('c-h-dom-hasta')?.value||'',
+    't_del_min':   $('c-t-del-min')?.value||'30',
+    't_del_max':   $('c-t-del-max')?.value||'45',
+    't_ret_min':   $('c-t-ret-min')?.value||'10',
+    't_ret_max':   $('c-t-ret-max')?.value||'15',
+  };
+  for (const [clave,valor] of Object.entries(opsCfg)) {
+    await db.from('configuracion').upsert({clave,valor},{onConflict:'clave'});
+  }
+  await _guardarConfigOriginal();
+};
+
+// ── ZONAS DE DELIVERY ─────────────────────────────────────────────────────
+let zonas = [];
+let zonaEditId = null;
+
+async function loadZonas() {
+  const panel = $('zonas-panel');
+  if (!panel) return;
+  try {
+    const { data } = await db.from('zonas_delivery').select('*').order('orden');
+    zonas = data || [];
+    renderZonasPanel();
+  } catch(e) {
+    panel.innerHTML = '<div style="color:rgba(255,255,255,.3);font-size:12px">Ejecutá el SQL de operaciones primero</div>';
+  }
+}
+
+function renderZonasPanel() {
+  const panel = $('zonas-panel');
+  if (!panel) return;
+  if (!zonas.length) {
+    panel.innerHTML = '<div style="color:rgba(255,255,255,.3);font-size:12px;padding:8px 0">Sin zonas configuradas.</div>';
+    return;
+  }
+  panel.innerHTML = zonas.map(z => `
+    <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:10px 12px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:${z.activa?'#fff':'rgba(255,255,255,.3)'}">${z.nombre}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.25)">Costo: ${fmt(z.costo)} · Mínimo: ${z.minimo?fmt(z.minimo):'Sin mínimo'}</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" ${z.activa?'checked':''} onchange="toggleZona(${z.id},this)">
+        <div class="toggle-sl"></div>
+      </label>
+      <button onclick="abrirModalZona(${z.id})" style="background:rgba(255,255,255,.08);border:none;color:rgba(255,255,255,.6);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:11px">✏️</button>
+      <button onclick="eliminarZona(${z.id})" style="background:rgba(227,30,36,.1);border:none;color:#FCA5A5;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:11px">🗑</button>
+    </div>`).join('');
+}
+
+async function toggleZona(id, cb) {
+  await db.from('zonas_delivery').update({activa: cb.checked}).eq('id',id);
+  const z = zonas.find(x=>x.id===id);
+  if (z) z.activa = cb.checked;
+  toast(cb.checked ? '✅ Zona activada' : '🔴 Zona desactivada');
+}
+
+function abrirModalZona(id) {
+  zonaEditId = id;
+  const z = id ? zonas.find(x=>x.id===id) : null;
+  const nombre = prompt('Nombre de la zona:', z?.nombre || '');
+  if (!nombre) return;
+  const desc = prompt('Descripción (ej: "5-15 cuadras del local"):', z?.descripcion || '');
+  const costo = prompt('Costo de delivery ($):', z?.costo ?? '0');
+  if (costo === null) return;
+  const minimo = prompt('Monto mínimo para esta zona ($, 0=sin mínimo):', z?.minimo ?? '0');
+  if (minimo === null) return;
+  guardarZona({nombre, descripcion: desc||'', costo: parseFloat(costo)||0, minimo: parseFloat(minimo)||0});
+}
+
+async function guardarZona(data) {
+  try {
+    if (zonaEditId) {
+      await db.from('zonas_delivery').update(data).eq('id', zonaEditId);
+      toast('✅ Zona actualizada');
+    } else {
+      await db.from('zonas_delivery').insert({...data, activa: true, orden: zonas.length});
+      toast('✅ Zona creada');
+    }
+    loadZonas();
+    zonaEditId = null;
+  } catch(e) { toast('⚠️ '+e.message); }
+}
+
+async function eliminarZona(id) {
+  if (!confirm('¿Eliminar esta zona?')) return;
+  await db.from('zonas_delivery').delete().eq('id',id);
+  zonas = zonas.filter(z=>z.id!==id);
+  renderZonasPanel();
+  toast('🗑 Zona eliminada');
+}
+
+
+// Cargar operaciones cuando se abre la pestaña
+const _navOriginal = nav;
+nav = function(el, id) {
+  _navOriginal(el, id);
+  if (id === 'config') {
+    setTimeout(() => {
+      loadEstadoLocal();
+      loadSabores();
+      loadProductosToggle();
+      loadBanners();
+      loadZonas();
+    }, 100);
+  }
+};
 
 // INIT
 $('fecha-hoy').textContent=new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
