@@ -29,7 +29,8 @@
   --gold:#FA5200;--gold2:#FF7A3D;--gold3:#FFB399;
   --warm:#FFF3EE;
   --r:#E53935;--gr:#43A047;--am:#FB8C00;
-  --w:#fff;--g3:#757575;
+  --w:#fff;--g3:#757575;--g2:#E0E0E0;--g:#F5F5F5;
+  --n:#FA5200;--n2:#666;--do:#FA5200;--do2:#FA5200CC;
   --sh:0 2px 8px rgba(0,0,0,.08);--sh2:0 4px 16px rgba(0,0,0,.12);
   --radius:12px
 }
@@ -1191,6 +1192,16 @@ const REGLAS = [
 let historialCliente = [];
 let historialCargado = false;
 
+// ══ MODO RÁPIDO — estado de sabores ══
+const SABORES = [
+  {id:40, nombre:'Carne',         emoji:'🥩', precio:0},
+  {id:41, nombre:'Jamón y Queso', emoji:'🧀', precio:0},
+  {id:42, nombre:'Verdura',       emoji:'🥬', precio:0},
+  {id:43, nombre:'Humita',        emoji:'🌽', precio:0},
+];
+let saboresQty = {};
+
+
 // ══════════════════════════════════════════════════════
 // FALLBACK LOCAL (sin conexión)
 // ══════════════════════════════════════════════════════
@@ -1696,15 +1707,7 @@ async function renderSugerencias() {
 
 // ══════════════════════════════════════════════════════
 // HOME
-// ══════════════════════════════════════════════════════
-// ══ MODO RÁPIDO — estado de sabores ══
-const SABORES = [
-  {id:40, nombre:'Carne',         emoji:'🥩', precio:0},
-  {id:41, nombre:'Jamón y Queso', emoji:'🧀', precio:0},
-  {id:42, nombre:'Verdura',       emoji:'🥬', precio:0},
-  {id:43, nombre:'Humita',        emoji:'🌽', precio:0},
-];
-let saboresQty = {}; // {id: cantidad}
+// ══════════════════════════════════════════════════════ // {id: cantidad}
 
 // ══════════════════════════════════════════════════════
 // HORARIO DE ATENCIÓN
@@ -1871,17 +1874,20 @@ function applyTheme() {
   const brown = CONFIG.color_brown || '#FA5200';
   const gold  = CONFIG.color_gold  || '#FA5200';
 
-  // Actualizar variables CSS — todos los sistemas
-  const r = document.documentElement;
-  r.style.setProperty('--brown',  brown);
-  r.style.setProperty('--brown2', lighten(brown, 20));
-  r.style.setProperty('--brown3', lighten(brown, 50));
-  r.style.setProperty('--gold',   gold);
-  r.style.setProperty('--gold2',  lighten(gold, 30));
-  r.style.setProperty('--gold3',  lighten(gold, 60));
-  r.style.setProperty('--n',      brown);
-  r.style.setProperty('--do',     gold);
-  r.style.setProperty('--do2',    gold + 'CC');
+  // Reescribir el :root del <style> tag — método más confiable
+  const styleEl = document.querySelector('style');
+  if (styleEl) {
+    styleEl.textContent = styleEl.textContent
+      .replace(/(--brown\s*:)[^;]+;/,  '$1' + brown + ';')
+      .replace(/(--brown2\s*:)[^;]+;/, '$1' + lighten(brown,20) + ';')
+      .replace(/(--brown3\s*:)[^;]+;/, '$1' + lighten(brown,50) + ';')
+      .replace(/(--gold\s*:)[^;]+;/,   '$1' + gold + ';')
+      .replace(/(--gold2\s*:)[^;]+;/,  '$1' + lighten(gold,30) + ';')
+      .replace(/(--gold3\s*:)[^;]+;/,  '$1' + lighten(gold,60) + ';')
+      .replace(/(--n\s*:)[^;]+;/,      '$1' + brown + ';')
+      .replace(/(--do\s*:)[^;]+;/,     '$1' + gold + ';')
+      .replace(/(--do2\s*:)[^;]+;/,    '$1' + gold + 'CC;');
+  }
 
   // Logo y nombre del local
   const logoIc  = document.getElementById('logo-ic');
@@ -1892,10 +1898,6 @@ function applyTheme() {
   // Subtítulo header
   const greetSub = document.getElementById('greet-sub');
   if (greetSub && CONFIG.local_subtitulo && !clienteActual) greetSub.textContent = CONFIG.local_subtitulo;
-
-  // Banner bienvenida
-  const wbTitle = document.querySelector('.wb-title');
-  if (wbTitle && CONFIG.banner_titulo) wbTitle.textContent = CONFIG.banner_titulo;
 
   // Meta theme-color
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', brown);
