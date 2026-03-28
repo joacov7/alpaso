@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Al Paso — Diagnóstico</title>
+<style>
+  body{font-family:monospace;background:#0f0f0f;color:#e0e0e0;padding:20px;max-width:800px;margin:0 auto}
+  h1{color:#FA5200;margin-bottom:4px}
+  h2{color:#888;font-size:13px;font-weight:normal;margin-bottom:24px}
+  .sec{background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:16px;margin-bottom:16px}
+  .sec h3{color:#FA5200;margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px}
+  .row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #222;gap:12px}
+  .row:last-child{border:none}
+  .key{color:#888;font-size:12px;flex-shrink:0}
+  .val{color:#fff;font-size:12px;text-align:right;word-break:break-all}
+  .ok{color:#4CAF50}
+  .err{color:#f44336}
+  .warn{color:#FF9800}
+  .btn{background:#FA5200;color:#fff;border:none;border-radius:6px;padding:10px 20px;font-family:monospace;font-size:13px;cursor:pointer;margin:4px}
+  .btn:hover{background:#E04A00}
+  .btn.sec-btn{background:#333;color:#fff}
+  .btn.sec-btn:hover{background:#444}
+  .log{background:#000;border-radius:6px;padding:12px;font-size:11px;line-height:1.8;max-height:300px;overflow-y:auto;white-space:pre-wrap;word-break:break-all}
+  .inp{background:#222;border:1px solid #444;border-radius:6px;padding:8px 12px;font-family:monospace;font-size:12px;color:#fff;width:100%;box-sizing:border-box;margin:4px 0}
+  .inp-row{display:flex;gap:8px;align-items:center}
+  .tag{font-size:10px;background:#333;padding:2px 6px;border-radius:4px;color:#aaa}
+  img.test-img{max-width:100%;max-height:120px;border-radius:6px;display:block;margin-top:8px;border:1px solid #333}
+</style>
+</head>
+<body>
+<h1>🔧 Al Paso — Diagnóstico</h1>
+<h2>Herramienta para identificar problemas de configuración y storage</h2>
+
+<div class="sec">
+  <h3>1. Conexión a Supabase</h3>
+  <div id="conn-status" class="row"><span class="key">Estado</span><span class="val warn">Testeando...</span></div>
+  <div id="conn-url" class="row"><span class="key">URL</span><span class="val" id="conn-url-val">—</span></div>
+</div>
+
+<div class="sec">
+  <h3>2. Tabla configuracion — valores actuales</h3>
+  <div id="cfg-list"><div class="val warn">Cargando...</div></div>
+  <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn" onclick="loadCfg()">🔄 Recargar</button>
+    <button class="btn sec-btn" onclick="testSave()">💾 Test: guardar color_brown=#FF0000</button>
+    <button class="btn sec-btn" onclick="testBvActiva()">💾 Test: guardar bv_activa=false</button>
+  </div>
+  <div id="save-log" class="log" style="margin-top:8px;display:none"></div>
+</div>
+
+<div class="sec">
+  <h3>3. Test de imagen — Storage</h3>
+  <p style="font-size:11px;color:#888;margin-bottom:10px">Pegá una URL de Supabase Storage para verificar si carga correctamente</p>
+  <div class="inp-row">
+    <input class="inp" id="img-url" placeholder="https://tlsyakbhceolczjzadpc.supabase.co/storage/v1/object/public/productos/...">
+    <button class="btn" onclick="testImg()">Probar</button>
+  </div>
+  <div id="img-result" style="margin-top:8px"></div>
+</div>
+
+<div class="sec">
+  <h3>4. Políticas RLS de configuracion</h3>
+  <div id="rls-status" class="val warn">Verificando...</div>
+</div>
+
+<div class="sec">
+  <h3>5. Log completo</h3>
+  <div id="main-log" class="log">Iniciando diagnóstico...\n</div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://tlsyakbhceolczjzadpc.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_pdCPXmVa47gh3rSURJsgaQ_axezH12Z';
+
+const logEl = document.getElementById('main-log');
+function log(msg, type='') {
+  const colors = {ok:'#4CAF50', err:'#f44336', warn:'#FF9800', info:'#2196F3'};
+  const col = colors[type] || '#e0e0e0';
+  logEl.innerHTML += `<span style="color:${col}">${new Date().toLocaleTimeString()} — ${msg}</span>\n`;
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+async function sb(path, opts={}) {
+  const url = SUPABASE_URL + '/rest/v1/' + path;
+  const res = await fetch(url, {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': opts.prefer || 'return=representation',
+      ...(opts.headers||{})
+    },
+    method: opts.method || 'GET',
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  const text = await res.text();
+  let data;
+  try { data = JSON.parse(text); } catch(e) { data = text; }
+  return { ok: res.ok, status: res.status, data };
+}
+
+// 1. Test connection
+async function testConn() {
+  log('Testeando conexión a Supabase...', 'info');
+  document.getElementById('conn-url-val').textContent = SUPABASE_URL;
+  try {
+    const r = await sb('configuracion?limit=1');
+    if (r.ok) {
+      document.getElementById('conn-status').innerHTML = '<span class="key">Estado</span><span class="val ok">✅ Conectado (HTTP ' + r.status + ')</span>';
+      log('Conexión OK — HTTP ' + r.status, 'ok');
+    } else {
+      document.getElementById('conn-status').innerHTML = '<span class="key">Estado</span><span class="val err">❌ Error HTTP ' + r.status + '</span>';
+      log('Error de conexión: ' + JSON.stringify(r.data), 'err');
+    }
+  } catch(e) {
+    document.getElementById('conn-status').innerHTML = '<span class="key">Estado</span><span class="val err">❌ Sin conexión: ' + e.message + '</span>';
+    log('Excepción: ' + e.message, 'err');
+  }
+}
+
+// 2. Load config
+async function loadCfg() {
+  log('Cargando tabla configuracion...', 'info');
+  const r = await sb('configuracion?order=clave');
+  const el = document.getElementById('cfg-list');
+  if (!r.ok) {
+    el.innerHTML = '<div class="val err">Error: ' + JSON.stringify(r.data) + '</div>';
+    log('Error cargando config: ' + JSON.stringify(r.data), 'err');
+
+    // Check RLS
+    document.getElementById('rls-status').innerHTML = '<span class="err">❌ No se puede leer la tabla. Problema de RLS o permisos.</span>';
+    return;
+  }
+  const rows = r.data || [];
+  log('Config cargada: ' + rows.length + ' filas', 'ok');
+
+  // Check for key fields
+  const cfg = {};
+  rows.forEach(r => cfg[r.clave] = r.valor);
+
+  const keysImportantes = ['color_brown','color_gold','bv_activa','acepta_pedidos','header_foto','bloque_carnes_foto'];
+  
+  let html = '';
+  // Primero mostrar las claves importantes
+  keysImportantes.forEach(k => {
+    const val = cfg[k];
+    const existe = val !== undefined;
+    html += `<div class="row">
+      <span class="key">${k} <span class="tag">${existe ? 'EXISTE' : 'NO EXISTE'}</span></span>
+      <span class="val ${existe ? 'ok' : 'err'}">${existe ? escHtml(val) || '(vacío)' : '❌ No encontrada en Supabase'}</span>
+    </div>`;
+    if (!existe) log('FALTA en Supabase: ' + k, 'warn');
+    else log(k + ' = ' + val, 'ok');
+  });
+
+  // Luego el resto
+  html += '<div style="margin-top:8px;border-top:1px solid #333;padding-top:8px"><span style="color:#555;font-size:11px">TODAS LAS CLAVES (' + rows.length + '):</span></div>';
+  rows.forEach(r => {
+    html += `<div class="row"><span class="key">${escHtml(r.clave)}</span><span class="val">${escHtml(r.valor)}</span></div>`;
+  });
+
+  el.innerHTML = html;
+
+  // RLS check
+  document.getElementById('rls-status').innerHTML = '<span class="ok">✅ Tabla legible — RLS permite SELECT</span>';
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// 3. Test save
+async function testSave() {
+  const logS = document.getElementById('save-log');
+  logS.style.display = 'block';
+  logS.textContent = 'Guardando color_brown=#FF0000...\n';
+
+  // Try upsert
+  const r = await sb('configuracion', {
+    method: 'POST',
+    prefer: 'resolution=merge-duplicates,return=representation',
+    headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+    body: { clave: 'color_brown', valor: '#FF0000' }
+  });
+
+  logS.textContent += 'HTTP ' + r.status + '\n';
+  logS.textContent += JSON.stringify(r.data, null, 2) + '\n';
+
+  if (r.ok) {
+    logS.textContent += '\n✅ Guardado OK. Recargando para verificar...\n';
+    log('Test save OK: color_brown=#FF0000', 'ok');
+    // Verify it was actually saved
+    await new Promise(r => setTimeout(r, 500));
+    const verify = await sb('configuracion?clave=eq.color_brown');
+    logS.textContent += 'Verificación: ' + JSON.stringify(verify.data) + '\n';
+    if (verify.data?.[0]?.valor === '#FF0000') {
+      logS.textContent += '✅ CONFIRMADO: el valor se guardó correctamente\n';
+      log('Verificación: color_brown guardado correctamente', 'ok');
+    } else {
+      logS.textContent += '❌ PROBLEMA: el valor NO coincide con lo guardado\n';
+      log('PROBLEMA: el valor guardado no coincide', 'err');
+    }
+  } else {
+    logS.textContent += '\n❌ Error al guardar\n';
+    log('Error al guardar: ' + JSON.stringify(r.data), 'err');
+
+    if (r.status === 401 || r.status === 403) {
+      logS.textContent += '\n🔴 CAUSA: RLS bloquea INSERT/UPDATE. Necesitás ejecutar el SQL de fix-rls.\n';
+    }
+    if (r.status === 409) {
+      logS.textContent += '\n🔴 CAUSA: Conflicto — la clave ya existe y ON CONFLICT no está configurado.\n';
+    }
+  }
+
+  await loadCfg();
+}
+
+async function testBvActiva() {
+  const logS = document.getElementById('save-log');
+  logS.style.display = 'block';
+  logS.textContent = 'Guardando bv_activa=false...\n';
+
+  const r = await sb('configuracion', {
+    method: 'POST',
+    prefer: 'resolution=merge-duplicates,return=representation',
+    headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+    body: { clave: 'bv_activa', valor: 'false' }
+  });
+
+  logS.textContent += 'HTTP ' + r.status + ' — ' + JSON.stringify(r.data) + '\n';
+
+  if (r.ok) {
+    await new Promise(r => setTimeout(r, 300));
+    const verify = await sb('configuracion?clave=eq.bv_activa');
+    logS.textContent += 'Valor en Supabase ahora: ' + JSON.stringify(verify.data?.[0]?.valor) + '\n';
+  }
+  await loadCfg();
+}
+
+// 4. Test image
+function testImg() {
+  const url = document.getElementById('img-url').value.trim();
+  const el = document.getElementById('img-result');
+  if (!url) { el.innerHTML = '<span class="err">Ingresá una URL</span>'; return; }
+  
+  el.innerHTML = '<span class="warn">Cargando imagen...</span>';
+  log('Testeando imagen: ' + url, 'info');
+
+  const img = document.createElement('img');
+  img.className = 'test-img';
+  img.onload = () => {
+    el.innerHTML = '<span class="ok">✅ Imagen carga correctamente (' + img.naturalWidth + 'x' + img.naturalHeight + 'px)</span>';
+    el.appendChild(img);
+    log('Imagen OK: ' + img.naturalWidth + 'x' + img.naturalHeight, 'ok');
+  };
+  img.onerror = () => {
+    el.innerHTML = `<span class="err">❌ No carga la imagen</span>
+    <div style="margin-top:8px;font-size:11px;color:#888;line-height:1.8">
+    Causas posibles:<br>
+    1. El bucket de Supabase Storage NO es público → ejecutá alpaso-storage-publico.sql<br>
+    2. La URL es incorrecta — debe ser del tipo:<br>
+    <span style="color:#FA5200">https://tlsyakbhceolczjzadpc.supabase.co/storage/v1/object/public/productos/nombre-archivo.jpg</span><br>
+    3. El archivo no existe en el bucket
+    </div>`;
+    log('Error cargando imagen: ' + url, 'err');
+  };
+  img.src = url;
+}
+
+// Run
+(async () => {
+  await testConn();
+  await loadCfg();
+})();
+
+// Test: simular exactamente lo que hace la app
+async function testSimularApp() {
+  const logS = document.getElementById('save-log');
+  logS.style.display = 'block';
+  logS.textContent = 'Simulando carga de la app...\n';
+
+  // Paso 1: leer toda la tabla configuracion
+  const r = await sb('configuracion');
+  logS.textContent += `HTTP ${r.status} — ${r.data?.length || 0} filas\n`;
+
+  if (!r.ok) {
+    logS.textContent += 'ERROR: no se puede leer configuracion\n';
+    return;
+  }
+
+  // Paso 2: poblar CONFIG como lo hace la app
+  const CONFIG = {};
+  r.data.forEach(c => CONFIG[c.clave] = c.valor);
+  logS.textContent += `\nValores relevantes en CONFIG:\n`;
+  ['color_brown','color_gold','bv_activa','acepta_pedidos','local_nombre'].forEach(k => {
+    logS.textContent += `  ${k} = ${CONFIG[k] ?? '⚠️ UNDEFINED'}\n`;
+  });
+
+  // Paso 3: aplicar colores como lo hace la app
+  const brown = CONFIG.color_brown || '#FA5200';
+  logS.textContent += `\napplyTheme usará brown = ${brown}\n`;
+
+  // Aplicar visualmente en esta página
+  document.documentElement.style.setProperty('--test-color', brown);
+  logS.textContent += `setProperty('--test-color', '${brown}') ejecutado\n`;
+
+  // Mostrar resultado visual
+  const div = document.createElement('div');
+  div.style.cssText = `background:${brown};color:#fff;padding:12px;border-radius:8px;margin-top:8px;font-size:14px;font-weight:700;`;
+  div.textContent = `✅ Este bloque debería ser color ${brown}`;
+  logS.parentElement.appendChild(div);
+
+  logS.textContent += '\nSi el bloque de arriba NO tiene el color correcto, el problema es CSS specificity.\n';
+  logS.textContent += 'Si el bloque SÍ tiene el color correcto, el problema es que la app no llega a ejecutar applyTheme().\n';
+}
+</script>
+<div style="margin-top:16px">
+  <button class="btn" onclick="testSimularApp()">🧪 Simular carga de la app (test definitivo)</button>
+</div>
+</body>
+</html>
