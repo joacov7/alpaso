@@ -587,6 +587,81 @@ Cada cuota: $23.760
       </div>
 
       <!-- OTRAS CONFIGURACIONES -->
+      <div class="sec-title">◆ Identidad y tema visual</div>
+      <div class="config-grid" style="margin-bottom:18px">
+        <div class="config-card">
+          <div class="cc-hdr"><h3>🏪 Datos del local</h3></div>
+          <div class="cc-body">
+            <div class="form-group"><label>Nombre del local</label><input class="form-input" id="cfg-local-nombre" placeholder="Ej: Al Paso"></div>
+            <div class="form-group"><label>Subtítulo (bajo el logo)</label><input class="form-input" id="cfg-local-subtitulo" placeholder="Ej: Tu mercado de proximidad"></div>
+            <div class="form-group"><label>Descripción (para Google)</label><input class="form-input" id="cfg-local-descripcion" placeholder="Descripción del local..."></div>
+            <div class="form-group"><label>Emoji / ícono del logo</label><input class="form-input" id="cfg-local-logo" placeholder="Ej: 👣 🛒 🏪"></div>
+            <div class="form-group"><label>Dirección</label><input class="form-input" id="cfg-local-direccion" placeholder="Ej: Av. Corrientes 1234"></div>
+            <div class="form-group"><label>WhatsApp del local</label><input class="form-input" id="cfg-local-wsp" placeholder="5491100000000"></div>
+          </div>
+        </div>
+        <div class="config-card">
+          <div class="cc-hdr"><h3>🎨 Colores del tema</h3></div>
+          <div class="cc-body">
+            <div class="form-group">
+              <label>Color principal (header, nav)</label>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input class="form-input" id="cfg-color-header" placeholder="#1A1A1A" value="#1A1A1A" style="flex:1">
+                <input type="color" id="cfg-color-header-picker" value="#1A1A1A" style="width:40px;height:38px;border:none;border-radius:8px;cursor:pointer;padding:2px" onchange="document.getElementById('cfg-color-header').value=this.value">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Color de acento (dorado, botones)</label>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input class="form-input" id="cfg-color-acento" placeholder="#C9A84C" value="#C9A84C" style="flex:1">
+                <input type="color" id="cfg-color-acento-picker" value="#C9A84C" style="width:40px;height:38px;border:none;border-radius:8px;cursor:pointer;padding:2px" onchange="document.getElementById('cfg-color-acento').value=this.value">
+              </div>
+            </div>
+            <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:10px;margin-top:4px">
+              <div style="font-size:10px;color:rgba(255,255,255,.3);margin-bottom:8px;font-weight:700">PREVIEW</div>
+              <div id="tema-preview" style="background:#1A1A1A;border-radius:8px;padding:10px;display:flex;align-items:center;gap:8px">
+                <div id="prev-logo" style="width:28px;height:28px;background:#C9A84C;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px">👣</div>
+                <div id="prev-nombre" style="font-family:'Bebas Neue';font-size:18px;color:#C9A84C;letter-spacing:2px">AL PASO</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="config-card">
+          <div class="cc-hdr"><h3>📢 Banner de bienvenida</h3></div>
+          <div class="cc-body">
+            <div class="form-group"><label>Título del banner</label><input class="form-input" id="cfg-banner-titulo" placeholder="Ej: 10% off en tu primera compra"></div>
+            <div class="form-group"><label>Texto del banner</label><textarea class="form-input" id="cfg-banner-texto" rows="3" placeholder="Ej: Para clientes del local anterior..." style="resize:none"></textarea></div>
+            <div class="toggle-row" style="margin-top:4px">
+              <span class="toggle-label">Mostrar banner de bienvenida</span>
+              <label class="toggle"><input type="checkbox" id="cfg-banner-activo" checked><div class="toggle-slider"></div></label>
+            </div>
+          </div>
+        </div>
+        <div class="config-card">
+          <div class="cc-hdr"><h3>📂 Emojis de categorías</h3></div>
+          <div class="cc-body">
+            <div class="form-row">
+              <div class="form-group"><label>Empanadas</label><input class="form-input" id="cfg-cat-empanadas" placeholder="🫓"></div>
+              <div class="form-group"><label>Carne al Vacío</label><input class="form-input" id="cfg-cat-carne" placeholder="🥩"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Carnicería</label><input class="form-input" id="cfg-cat-carniceria" placeholder="🥩"></div>
+              <div class="form-group"><label>Fiambres</label><input class="form-input" id="cfg-cat-fiambres" placeholder="🧀"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Lácteos</label><input class="form-input" id="cfg-cat-lacteos" placeholder="🥛"></div>
+              <div class="form-group"><label>Bebidas</label><input class="form-input" id="cfg-cat-bebidas" placeholder="🥤"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Almacén</label><input class="form-input" id="cfg-cat-almacen" placeholder="🌾"></div>
+              <div class="form-group"><label>Panadería</label><input class="form-input" id="cfg-cat-panaderia" placeholder="🍞"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-gold" style="margin-bottom:20px;padding:11px 22px" onclick="previsualizarTema()">👁 Previsualizar tema</button>
+
       <div class="sec-title">◆ Configuración general</div>
       <div class="config-grid">
         <div class="config-card">
@@ -954,7 +1029,7 @@ async function loadConfig() {
     const cfg = {};
     (data||[]).forEach(c => cfg[c.clave] = c.valor);
 
-    // Rellenar campos de configuración
+    // Campos operativos
     const campos = {
       'tel_cocina':       'tel-cocina',
       'tel_carnicero':    'tel-carnicero',
@@ -966,17 +1041,43 @@ async function loadConfig() {
       'puntos_canje':     'cfg-puntos-canje',
       'descuento_cumple': 'cfg-cumple',
       'descuento_bv':     'cfg-bv',
+      // Tema
+      'local_nombre':      'cfg-local-nombre',
+      'local_subtitulo':   'cfg-local-subtitulo',
+      'local_descripcion': 'cfg-local-descripcion',
+      'local_logo_emoji':  'cfg-local-logo',
+      'local_direccion':   'cfg-local-direccion',
+      'local_wsp':         'cfg-local-wsp',
+      'tema_color_header': 'cfg-color-header',
+      'tema_color_acento': 'cfg-color-acento',
+      'banner_titulo':     'cfg-banner-titulo',
+      'banner_texto':      'cfg-banner-texto',
+      // Categorías
+      'cat_emoji_empanadas':  'cfg-cat-empanadas',
+      'cat_emoji_carne':      'cfg-cat-carne',
+      'cat_emoji_carniceria': 'cfg-cat-carniceria',
+      'cat_emoji_fiambres':   'cfg-cat-fiambres',
+      'cat_emoji_lacteos':    'cfg-cat-lacteos',
+      'cat_emoji_bebidas':    'cfg-cat-bebidas',
+      'cat_emoji_almacen':    'cfg-cat-almacen',
+      'cat_emoji_panaderia':  'cfg-cat-panaderia',
     };
+
     Object.entries(campos).forEach(([clave, id]) => {
       const el = $(id);
       if (el && cfg[clave] !== undefined) el.value = cfg[clave];
     });
 
-    // Guardar en localStorage para uso offline
+    // Color pickers
+    if (cfg.tema_color_header && $('cfg-color-header-picker'))
+      $('cfg-color-header-picker').value = cfg.tema_color_header;
+    if (cfg.tema_color_acento && $('cfg-color-acento-picker'))
+      $('cfg-color-acento-picker').value = cfg.tema_color_acento;
+
+    // Preview
+    actualizarPreview();
     localStorage.setItem('alpaso_config', JSON.stringify(cfg));
   } catch(e) {
-    // Cargar desde localStorage si Supabase falla
-    const cfg = cargarConfigLocal();
     toast('⚠️ Cargando configuración local');
   }
 }
@@ -993,6 +1094,26 @@ async function guardarConfig() {
     'puntos_canje':     $('cfg-puntos-canje')?.value||'500',
     'descuento_cumple': $('cfg-cumple')?.value||'10',
     'descuento_bv':     $('cfg-bv')?.value||'10',
+    // Tema
+    'local_nombre':      $('cfg-local-nombre')?.value||'',
+    'local_subtitulo':   $('cfg-local-subtitulo')?.value||'',
+    'local_descripcion': $('cfg-local-descripcion')?.value||'',
+    'local_logo_emoji':  $('cfg-local-logo')?.value||'',
+    'local_direccion':   $('cfg-local-direccion')?.value||'',
+    'local_wsp':         $('cfg-local-wsp')?.value||'',
+    'tema_color_header': $('cfg-color-header')?.value||'#1A1A1A',
+    'tema_color_acento': $('cfg-color-acento')?.value||'#C9A84C',
+    'banner_titulo':     $('cfg-banner-titulo')?.value||'',
+    'banner_texto':      $('cfg-banner-texto')?.value||'',
+    // Categorías
+    'cat_emoji_empanadas':  $('cfg-cat-empanadas')?.value||'',
+    'cat_emoji_carne':      $('cfg-cat-carne')?.value||'',
+    'cat_emoji_carniceria': $('cfg-cat-carniceria')?.value||'',
+    'cat_emoji_fiambres':   $('cfg-cat-fiambres')?.value||'',
+    'cat_emoji_lacteos':    $('cfg-cat-lacteos')?.value||'',
+    'cat_emoji_bebidas':    $('cfg-cat-bebidas')?.value||'',
+    'cat_emoji_almacen':    $('cfg-cat-almacen')?.value||'',
+    'cat_emoji_panaderia':  $('cfg-cat-panaderia')?.value||'',
   };
 
   try {
@@ -1000,10 +1121,30 @@ async function guardarConfig() {
       await db.from('configuracion').upsert({clave, valor}, {onConflict:'clave'});
     }
     localStorage.setItem('alpaso_config', JSON.stringify(campos));
-    toast('💾 Configuración guardada en Supabase');
+    toast('💾 Configuración guardada — los cambios se ven en la app al instante');
   } catch(e) {
     toast('⚠️ Error guardando: '+e.message);
   }
+}
+
+function actualizarPreview() {
+  const nombre = $('cfg-local-nombre')?.value || 'AL PASO';
+  const logo   = $('cfg-local-logo')?.value   || '👣';
+  const header = $('cfg-color-header')?.value  || '#1A1A1A';
+  const acento = $('cfg-color-acento')?.value  || '#C9A84C';
+  const prev = $('tema-preview');
+  if (prev) {
+    prev.style.background = header;
+    const prevLogo = $('prev-logo');
+    const prevNombre = $('prev-nombre');
+    if (prevLogo)   { prevLogo.style.background = acento; prevLogo.textContent = logo; }
+    if (prevNombre) { prevNombre.style.color = acento; prevNombre.textContent = nombre.toUpperCase(); }
+  }
+}
+
+function previsualizarTema() {
+  actualizarPreview();
+  toast('👁 Preview actualizado — guardá para aplicar en la app');
 }
 
 async function probarAvisos() {

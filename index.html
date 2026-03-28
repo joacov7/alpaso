@@ -20,6 +20,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--r:#E31E24;--rp:#FFF0F0;--n:#1A1A1A;--g:#F5F5F5;--g2:#E8E8E8;--g3:#999;--w:#fff;--gr:#27AE60;--am:#F39C12;--do:#C9A84C;--do2:#E8C96A;--sh2:0 2px 12px rgba(0,0,0,.08)}
+/* TEMA DINÁMICO — se sobreescribe desde Supabase */
+:root.tema-aplicado{--n:var(--tema-n,#1A1A1A);--do:var(--tema-do,#C9A84C);--do2:var(--tema-do2,#E8C96A)}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden}
 body{font-family:'Nunito',sans-serif;background:var(--w);color:var(--n)}
@@ -321,10 +323,13 @@ function instalarPWA(){
       <div class="hdr">
         <div class="hdr-bot"></div>
         <div class="hdr-top">
-          <div class="logo-area"><div class="logo-ic">👣</div><div class="logo-txt">Al Paso</div></div>
+          <div class="logo-area">
+            <div class="logo-ic" id="logo-ic">👣</div>
+            <div class="logo-txt" id="logo-txt">Al Paso</div>
+          </div>
           <div class="notif" id="notif-btn">🔔<div class="ndot" id="notif-dot" style="display:none"></div></div>
         </div>
-        <div class="greet">Bienvenido a<strong>Tu mercado de proximidad</strong></div>
+        <div class="greet" id="greet-txt">Bienvenido a<strong id="greet-sub">Tu mercado de proximidad</strong></div>
       </div>
       <div class="sbar" onclick="goTo('catalogo')"><span>🔍</span><span>Buscá productos...</span></div>
       <div class="hcontent">
@@ -1681,6 +1686,83 @@ function guardarListasLocal(listas) {
 }
 
 // ══════════════════════════════════════════════════════
+// TEMA DINÁMICO — lee config de Supabase y aplica
+// ══════════════════════════════════════════════════════
+async function aplicarTema() {
+  try {
+    const { data } = await db.from('configuracion').select('clave,valor');
+    if (!data) return;
+    const cfg = {};
+    data.forEach(c => cfg[c.clave] = c.valor);
+
+    const r = document.documentElement;
+
+    // ── COLORES ──
+    if (cfg.tema_color_header) r.style.setProperty('--n', cfg.tema_color_header);
+    if (cfg.tema_color_acento) {
+      r.style.setProperty('--do',  cfg.tema_color_acento);
+      r.style.setProperty('--do2', cfg.tema_color_acento + 'CC');
+    }
+
+    // ── LOGO Y NOMBRE ──
+    const logoIc  = document.getElementById('logo-ic');
+    const logoTxt = document.getElementById('logo-txt');
+    if (logoIc  && cfg.local_logo_emoji) logoIc.textContent  = cfg.local_logo_emoji;
+    if (logoTxt && cfg.local_nombre)      logoTxt.textContent = cfg.local_nombre;
+
+    // ── SUBTÍTULO HEADER ──
+    const greetSub = document.getElementById('greet-sub');
+    if (greetSub && cfg.local_subtitulo) greetSub.textContent = cfg.local_subtitulo;
+
+    // ── BANNER BIENVENIDA ──
+    const wbTitle = document.querySelector('.wb-title');
+    const wbSub   = document.querySelector('.wb-sub');
+    if (wbTitle && cfg.banner_titulo) wbTitle.textContent = cfg.banner_titulo;
+    if (wbSub   && cfg.banner_texto)  wbSub.textContent   = cfg.banner_texto;
+
+    // ── META TAGS DINÁMICOS ──
+    if (cfg.local_nombre) {
+      document.title = cfg.local_nombre + (cfg.local_subtitulo ? ' — ' + cfg.local_subtitulo : '');
+      document.querySelector('meta[name="apple-mobile-web-app-title"]')
+        ?.setAttribute('content', cfg.local_nombre);
+    }
+    if (cfg.local_descripcion) {
+      document.querySelector('meta[name="description"]')
+        ?.setAttribute('content', cfg.local_descripcion);
+    }
+
+    // ── COLOR THEME-COLOR (barra del navegador) ──
+    if (cfg.tema_color_header) {
+      document.querySelector('meta[name="theme-color"]')
+        ?.setAttribute('content', cfg.tema_color_header);
+    }
+
+    // ── HEADER COLOR INLINE ──
+    const hdrs = document.querySelectorAll('.hdr, .cat-hdr, .cart-hdr, .fid-hdr, .reg-hdr, .statusbar, .bnav .ni.active');
+    // Los colores ya se aplican via CSS variables, no hace falta inline
+
+    // ── IMÁGENES DE CATEGORÍAS (emoji o URL) ──
+    const catEmojisConfig = {
+      'cat_emoji_empanadas':   'Empanadas',
+      'cat_emoji_carne':       'Carne al Vacío',
+      'cat_emoji_carniceria':  'Carnicería',
+      'cat_emoji_fiambres':    'Fiambres',
+      'cat_emoji_lacteos':     'Lácteos',
+      'cat_emoji_panaderia':   'Panadería',
+      'cat_emoji_bebidas':     'Bebidas',
+      'cat_emoji_almacen':     'Almacén',
+    };
+    Object.entries(catEmojisConfig).forEach(([key, cat]) => {
+      if (cfg[key]) CE[cat] = cfg[key];
+    });
+
+  } catch(e) {
+    console.warn('Error aplicando tema:', e);
+    // No interrumpir la carga si falla
+  }
+}
+
+// ══════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════
 async function init() {
@@ -1697,8 +1779,8 @@ async function init() {
     } catch(e) {}
   }
 
-  // Cargar datos
-  await loadData();
+  // Cargar datos y tema
+  await Promise.all([loadData(), aplicarTema()]);
 
   // Ocultar loading
   $('loading').style.display = 'none';
