@@ -191,7 +191,7 @@ select.form-input{cursor:pointer}
     <h1 id="topbar-title">📊 Dashboard</h1>
     <div class="tb-right">
       <div style="font-size:11px;color:rgba(255,255,255,.3);font-weight:600" id="fecha-hoy"></div>
-      <button class="btn btn-gold" onclick="toast('Actualizando datos...')">🔄 Actualizar</button>
+      <button id="btn-actualizar" class="btn btn-gold" onclick="refreshActual()">🔄 Actualizar</button>
     </div>
   </div>
 
@@ -683,8 +683,11 @@ function toast(msg, dur=2800) {
 }
 
 function goTo(s, el) {
+  console.log('goTo:', s);
   document.querySelectorAll('.screen').forEach(x => x.classList.remove('active'));
-  $('s-'+s).classList.add('active');
+  const screen = $('s-'+s);
+  if (!screen) { console.error('Screen not found: s-'+s); return; }
+  screen.classList.add('active');
   document.querySelectorAll('.ni').forEach(n => n.classList.remove('active'));
   if (el) el.classList.add('active');
   const titles = {
@@ -693,12 +696,11 @@ function goTo(s, el) {
     alta:'➕ Alta rápida', config:'⚙️ Configuración'
   };
   $('topbar-title').textContent = titles[s] || s;
-  // Cargar datos de la sección
   if (s==='dashboard')  loadDashboard();
   if (s==='pedidos')    loadPedidos();
   if (s==='clientes')   loadClientes();
   if (s==='prediccion') renderPrediccion();
-  if (s==='config')     loadConfig();
+  if (s==='config')     { console.log('Loading config...'); loadConfig(); }
 }
 
 // ══ DASHBOARD ═════════════════════════════════════════════════════════════════
@@ -1143,18 +1145,18 @@ function iniciarAutoRefresh() {
   }, 30000); // cada 30 segundos
 }
 
+function refreshActual() {
+  const screen = document.querySelector('.screen.active')?.id;
+  if (screen==='s-dashboard') loadDashboard();
+  else if (screen==='s-pedidos')   loadPedidos();
+  else if (screen==='s-clientes')  loadClientes();
+  else if (screen==='s-config')    loadConfig();
+  toast('🔄 Actualizando...');
+}
+
 // ══ INIT ══════════════════════════════════════════════════════════════════════
 const d = new Date();
 $('fecha-hoy').textContent = d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
-
-// Botón actualizar
-document.querySelector('.btn-gold')?.addEventListener('click', () => {
-  const screen = document.querySelector('.screen.active')?.id;
-  if (screen==='s-dashboard') loadDashboard();
-  if (screen==='s-pedidos')   loadPedidos();
-  if (screen==='s-clientes')  loadClientes();
-  toast('🔄 Actualizando...');
-});
 
 loadDashboard();
 loadProgresoCli();
