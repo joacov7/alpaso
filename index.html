@@ -2097,7 +2097,7 @@ function renderCart() {
   const desc = calcularDescuentoPersonal();
   const descAmt = desc ? Math.round(sub * desc.pct / 100) : 0;
   const delCosto = entrega==='Delivery' ? (sub >= parseFloat(CONFIG.delivery_minimo||'10000') ? 0 : parseFloat(CONFIG.delivery_costo||'1500')) : 0;
-  const recargo  = pasoTipo==='credito3' ? Math.round(sub * parseFloat(CONFIG.recargo_credito3||'20') / 100) : 0;
+  const recargo  = pagoTipo==='credito3' ? Math.round(sub * parseFloat(CONFIG.recargo_credito3||'20') / 100) : 0;
   const total = sub - bv - ptsDes - descAmt + delCosto + recargo;
   const tiempoTxt = tiempoEntregaTexto();
 
