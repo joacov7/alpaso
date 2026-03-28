@@ -695,7 +695,23 @@ function instalarPWA(){
             </div>
             <div style="font-size:10px;color:var(--g3);margin-top:3px">Para avisarte cuando tu pedido esté listo</div>
           </div>
-          <div class="fg"><label>Cumpleaños <span style="color:var(--g3);font-weight:400">(opcional — para tu descuento)</span></label><input id="r-cumple" type="date" autocomplete="bday"></div>
+          <div class="fg">
+            <label>Cumpleaños <span style="color:var(--g3);font-weight:400">(opcional — para tu descuento)</span></label>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:8px">
+              <select id="r-cumple-d" style="border:1.5px solid var(--g2);border-radius:10px;padding:10px 8px;font-family:'Nunito';font-size:13px;font-weight:600;color:var(--n);outline:none;background:#fff">
+                <option value="">Día</option>
+                ${Array.from({length:31},(_,i)=>`<option value="${String(i+1).padStart(2,'0')}">${i+1}</option>`).join('')}
+              </select>
+              <select id="r-cumple-m" style="border:1.5px solid var(--g2);border-radius:10px;padding:10px 8px;font-family:'Nunito';font-size:13px;font-weight:600;color:var(--n);outline:none;background:#fff">
+                <option value="">Mes</option>
+                ${['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'].map((m,i)=>`<option value="${String(i+1).padStart(2,'0')}">${m}</option>`).join('')}
+              </select>
+              <select id="r-cumple-a" style="border:1.5px solid var(--g2);border-radius:10px;padding:10px 8px;font-family:'Nunito';font-size:13px;font-weight:600;color:var(--n);outline:none;background:#fff">
+                <option value="">Año</option>
+                ${Array.from({length:80},(_,i)=>{ const y=new Date().getFullYear()-18-i; return `<option value="${y}">${y}</option>`; }).join('')}
+              </select>
+            </div>
+          </div>
           <div class="fg">
             <label>¿Eras cliente del local anterior?</label>
             <select id="r-anterior">
@@ -885,43 +901,63 @@ async function registrarCliente() {
   const nombre   = $('r-nombre').value.trim();
   const apellido = $('r-apellido').value.trim();
   const tel      = $('r-tel').value.trim();
-  const cumple   = $('r-cumple').value;
+  const cumpleD = $('r-cumple-d')?.value;
+  const cumpleM = $('r-cumple-m')?.value;
+  const cumpleA = $('r-cumple-a')?.value;
+  const cumple  = (cumpleD && cumpleM && cumpleA) ? `${cumpleA}-${cumpleM}-${cumpleD}` : null;
   const anterior = $('r-anterior').value === 'true';
 
   if (!nombre || !tel) { toast('⚠️ Completá nombre y WhatsApp'); return; }
 
   const ptsBienvenida = anterior ? 100 : 50;
 
-  const { data, error } = await db.from('clientes').insert({
-    nombre, apellido, telefono: tel,
-    cumpleanos: cumple || null,
-    puntos: ptsBienvenida,
-    nivel: 'Bronze',
+  const insertData = {
+    nombre,
+    apellido:         apellido || null,
+    telefono:         tel,
+    cumpleanos:       cumple || null,
+    puntos:           ptsBienvenida,
+    nivel:            'Bronze',
     cliente_anterior: anterior,
-    bv_activa: true,
-    bv_usada: false,
-  }).select().single();
+    bv_activa:        true,
+    bv_usada:         false,
+  };
+
+  console.log('Intentando registrar:', insertData);
+
+  const { data, error } = await db.from('clientes').insert(insertData).select().single();
 
   if (error) {
+    console.error('Error Supabase completo:', JSON.stringify(error));
     if (error.code === '23505') {
-      // Ya existe — cargarlo
-      const { data: existing } = await db.from('clientes').select('*').eq('telefono', tel).single();
-      if (existing) { clienteActual = existing; bvActiva = existing.bv_activa; bvUsada = existing.bv_usada; historialCliente=[]; historialCargado=false; }
-      toast('✅ Bienvenido de vuelta — tarjeta cargada');
-    } else {
-      toast('⚠️ Error al crear tarjeta — intentá de nuevo');
+      // Ya existe — cargarlo por teléfono
+      const { data: existing, error: e2 } = await db.from('clientes').select('*').eq('telefono', tel).single();
+      if (e2) { toast('⚠️ Error: ' + e2.message); return; }
+      if (existing) {
+        clienteActual = existing;
+        bvActiva = existing.bv_activa;
+        bvUsada  = existing.bv_usada;
+        historialCliente = []; historialCargado = false;
+        localStorage.setItem('alpaso_cliente', JSON.stringify(clienteActual));
+        actualizarUserBtn();
+        goTo('fidelidad');
+        toast('✅ Bienvenido de vuelta, ' + existing.nombre);
+      }
       return;
     }
-  } else {
-    clienteActual = data;
-    bvActiva = true;
-    historialCliente = []; historialCargado = false;
+    // Mostrar error detallado
+    toast('⚠️ Error: ' + (error.message || error.details || JSON.stringify(error)));
+    return;
   }
 
+  clienteActual = data;
+  bvActiva = true;
+  bvUsada  = false;
+  historialCliente = []; historialCargado = false;
   localStorage.setItem('alpaso_cliente', JSON.stringify(clienteActual));
   actualizarUserBtn();
   goTo('fidelidad');
-  toast(`👣 Tarjeta Al Paso creada con ${ptsBienvenida} Pasos de bienvenida`);
+  toast(`👣 Tarjeta creada con ${ptsBienvenida} Pasos de bienvenida`);
 }
 
 async function actualizarPuntos(pts) {
