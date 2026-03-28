@@ -308,6 +308,35 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
     <div class="fg"><label>Alias / CBU para transferencia</label><input id="c-mp-alias" placeholder="alpaso.mp"></div>
   </div>
 
+  <!-- ENTREGA Y PAGO -->
+  <div class="card">
+    <div class="card-title">🛵 Modalidades de entrega</div>
+    <div class="tog-row">
+      <div><div class="tog-lbl">🛵 Delivery habilitado</div><div class="tog-sub">Los clientes pueden pedir con envío a domicilio</div></div>
+      <label class="tog"><input type="checkbox" id="c-entrega-delivery" checked><div class="tog-sl"></div></label>
+    </div>
+    <div class="tog-row">
+      <div><div class="tog-lbl">🏪 Retiro en local habilitado</div><div class="tog-sub">Los clientes pueden retirar del local</div></div>
+      <label class="tog"><input type="checkbox" id="c-entrega-retiro" checked><div class="tog-sl"></div></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">💳 Formas de pago habilitadas</div>
+    <div class="tog-row">
+      <div><div class="tog-lbl">💵 Efectivo / Débito / Transferencia</div></div>
+      <label class="tog"><input type="checkbox" id="c-pago-efectivo" checked><div class="tog-sl"></div></label>
+    </div>
+    <div class="tog-row">
+      <div><div class="tog-lbl">💙 MercadoPago</div><div class="tog-sub">Requiere que esté configurado el link de MP</div></div>
+      <label class="tog"><input type="checkbox" id="c-pago-mp" checked><div class="tog-sl"></div></label>
+    </div>
+    <div class="tog-row">
+      <div><div class="tog-lbl">💳 Crédito 3 cuotas</div></div>
+      <label class="tog"><input type="checkbox" id="c-pago-credito3" checked><div class="tog-sl"></div></label>
+    </div>
+  </div>
+
   <!-- WHATSAPP -->
   <div class="card">
     <div class="card-title">📲 WhatsApp</div>
@@ -475,6 +504,11 @@ const CFG_MAP = {
   'recargo_credito3':     'c-recargo',
   'mp_link':              'c-mp-link',
   'mp_alias':             'c-mp-alias',
+  'entrega_delivery':     'c-entrega-delivery',
+  'entrega_retiro':       'c-entrega-retiro',
+  'pago_efectivo':        'c-pago-efectivo',
+  'pago_mp':              'c-pago-mp',
+  'pago_credito3':        'c-pago-credito3',
   'local_wsp':            'c-wsp-local',
   'tel_cocina':           'c-tel-cocina',
   'empanadas_por_caja':   'c-emp-caja',
@@ -499,7 +533,12 @@ async function loadConfig() {
     Object.entries(CFG_MAP).forEach(([clave, id]) => {
       const el = $(id);
       if (!el) return;
-      if (configCargado[clave] !== undefined) el.value = configCargado[clave];
+      if (configCargado[clave] === undefined) return;
+      if (el.type === 'checkbox') {
+        el.checked = configCargado[clave] !== 'false';
+      } else {
+        el.value = configCargado[clave];
+      }
     });
 
     // Toggles
@@ -527,7 +566,7 @@ async function guardarSeccion(seccion) {
   // Determinar qué claves guardar según la sección
   const clavesPorSeccion = {
     visual: ['header_foto','local_nombre','local_logo_emoji','local_logo_url','local_subtitulo','b1_foto','b1_tag','b1_titulo','b1_precio','bloque_carnes_foto','bloque_carnes_titulo','bloque_carnes_sub','banner_titulo','banner_texto'],
-    operaciones: ['mensaje_cierre','h_lv_desde','h_lv_hasta','h_sab_desde','h_sab_hasta','h_dom_desde','h_dom_hasta','t_del_min','t_del_max','t_ret_min','t_ret_max','delivery_minimo','delivery_costo','recargo_credito3','mp_link','mp_alias','local_wsp','tel_cocina','empanadas_por_caja','acepta_pedidos'],
+    operaciones: ['mensaje_cierre','h_lv_desde','h_lv_hasta','h_sab_desde','h_sab_hasta','h_dom_desde','h_dom_hasta','t_del_min','t_del_max','t_ret_min','t_ret_max','delivery_minimo','delivery_costo','recargo_credito3','mp_link','mp_alias','local_wsp','tel_cocina','empanadas_por_caja','acepta_pedidos','entrega_delivery','entrega_retiro','pago_efectivo','pago_mp','pago_credito3'],
     fidelidad: ['descuento_bv','bv_activa','puntos_x_peso','puntos_canje','puntos_val','descuento_cumple'],
   };
 
@@ -544,7 +583,7 @@ async function guardarSeccion(seccion) {
       const id = CFG_MAP[clave];
       const el = id ? $(id) : null;
       if (!el) continue;
-      valor = el.value;
+      valor = el.type === 'checkbox' ? (el.checked ? 'true' : 'false') : el.value;
     }
 
     const { error } = await db.from('configuracion').upsert({clave, valor},{onConflict:'clave'});

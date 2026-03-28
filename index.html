@@ -752,7 +752,7 @@ function instalarPWA(){
     <div class="scroll-area" style="background:var(--cream2)">
 
       <!-- VACÍO -->
-      <div id="cart-empty" class="cart-empty" style="display:none">
+      <div id="cart-empty" class="cart-empty" style="display:none;flex-direction:column">
         <div class="emp-ic">🛒</div>
         <h3>Carrito vacío</h3>
         <p>Elegí tus empanadas o explorá el catálogo</p>
@@ -2074,7 +2074,7 @@ function explorarCarnes() { activeCat='Carne al Vacío'; goTo('catalogo'); }
 // CARRITO
 // ══════════════════════════════════════════════════════
 function renderCart() {
-  const wrap = $('cart-wrap');
+  const wrap = $('cart-area');
   if (!wrap) return;
   buildNav('bn-carrito', 'carrito');
 
@@ -2140,41 +2140,54 @@ function renderCart() {
       </div></div>`;
   }
 
-  // Entrega
+  // Entrega — respetar flags de config
+  const deliveryOn = CONFIG.entrega_delivery !== 'false';
+  const retiroOn   = CONFIG.entrega_retiro   !== 'false';
+  // Si el modo actual está deshabilitado, cambiar al primero disponible
+  if (entrega==='Delivery' && !deliveryOn && retiroOn)  entrega = 'Retiro';
+  if (entrega==='Retiro'   && !retiroOn   && deliveryOn) entrega = 'Delivery';
+
   html += `<div class="cart-section" style="margin:8px 12px;border-radius:14px;overflow:hidden">
     <div class="cart-section-hdr"><span>Entrega</span></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 16px">
-      <div class="eopt${entrega==='Delivery'?' sel':''}" onclick="setEntrega('Delivery')">
+    <div style="display:grid;grid-template-columns:${deliveryOn&&retiroOn?'1fr 1fr':'1fr'};gap:8px;padding:12px 16px">
+      ${deliveryOn ? `<div class="eopt${entrega==='Delivery'?' sel':''}" onclick="setEntrega('Delivery')">
         <div style="font-size:20px;margin-bottom:4px">🛵</div>
         <div style="font-size:12px;font-weight:800;color:var(--brown)">Delivery</div>
         <div style="font-size:10px;color:var(--g3)">${tiempoTxt.delivery}</div>
-      </div>
-      <div class="eopt${entrega==='Retiro'?' sel':''}" onclick="setEntrega('Retiro')">
+      </div>` : ''}
+      ${retiroOn ? `<div class="eopt${entrega==='Retiro'?' sel':''}" onclick="setEntrega('Retiro')">
         <div style="font-size:20px;margin-bottom:4px">🏪</div>
         <div style="font-size:12px;font-weight:800;color:var(--brown)">Retiro</div>
         <div style="font-size:10px;color:var(--g3)">${tiempoTxt.retiro}</div>
-      </div>
+      </div>` : ''}
     </div>
   </div>`;
 
-  // Pago
-  const mpLink = CONFIG.mp_link || '';
+  // Pago — respetar flags de config
+  const pagoEfectivoOn = CONFIG.pago_efectivo !== 'false';
+  const pagoMpOn       = CONFIG.pago_mp       !== 'false' && !!CONFIG.mp_link;
+  const pagoCredito3On = CONFIG.pago_credito3 !== 'false';
+  // Si el modo actual está deshabilitado, cambiar a efectivo
+  if (pagoTipo==='efectivo' && !pagoEfectivoOn) pagoTipo = pagoMpOn ? 'mp' : 'credito3';
+  if (pagoTipo==='mp'       && !pagoMpOn)       pagoTipo = pagoEfectivoOn ? 'efectivo' : 'credito3';
+  if (pagoTipo==='credito3' && !pagoCredito3On) pagoTipo = pagoEfectivoOn ? 'efectivo' : 'mp';
+
   html += `<div class="cart-section" style="margin:8px 12px;border-radius:14px;overflow:hidden">
     <div class="cart-section-hdr"><span>Forma de pago</span></div>
     <div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px">
-      <div class="popt${pagoTipo==='efectivo'?' sel':''}" onclick="setPago('efectivo')">
+      ${pagoEfectivoOn ? `<div class="popt${pagoTipo==='efectivo'?' sel':''}" onclick="setPago('efectivo')">
         <div style="font-size:20px">💵</div>
         <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--brown)">Efectivo / Débito / Transferencia</div></div>
-      </div>
-      ${mpLink ? `<div class="popt popt-mp${pagoTipo==='mp'?' sel':''}" onclick="setPago('mp')">
+      </div>` : ''}
+      ${pagoMpOn ? `<div class="popt popt-mp${pagoTipo==='mp'?' sel':''}" onclick="setPago('mp')">
         <div class="popt-mp-logo">💙</div>
         <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--brown)">MercadoPago</div></div>
       </div>` : ''}
-      <div class="popt${pagoTipo==='credito3'?' sel':''}" onclick="setPago('credito3')">
+      ${pagoCredito3On ? `<div class="popt${pagoTipo==='credito3'?' sel':''}" onclick="setPago('credito3')">
         <div style="font-size:20px">💳</div>
         <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--brown)">Crédito 3 cuotas</div>
         <div style="font-size:10px;color:var(--g3)">Recargo ${CONFIG.recargo_credito3||'20'}%</div></div>
-      </div>
+      </div>` : ''}
     </div>
   </div>`;
 
