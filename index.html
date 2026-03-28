@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#3D2008">
+<meta name="theme-color" content="#FA5200">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -1849,54 +1849,32 @@ function lighten(hex, amt) {
 }
 
 function applyTheme() {
-  const brown = CONFIG.color_brown || localStorage.getItem('t_brown') || '#3D2008';
-  const gold  = CONFIG.color_gold  || localStorage.getItem('t_gold')  || '#D4911A';
+  const brown = CONFIG.color_brown || '#FA5200';
+  const gold  = CONFIG.color_gold  || '#FA5200';
 
-  // Guardar en localStorage para carga inmediata próxima vez
-  if (CONFIG.color_brown) localStorage.setItem('t_brown', CONFIG.color_brown);
-  if (CONFIG.color_gold)  localStorage.setItem('t_gold',  CONFIG.color_gold);
+  // Pisar las variables CSS del :root directamente en el elemento html
+  const root = document.documentElement;
+  root.style.setProperty('--brown',  brown);
+  root.style.setProperty('--brown2', lighten(brown, 20));
+  root.style.setProperty('--brown3', lighten(brown, 50));
+  root.style.setProperty('--gold',   gold);
+  root.style.setProperty('--gold2',  lighten(gold, 30));
+  root.style.setProperty('--gold3',  lighten(gold, 60));
 
   // Foto de fondo del header
   const hdrEl = document.getElementById('app-hdr');
   const hdrOv = document.getElementById('hdr-overlay');
-  const hdrFoto = CONFIG.header_foto || localStorage.getItem('t_hdr_foto') || '';
+  const hdrFoto = CONFIG.header_foto || '';
   if (hdrFoto && hdrEl) {
     hdrEl.style.backgroundImage = `url('${hdrFoto}')`;
     if (hdrOv) hdrOv.style.display = 'block';
-    localStorage.setItem('t_hdr_foto', hdrFoto);
   } else if (hdrEl) {
     hdrEl.style.backgroundImage = '';
     if (hdrOv) hdrOv.style.display = 'none';
   }
-
-  let styleEl = document.getElementById('theme-override');
-  if (!styleEl) {
-    styleEl = document.createElement('style');
-    styleEl.id = 'theme-override';
-    document.head.appendChild(styleEl);
-  }
-  styleEl.textContent = `:root {
-    --brown:  ${brown} !important;
-    --brown2: ${lighten(brown, 30)} !important;
-    --brown3: ${lighten(brown, 70)} !important;
-    --gold:   ${gold} !important;
-    --gold2:  ${lighten(gold, 30)} !important;
-    --gold3:  ${lighten(gold, 60)} !important;
-  }`;
 }
 
-// Aplicar colores guardados ANTES de que cargue Supabase (evita flash)
-(function() {
-  const b = localStorage.getItem('t_brown');
-  const g = localStorage.getItem('t_gold');
-  if (!b && !g) return;
-  const brown = b || '#3D2008', gold = g || '#D4911A';
-  function lx(hex,amt){try{let c=parseInt(hex.replace('#',''),16);let r=Math.min(255,(c>>16)+amt),gr=Math.min(255,((c>>8)&0xff)+amt),bl=Math.min(255,(c&0xff)+amt);return '#'+[r,gr,bl].map(x=>x.toString(16).padStart(2,'0')).join('');}catch(e){return hex;}}
-  const s = document.createElement('style');
-  s.id = 'theme-override';
-  s.textContent = `:root{--brown:${brown}!important;--brown2:${lx(brown,30)}!important;--brown3:${lx(brown,70)}!important;--gold:${gold}!important;--gold2:${lx(gold,30)}!important;--gold3:${lx(gold,60)}!important;}`;
-  document.head.appendChild(s);
-})();
+// theme applied by applyTheme() after Supabase loads
 
 function renderHome() {
   buildNav('bn-home', 'home');
@@ -2240,7 +2218,8 @@ function renderCart() {
   const DC      = parseInt(CONFIG.delivery_costo  || 1500);
   const env     = entrega === 'Delivery' && sub < DM ? DC : 0;
   const bvPct = parseFloat(CONFIG.descuento_bv||'10')/100;
-  const bv      = CONFIG.bv_activa!=='false' && bvActiva && !bvUsada ? Math.round(sub * bvPct) : 0;
+  const bvGlobal = CONFIG.bv_activa !== 'false';  // default: activo si no está en Supabase
+  const bv      = bvGlobal && bvActiva && !bvUsada ? Math.round(sub * bvPct) : 0;
   const canjeAmt = puntosAplicados ? 500 : 0;
   const total   = sub + rec + env - bv - canjeAmt;
   const cnt     = cartCount();
@@ -2340,7 +2319,8 @@ async function showCheckout() {
   const DC       = parseInt(CONFIG.delivery_costo  || 1500);
   const env      = entrega==='Delivery' && sub<DM ? DC : 0;
   const bvPct2 = parseFloat(CONFIG.descuento_bv||'10')/100;
-  const bv       = CONFIG.bv_activa!=='false' && bvActiva && !bvUsada ? Math.round(sub*bvPct2) : 0;
+  const bvGlobal2 = CONFIG.bv_activa !== 'false';
+  const bv       = bvGlobal2 && bvActiva && !bvUsada ? Math.round(sub*bvPct2) : 0;
   const canjeAmt = puntosAplicados ? 500 : 0;
   const total    = sub + rec + env - bv - canjeAmt;
   const pts      = Math.floor(sub/100);
@@ -2407,7 +2387,8 @@ function abrirWsp() {
   const DC      = parseInt(CONFIG.delivery_costo  || 1500);
   const env     = entrega==='Delivery' && sub<DM ? DC : 0;
   const bvPct3 = parseFloat(CONFIG.descuento_bv||'10')/100;
-  const bv      = CONFIG.bv_activa!=='false' && bvUsada ? Math.round(sub*bvPct3) : 0;
+  const bvGlobal3 = CONFIG.bv_activa !== 'false';
+  const bv      = bvGlobal3 && bvUsada ? Math.round(sub*bvPct3) : 0;
   const total   = sub + rec + env - bv - (puntosAplicados?500:0);
   const pagoLabel = {
     efectivo: 'Efectivo / Débito / Transferencia',
@@ -3071,10 +3052,13 @@ async function init() {
   } else {
     renderFid();
     actualizarUserBtn();
-    // Solo mostrar banner si el descuento NO fue usado
-    if (bvActiva && !bvUsada) {
+    // Solo mostrar banner si el descuento está activo globalmente y el cliente no lo usó
+    const bvGlobalOn = CONFIG.bv_activa !== 'false';
+    if (bvGlobalOn && bvActiva && !bvUsada) {
       $('wb').style.display = 'block';
-      if ($('wb-btn')) $('wb-btn').textContent = '✓ 10% off — primera compra';
+      const pct = CONFIG.descuento_bv || '10';
+      if ($('wb-btn')) $('wb-btn').textContent = `✓ ${pct}% off — primera compra`;
+      if ($('wb-title')) $('wb-title').textContent = `${pct}% off en tu primera compra`;
     } else {
       $('wb').style.display = 'none';
     }
