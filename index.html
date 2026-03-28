@@ -1855,42 +1855,50 @@ function lighten(hex, amt) {
 function applyTheme() {
   const brown = CONFIG.color_brown || '#FA5200';
   const gold  = CONFIG.color_gold  || '#FA5200';
-  console.log('[Al Paso] applyTheme — brown:', brown, '| gold:', gold);
 
-  // Reemplazar el bloque :root en la hoja de estilos existente
-  // Es el método más confiable — modifica el CSS directamente
-  try {
-    const sheet = document.styleSheets[0];
-    for (let i = 0; i < sheet.cssRules.length; i++) {
-      const rule = sheet.cssRules[i];
-      if (rule.selectorText === ':root') {
-        rule.style.setProperty('--brown',  brown);
-        rule.style.setProperty('--brown2', lighten(brown, 20));
-        rule.style.setProperty('--brown3', lighten(brown, 50));
-        rule.style.setProperty('--gold',   gold);
-        rule.style.setProperty('--gold2',  lighten(gold, 30));
-        rule.style.setProperty('--gold3',  lighten(gold, 60));
-        break;
-      }
-    }
-  } catch(e) {
-    // Fallback: inyectar un <style> nuevo al final del <head>
-    const old = document.getElementById('theme-dyn');
-    if (old) old.remove();
-    const s = document.createElement('style');
-    s.id = 'theme-dyn';
-    s.textContent = [
-      ':root{',
-      `--brown:${brown};`,
-      `--brown2:${lighten(brown,20)};`,
-      `--brown3:${lighten(brown,50)};`,
-      `--gold:${gold};`,
-      `--gold2:${lighten(gold,30)};`,
-      `--gold3:${lighten(gold,60)}`,
-      '}'
-    ].join('');
-    document.head.appendChild(s);
-  }
+  console.log('[Al Paso] applyTheme — brown:', brown);
+
+  // Actualizar TODAS las variables CSS (sistema viejo --n/--do Y nuevo --brown/--gold)
+  const r = document.documentElement;
+  // Sistema nuevo
+  r.style.setProperty('--brown',  brown);
+  r.style.setProperty('--brown2', lighten(brown, 20));
+  r.style.setProperty('--brown3', lighten(brown, 50));
+  r.style.setProperty('--gold',   gold);
+  r.style.setProperty('--gold2',  lighten(gold, 30));
+  r.style.setProperty('--gold3',  lighten(gold, 60));
+  // Sistema viejo (--n, --do) — apuntar al mismo color
+  r.style.setProperty('--n',   brown);
+  r.style.setProperty('--do',  gold);
+  r.style.setProperty('--do2', gold + 'CC');
+
+  // Logo y nombre
+  const logoIc  = document.getElementById('logo-ic');
+  const logoTxt = document.getElementById('logo-txt');
+  if (logoIc  && CONFIG.local_logo_emoji) logoIc.textContent  = CONFIG.local_logo_emoji;
+  if (logoTxt && CONFIG.local_nombre)     logoTxt.textContent = CONFIG.local_nombre;
+
+  // Subtítulo header (cuando no hay cliente)
+  const greetSub = document.getElementById('greet-sub');
+  if (greetSub && CONFIG.local_subtitulo && !clienteActual) greetSub.textContent = CONFIG.local_subtitulo;
+
+  // Banner bienvenida
+  const wbTitle = document.querySelector('.wb-title');
+  const wbSub   = document.querySelector('.wb-sub');
+  if (wbTitle && CONFIG.banner_titulo) wbTitle.textContent = CONFIG.banner_titulo;
+  if (wbSub   && CONFIG.banner_texto)  wbSub.textContent   = CONFIG.banner_texto;
+
+  // Emojis por categoría
+  const catMap = {
+    cat_emoji_empanadas:'Empanadas', cat_emoji_carne:'Carne al Vacío',
+    cat_emoji_carniceria:'Carnicería', cat_emoji_fiambres:'Fiambres',
+    cat_emoji_lacteos:'Lácteos', cat_emoji_panaderia:'Panadería',
+    cat_emoji_bebidas:'Bebidas', cat_emoji_almacen:'Almacén',
+  };
+  Object.entries(catMap).forEach(([key, cat]) => { if (CONFIG[key]) CE[cat] = CONFIG[key]; });
+
+  // Meta theme-color (barra del navegador)
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', brown);
 
   // Foto de fondo del header
   const hdrEl = document.getElementById('app-hdr');
@@ -2972,79 +2980,9 @@ function guardarListasLocal(listas) {
 // ══════════════════════════════════════════════════════
 // TEMA DINÁMICO — lee config de Supabase y aplica
 // ══════════════════════════════════════════════════════
-async function aplicarTema() {
-  try {
-    const { data } = await db.from('configuracion').select('clave,valor');
-    if (!data) return;
-    const cfg = {};
-    data.forEach(c => cfg[c.clave] = c.valor);
+// aplicarTema() merged into applyTheme()
+function aplicarTema() { /* vacía — ver applyTheme */ }
 
-    const r = document.documentElement;
-
-    // ── COLORES ──
-    if (cfg.tema_color_header) r.style.setProperty('--n', cfg.tema_color_header);
-    if (cfg.tema_color_acento) {
-      r.style.setProperty('--do',  cfg.tema_color_acento);
-      r.style.setProperty('--do2', cfg.tema_color_acento + 'CC');
-    }
-
-    // ── LOGO Y NOMBRE ──
-    const logoIc  = document.getElementById('logo-ic');
-    const logoTxt = document.getElementById('logo-txt');
-    if (logoIc  && cfg.local_logo_emoji) logoIc.textContent  = cfg.local_logo_emoji;
-    if (logoTxt && cfg.local_nombre)      logoTxt.textContent = cfg.local_nombre;
-
-    // ── SUBTÍTULO HEADER ──
-    const greetSub = document.getElementById('greet-sub');
-    if (greetSub && cfg.local_subtitulo) greetSub.textContent = cfg.local_subtitulo;
-
-    // ── BANNER BIENVENIDA ──
-    const wbTitle = document.querySelector('.wb-title');
-    const wbSub   = document.querySelector('.wb-sub');
-    if (wbTitle && cfg.banner_titulo) wbTitle.textContent = cfg.banner_titulo;
-    if (wbSub   && cfg.banner_texto)  wbSub.textContent   = cfg.banner_texto;
-
-    // ── META TAGS DINÁMICOS ──
-    if (cfg.local_nombre) {
-      document.title = cfg.local_nombre + (cfg.local_subtitulo ? ' — ' + cfg.local_subtitulo : '');
-      document.querySelector('meta[name="apple-mobile-web-app-title"]')
-        ?.setAttribute('content', cfg.local_nombre);
-    }
-    if (cfg.local_descripcion) {
-      document.querySelector('meta[name="description"]')
-        ?.setAttribute('content', cfg.local_descripcion);
-    }
-
-    // ── COLOR THEME-COLOR (barra del navegador) ──
-    if (cfg.tema_color_header) {
-      document.querySelector('meta[name="theme-color"]')
-        ?.setAttribute('content', cfg.tema_color_header);
-    }
-
-    // ── HEADER COLOR INLINE ──
-    const hdrs = document.querySelectorAll('.hdr, .cat-hdr, .cart-hdr, .fid-hdr, .reg-hdr, .statusbar, .bnav .ni.active');
-    // Los colores ya se aplican via CSS variables, no hace falta inline
-
-    // ── IMÁGENES DE CATEGORÍAS (emoji o URL) ──
-    const catEmojisConfig = {
-      'cat_emoji_empanadas':   'Empanadas',
-      'cat_emoji_carne':       'Carne al Vacío',
-      'cat_emoji_carniceria':  'Carnicería',
-      'cat_emoji_fiambres':    'Fiambres',
-      'cat_emoji_lacteos':     'Lácteos',
-      'cat_emoji_panaderia':   'Panadería',
-      'cat_emoji_bebidas':     'Bebidas',
-      'cat_emoji_almacen':     'Almacén',
-    };
-    Object.entries(catEmojisConfig).forEach(([key, cat]) => {
-      if (cfg[key]) CE[cat] = cfg[key];
-    });
-
-  } catch(e) {
-    console.warn('Error aplicando tema:', e);
-    // No interrumpir la carga si falla
-  }
-}
 
 // ══════════════════════════════════════════════════════
 // INIT
@@ -3064,7 +3002,7 @@ async function init() {
   }
 
   // Cargar datos y tema
-  await Promise.all([loadData(), aplicarTema()]);
+  await loadData();
 
   // Ocultar loading
   $('loading').style.display = 'none';
