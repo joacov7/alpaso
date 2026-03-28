@@ -866,40 +866,36 @@ async function loadConfig() {
 }
 
 async function guardarConfig() {
-  // Recolectar todos los valores actuales de la UI
   const vals = {};
   Object.entries(CFG_MAP).forEach(([clave, id]) => {
     const el = $(id);
-    if (el) vals[clave] = el.type === 'checkbox' ? (el.checked ? 'true' : 'false') : el.value;
+    if (!el) return;
+    vals[clave] = el.type === 'checkbox' ? (el.checked ? 'true' : 'false') : el.value;
   });
-  // Toggle acepta_pedidos (fuera del CFG_MAP)
   const togAcepta = $('tog-acepta-pedidos');
   if (togAcepta) vals.acepta_pedidos = togAcepta.checked ? 'true' : 'false';
 
-  // Guardar en lote: un solo upsert con todos los registros
-  const rows = Object.entries(vals).map(([clave, valor]) => ({ clave, valor }));
-  
-  try {
-    const { error } = await db.from('configuracion').upsert(rows, { onConflict: 'clave' });
-    if (error) throw error;
-    // Guardar en localStorage (fuente de verdad local)
-    localStorage.setItem('alpaso_cfg', JSON.stringify(vals));
-    toast('✅ Guardado');
-    // NO recargar de Supabase — los valores ya están bien en la UI
-  } catch(e) {
-    // Si falla el lote, intentar uno por uno para identificar el problema
-    console.error('Batch upsert failed, trying one by one:', e);
-    let errores = 0;
-    for (const [clave, valor] of Object.entries(vals)) {
-      const { error } = await db.from('configuracion').upsert({ clave, valor }, { onConflict: 'clave' });
-      if (error) { console.error('Error saving', clave, error); errores++; }
-    }
-    if (errores === 0) {
-      localStorage.setItem('alpaso_cfg', JSON.stringify(vals));
-      toast('✅ Guardado (modo individual)');
+  // Mostrar qué se va a guardar (debug)
+  console.log('Guardando config:', vals);
+
+  let ok = 0, fail = 0;
+  for (const [clave, valor] of Object.entries(vals)) {
+    const { error } = await db
+      .from('configuracion')
+      .upsert({ clave, valor }, { onConflict: 'clave' });
+    if (error) {
+      console.error('❌ Error guardando', clave, ':', error.message);
+      fail++;
     } else {
-      toast(`⚠️ ${errores} campos no se pudieron guardar — revisá la consola`);
+      ok++;
     }
+  }
+
+  if (fail === 0) {
+    localStorage.setItem('alpaso_cfg', JSON.stringify(vals));
+    toast(`✅ ${ok} campos guardados`);
+  } else {
+    toast(`⚠️ ${fail} errores — abrí la consola (F12) para ver cuáles`);
   }
 }
 
@@ -1334,15 +1330,15 @@ async function eliminarZona(id) {
 // Cargar operaciones cuando se abre la pestaña
 const _navOriginal = nav;
 nav = function(el, id) {
-  _navOriginal(el, id);
+  _navOriginal(el, id);  // este ya llama loadConfig() si id==='config'
   if (id === 'config') {
     setTimeout(() => {
-      loadEstadoLocal();
+      // loadConfig() ya corrió arriba — solo cargar las listas dinámicas
       loadSabores();
       loadProductosToggle();
       loadBanners();
       loadZonas();
-    }, 100);
+    }, 300);
   }
 };
 
