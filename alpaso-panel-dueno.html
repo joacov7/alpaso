@@ -2,490 +2,760 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Al Paso — Panel</title>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Al Paso — Panel del Dueño</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Bebas+Neue&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Nunito',sans-serif;background:#0D0D0D;color:#fff;min-height:100vh}
-.app{max-width:640px;margin:0 auto;padding:0 0 80px}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:100vh}
+.wrap{max-width:680px;margin:0 auto;padding-bottom:80px}
 
-/* NAV */
-.top-nav{background:#1A1A1A;border-bottom:1px solid #333;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
-.top-nav h1{font-size:18px;font-weight:900;color:#FA5200}
-.top-nav span{font-size:12px;color:#666}
-.tabs{display:flex;gap:4px;padding:12px 16px;background:#111;border-bottom:1px solid #222;overflow-x:auto;position:sticky;top:57px;z-index:40}
-.tab{padding:8px 16px;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;color:#666;background:transparent;border:none;font-family:'Nunito';white-space:nowrap;transition:all .15s}
-.tab.on{background:#FA5200;color:#fff}
+/* TOP BAR */
+.topbar{background:#111;border-bottom:1px solid #222;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.topbar-logo{font-family:'Bebas Neue';font-size:22px;color:#C9A84C;letter-spacing:2px}
+.topbar-fecha{font-size:11px;color:#555}
 
-/* SECCIONES */
-.sec{padding:16px}
-.sec-title{font-size:11px;font-weight:800;color:#FA5200;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px}
-.card{background:#1A1A1A;border:1px solid #2A2A2A;border-radius:12px;padding:16px;margin-bottom:12px}
-.card-title{font-size:13px;font-weight:800;color:#fff;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+/* ESTADO RÁPIDO */
+.estado-bar{background:#161616;border-bottom:1px solid #222;padding:10px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:57px;z-index:90}
+.estado-info{display:flex;align-items:center;gap:8px}
+.dot{width:10px;height:10px;border-radius:50%;background:#43A047;flex-shrink:0;transition:background .3s}
+.dot.off{background:#E53935}
+.estado-txt{font-size:13px;font-weight:700}
+
+/* TABS */
+.tabs{display:flex;gap:4px;padding:12px 16px;background:#111;border-bottom:1px solid #1A1A1A;overflow-x:auto;scrollbar-width:none;position:sticky;top:103px;z-index:80}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:8px 16px;border-radius:8px;font-family:'Nunito';font-size:12px;font-weight:800;cursor:pointer;color:#555;background:transparent;border:none;white-space:nowrap;transition:all .15s}
+.tab.on{background:#C9A84C;color:#0A0A0A}
+
+/* SECCIÓN */
+.sec{padding:16px 18px}
+.sec-title{font-size:10px;font-weight:800;color:#C9A84C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px}
+
+/* CARD */
+.card{background:#161616;border:1px solid #222;border-radius:14px;padding:16px;margin-bottom:12px}
+.card-title{font-size:13px;font-weight:800;color:#fff;margin-bottom:14px;display:flex;align-items:center;gap:8px}
 
 /* FORMS */
 .fg{margin-bottom:12px}
-.fg label{display:block;font-size:10px;font-weight:800;color:#888;margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
-.fg input,.fg select,.fg textarea{width:100%;background:#222;border:1px solid #333;border-radius:8px;padding:9px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none;transition:border-color .15s}
-.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:#FA5200}
+.fg label{display:block;font-size:10px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+.fg input,.fg select,.fg textarea{width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none;transition:border-color .15s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:#C9A84C}
 .fg textarea{resize:vertical;min-height:70px}
 .fg-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.fg-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.fg-hint{font-size:10px;color:#555;margin-top:4px;line-height:1.4}
+.preview-img{width:100%;height:80px;object-fit:cover;border-radius:8px;margin-top:8px;border:1px solid #2A2A2A;display:none}
 
 /* TOGGLE */
-.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #222}
-.toggle-row:last-child{border:none}
-.toggle-row .lbl{font-size:13px;font-weight:600;color:#fff}
-.toggle-row .sub{font-size:10px;color:#666;margin-top:2px}
-.tog{position:relative;width:44px;height:24px;flex-shrink:0}
-.tog input{opacity:0;width:0;height:0}
-.tog-sl{position:absolute;cursor:pointer;inset:0;background:#333;border-radius:12px;transition:.3s}
-.tog-sl::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s}
-.tog input:checked+.tog-sl{background:#FA5200}
-.tog input:checked+.tog-sl::before{transform:translateX(20px)}
+.tog-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #1E1E1E}
+.tog-row:last-child{border:none}
+.tog-lbl{font-size:13px;font-weight:600;color:#fff}
+.tog-sub{font-size:10px;color:#555;margin-top:2px}
+.tog{position:relative;width:44px;height:24px;flex-shrink:0;cursor:pointer}
+.tog input{opacity:0;width:0;height:0;position:absolute}
+.tog-sl{position:absolute;inset:0;background:#2A2A2A;border-radius:12px;transition:.3s;cursor:pointer}
+.tog-sl::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#666;border-radius:50%;transition:.3s}
+.tog input:checked+.tog-sl{background:#C9A84C}
+.tog input:checked+.tog-sl::before{background:#fff;transform:translateX(20px)}
 
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:9px;font-family:'Nunito';font-size:13px;font-weight:800;cursor:pointer;border:none;transition:all .15s}
-.btn-brand{background:#FA5200;color:#fff}
-.btn-brand:active{background:#E04A00}
-.btn-ghost{background:#222;color:#aaa;border:1px solid #333}
-.btn-ghost:active{background:#2A2A2A}
-.btn-danger{background:rgba(229,57,53,.15);color:#F48080;border:1px solid rgba(229,57,53,.3)}
+.btn-gold{background:#C9A84C;color:#0A0A0A}
+.btn-gold:active{background:#B89440}
+.btn-ghost{background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A}
+.btn-ghost:active{background:#252525}
+.btn-danger{background:rgba(229,57,53,.1);color:#EF9A9A;border:1px solid rgba(229,57,53,.2)}
+.btn-full{width:100%;justify-content:center;padding:13px}
 
 /* PEDIDOS */
-.ped-card{background:#1A1A1A;border:1px solid #2A2A2A;border-radius:12px;padding:14px;margin-bottom:10px}
-.ped-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
-.ped-num{font-size:14px;font-weight:900;color:#FA5200}
-.ped-estado{font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;text-transform:uppercase}
-.estado-nuevo{background:rgba(67,160,71,.15);color:#81C784}
-.estado-preparando{background:rgba(251,140,0,.15);color:#FFB74D}
-.estado-listo{background:rgba(33,150,243,.15);color:#64B5F6}
-.estado-entregado{background:#222;color:#666}
-.estado-pendiente_pago{background:rgba(33,150,243,.15);color:#64B5F6}
-.ped-cliente{font-size:12px;font-weight:700;color:#fff;margin-bottom:3px}
-.ped-info{font-size:11px;color:#666}
-.ped-items{font-size:11px;color:#aaa;margin:8px 0;line-height:1.6;border-top:1px solid #222;padding-top:8px}
-.ped-total{font-size:15px;font-weight:900;color:#fff}
-.ped-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
-.ped-btn{padding:6px 12px;border-radius:7px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;border:none;transition:all .15s}
+.ped{background:#161616;border:1px solid #222;border-radius:12px;padding:14px;margin-bottom:10px}
+.ped-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
+.ped-num{font-size:15px;font-weight:900;color:#C9A84C}
+.ped-badge{font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px}
+.b-nuevo{background:rgba(67,160,71,.15);color:#81C784}
+.b-preparando{background:rgba(251,140,0,.15);color:#FFB74D}
+.b-listo{background:rgba(33,150,243,.15);color:#64B5F6}
+.b-entregado{background:#1A1A1A;color:#444}
+.b-cancelado{background:rgba(229,57,53,.1);color:#EF9A9A}
+.b-pendiente_pago{background:rgba(33,150,243,.15);color:#64B5F6}
+.ped-cliente{font-size:13px;font-weight:700;color:#fff;margin-bottom:2px}
+.ped-meta{font-size:11px;color:#555;margin-bottom:8px}
+.ped-items{font-size:11px;color:#888;padding:8px 0;border-top:1px solid #1E1E1E;border-bottom:1px solid #1E1E1E;margin-bottom:8px;line-height:1.7}
+.ped-footer{display:flex;align-items:center;justify-content:space-between}
+.ped-total{font-size:16px;font-weight:900;color:#fff}
+.ped-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.ped-btn{padding:7px 12px;border-radius:8px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;border:none;transition:all .15s}
 
 /* PRODUCTOS */
-.prod-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #222}
-.prod-row:last-child{border:none}
-.prod-name{flex:1;font-size:12px;font-weight:700;color:#fff}
-.prod-cat{font-size:10px;color:#666}
+.prod-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1A1A1A}
+.prod-item:last-child{border:none}
+.prod-name{flex:1;min-width:0}
+.prod-name-txt{font-size:12px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prod-cat-txt{font-size:10px;color:#555}
 
 /* KPI */
-.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
-.kpi{background:#1A1A1A;border:1px solid #2A2A2A;border-radius:12px;padding:14px;text-align:center}
-.kpi-n{font-size:28px;font-weight:900;color:#FA5200}
-.kpi-l{font-size:11px;color:#666;margin-top:2px}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.kpi{background:#161616;border:1px solid #222;border-radius:12px;padding:14px;text-align:center}
+.kpi-val{font-size:26px;font-weight:900;color:#C9A84C;line-height:1}
+.kpi-lbl{font-size:10px;color:#555;margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+
+/* BANNER CIERRE */
+.banner-cierre-preview{background:linear-gradient(135deg,#1A0A00,#C9A84C33);border:1px solid #C9A84C44;border-radius:10px;padding:12px;margin-top:8px;font-size:12px;color:#C9A84C;line-height:1.5;display:none}
 
 /* TOAST */
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1A1A1A;color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;font-weight:700;opacity:0;transition:all .3s;pointer-events:none;border:1px solid #333;z-index:999}
-.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#161616;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:700;opacity:0;transition:all .3s;pointer-events:none;border:1px solid #333;z-index:999;white-space:nowrap}
+.toast.on{opacity:1;transform:translateX(-50%)}
 
-/* ESTADO LOCAL — sticky top */
-.estado-bar{background:#1A1A1A;border-bottom:1px solid #333;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:98px;z-index:30}
-.estado-dot{width:10px;height:10px;border-radius:50%;background:#43A047;display:inline-block;margin-right:6px;flex-shrink:0}
-.estado-dot.cerrado{background:#E53935}
+/* LOADING */
+.loading-panel{display:flex;align-items:center;justify-content:center;padding:48px;color:#333;font-size:13px;gap:8px}
 </style>
 </head>
 <body>
-<div class="app">
+<div class="wrap">
 
-<div class="top-nav">
-  <h1>⚡ Al Paso — Panel</h1>
-  <span id="fecha-hoy"></span>
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-logo">◆ AL PASO — PANEL</div>
+  <div class="topbar-fecha" id="fecha-hoy"></div>
 </div>
 
-<!-- ESTADO LOCAL STICKY -->
+<!-- ESTADO RÁPIDO -->
 <div class="estado-bar">
-  <div style="display:flex;align-items:center">
-    <div class="estado-dot" id="estado-dot"></div>
-    <span style="font-size:13px;font-weight:700" id="estado-txt">Cargando...</span>
+  <div class="estado-info">
+    <div class="dot" id="estado-dot"></div>
+    <div>
+      <div class="estado-txt" id="estado-txt">Cargando...</div>
+    </div>
   </div>
-  <label class="tog">
+  <label class="tog" title="Abrir / cerrar local">
     <input type="checkbox" id="tog-acepta" onchange="toggleAcepta(this)">
     <div class="tog-sl"></div>
   </label>
 </div>
 
+<!-- TABS -->
 <div class="tabs">
-  <button class="tab on" onclick="showTab(this,'pedidos')">📋 Pedidos</button>
-  <button class="tab" onclick="showTab(this,'dashboard')">📊 Dashboard</button>
-  <button class="tab" onclick="showTab(this,'productos')">📦 Productos</button>
-  <button class="tab" onclick="showTab(this,'config')">⚙️ Config</button>
+  <button class="tab on"  onclick="tab(this,'pedidos')">📋 Pedidos</button>
+  <button class="tab"     onclick="tab(this,'dashboard')">📊 Dashboard</button>
+  <button class="tab"     onclick="tab(this,'visual')">🎨 Visual</button>
+  <button class="tab"     onclick="tab(this,'operaciones')">⚙️ Operaciones</button>
+  <button class="tab"     onclick="tab(this,'productos')">📦 Productos</button>
+  <button class="tab"     onclick="tab(this,'fidelidad')">💛 Fidelidad</button>
 </div>
 
-<!-- ═══ PEDIDOS ═══════════════════════════════════════ -->
+<!-- ═══ PEDIDOS ════════════════════════════════════ -->
 <div id="tab-pedidos" class="sec">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
     <div class="sec-title" style="margin:0">Pedidos activos</div>
     <button class="btn btn-ghost" onclick="loadPedidos()" style="padding:6px 12px;font-size:11px">🔄 Actualizar</button>
   </div>
-  <div id="pedidos-list"><div style="text-align:center;padding:40px;color:#444">Cargando pedidos...</div></div>
+  <div id="pedidos-list"><div class="loading-panel">⏳ Cargando...</div></div>
 </div>
 
-<!-- ═══ DASHBOARD ══════════════════════════════════════ -->
+<!-- ═══ DASHBOARD ══════════════════════════════════ -->
 <div id="tab-dashboard" class="sec" style="display:none">
-  <div class="sec-title">Resumen del día</div>
-  <div class="kpis" id="kpis">
-    <div class="kpi"><div class="kpi-n" id="kpi-pedidos">—</div><div class="kpi-l">Pedidos hoy</div></div>
-    <div class="kpi"><div class="kpi-n" id="kpi-total">—</div><div class="kpi-l">Ventas hoy</div></div>
-    <div class="kpi"><div class="kpi-n" id="kpi-clientes">—</div><div class="kpi-l">Clientes registrados</div></div>
-    <div class="kpi"><div class="kpi-n" id="kpi-ticket">—</div><div class="kpi-l">Ticket promedio</div></div>
+  <div class="sec-title">Resumen de hoy</div>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-val" id="kpi-ped">—</div><div class="kpi-lbl">Pedidos</div></div>
+    <div class="kpi"><div class="kpi-val" id="kpi-vta">—</div><div class="kpi-lbl">Ventas</div></div>
+    <div class="kpi"><div class="kpi-val" id="kpi-cli">—</div><div class="kpi-lbl">Clientes</div></div>
+    <div class="kpi"><div class="kpi-val" id="kpi-tkt">—</div><div class="kpi-lbl">Ticket prom.</div></div>
   </div>
-</div>
-
-<!-- ═══ PRODUCTOS ══════════════════════════════════════ -->
-<div id="tab-productos" class="sec" style="display:none">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-    <div class="sec-title" style="margin:0">Activar / desactivar</div>
-    <select id="prod-cat-filter" onchange="loadProductos()" style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 10px;font-family:'Nunito';font-size:12px;color:#fff;outline:none">
-      <option value="">Todas las categorías</option>
-      <option>Empanadas</option><option>Carnicería</option><option>Carne al Vacío</option>
-      <option>Fiambres</option><option>Lácteos</option><option>Bebidas</option>
-      <option>Almacén</option><option>Limpieza</option><option>Kiosco</option>
-    </select>
-  </div>
-  <input id="prod-buscar" placeholder="🔍 Buscar producto..." oninput="loadProductos()"
-    style="width:100%;background:#222;border:1px solid #333;border-radius:8px;padding:9px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none;margin-bottom:12px">
-  <div id="prod-list"><div style="text-align:center;padding:40px;color:#444">Cargando...</div></div>
-</div>
-
-<!-- ═══ CONFIG ════════════════════════════════════════ -->
-<div id="tab-config" class="sec" style="display:none">
-  <div class="sec-title">Configuración</div>
-
-  <!-- Local -->
   <div class="card">
-    <div class="card-title">🏪 Datos del local</div>
-    <div class="fg-row">
-      <div class="fg"><label>Nombre</label><input id="c-nombre" placeholder="Al Paso"></div>
-      <div class="fg"><label>Emoji logo</label><input id="c-logo" placeholder="👣"></div>
+    <div class="card-title">📋 Últimos pedidos del día</div>
+    <div id="dash-pedidos"><div class="loading-panel">⏳</div></div>
+  </div>
+</div>
+
+<!-- ═══ VISUAL ═════════════════════════════════════ -->
+<div id="tab-visual" class="sec" style="display:none">
+  <div class="sec-title">Apariencia de la app</div>
+
+  <!-- HEADER -->
+  <div class="card">
+    <div class="card-title">🖼 Header — imagen de fondo</div>
+    <div class="fg">
+      <label>URL de la foto de fondo</label>
+      <input id="c-header-foto" placeholder="https://..." oninput="previewImg('c-header-foto','prev-header')">
+      <div class="fg-hint">Reemplaza el color sólido del header. Recomendado: 800×200px horizontal.<br>
+      URL actual de tu imagen: <span style="color:#C9A84C;word-break:break-all">https://tlsyakbhceolczjzadpc.supabase.co/storage/v1/object/public/productos/alpasoinicio.png</span></div>
+      <img id="prev-header" class="preview-img" style="height:100px">
     </div>
-    <div class="fg"><label>Subtítulo</label><input id="c-sub" placeholder="Tu mercado de proximidad"></div>
-    <div class="fg"><label>WhatsApp del local (para pedidos)</label><input id="c-wsp" placeholder="5491100000000"></div>
-    <div class="fg"><label>Link MercadoPago</label><input id="c-mp" placeholder="https://mpago.la/..."></div>
   </div>
 
-  <!-- Horarios -->
+  <!-- LOGO Y NOMBRE -->
+  <div class="card">
+    <div class="card-title">🏪 Logo y nombre</div>
+    <div class="fg-row">
+      <div class="fg">
+        <label>Nombre del local</label>
+        <input id="c-nombre" placeholder="Al Paso">
+      </div>
+      <div class="fg">
+        <label>Emoji del logo</label>
+        <input id="c-logo" placeholder="👣">
+      </div>
+    </div>
+    <div class="fg">
+      <label>Subtítulo (debajo del nombre)</label>
+      <input id="c-subtitulo" placeholder="Tu mercado de proximidad">
+    </div>
+  </div>
+
+  <!-- BLOQUE EMPANADAS -->
+  <div class="card">
+    <div class="card-title">🫓 Bloque Empanadas</div>
+    <div class="fg"><label>Tag / etiqueta</label><input id="c-b1-tag" placeholder="🔥 OFERTA DEL DÍA"></div>
+    <div class="fg"><label>Título (HTML permitido para saltos de línea)</label><input id="c-b1-titulo" placeholder="4 empanadas&lt;br&gt;+ bebida"></div>
+    <div class="fg"><label>Precio destacado</label><input id="c-b1-precio" placeholder="$7.500"></div>
+  </div>
+
+  <!-- BLOQUE CARNES -->
+  <div class="card">
+    <div class="card-title">🥩 Bloque Carnes</div>
+    <div class="fg">
+      <label>Foto de fondo (URL)</label>
+      <input id="c-b2-foto" placeholder="https://..." oninput="previewImg('c-b2-foto','prev-b2')">
+      <img id="prev-b2" class="preview-img">
+    </div>
+    <div class="fg"><label>Título</label><input id="c-b2-titulo" placeholder="Cortes al vacío&lt;br&gt;y carnicería"></div>
+    <div class="fg"><label>Subtítulo</label><input id="c-b2-sub" placeholder="Vacío · Nalga · Costeleta"></div>
+  </div>
+
+  <!-- BANNER BIENVENIDA -->
+  <div class="card">
+    <div class="card-title">🎁 Banner de bienvenida</div>
+    <div class="fg"><label>Título del banner</label><input id="c-wb-titulo" placeholder="10% off en tu primera compra"></div>
+    <div class="fg"><label>Texto del banner</label><input id="c-wb-texto" placeholder="Para clientes del local anterior..."></div>
+  </div>
+
+  <button class="btn btn-gold btn-full" onclick="guardarSeccion('visual')">💾 Guardar cambios visuales</button>
+</div>
+
+<!-- ═══ OPERACIONES ════════════════════════════════ -->
+<div id="tab-operaciones" class="sec" style="display:none">
+  <div class="sec-title">Operaciones diarias</div>
+
+  <!-- MENSAJE CIERRE -->
+  <div class="card">
+    <div class="card-title">🔴 Mensaje cuando está cerrado</div>
+    <div class="fg">
+      <label>Mensaje que ve el cliente</label>
+      <input id="c-cierre" placeholder="Estamos cerrados. Volvemos mañana a las 8:00hs 🕗" oninput="actualizarPreviewCierre()">
+      <div class="banner-cierre-preview" id="preview-cierre"></div>
+    </div>
+  </div>
+
+  <!-- HORARIOS -->
   <div class="card">
     <div class="card-title">🕐 Horarios de atención</div>
-    <div class="fg"><label>Mensaje cuando está cerrado</label><input id="c-cierre" placeholder="Volvemos mañana a las 8:00hs"></div>
-    <div style="font-size:10px;font-weight:800;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Lunes a Viernes</div>
+    <div style="font-size:10px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Lunes a Viernes</div>
     <div class="fg-row">
       <div class="fg"><label>Apertura</label><input id="c-lv-desde" type="time" value="08:00"></div>
       <div class="fg"><label>Cierre</label><input id="c-lv-hasta" type="time" value="21:00"></div>
     </div>
-    <div style="font-size:10px;font-weight:800;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Sábado</div>
+    <div style="font-size:10px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:.5px;margin:10px 0 8px">Sábado</div>
     <div class="fg-row">
       <div class="fg"><label>Apertura</label><input id="c-sab-desde" type="time" value="08:00"></div>
       <div class="fg"><label>Cierre</label><input id="c-sab-hasta" type="time" value="14:00"></div>
     </div>
+    <div class="tog-row" style="margin-top:8px">
+      <div><div class="tog-lbl">Abierto los domingos</div></div>
+      <label class="tog"><input type="checkbox" id="tog-dom" onchange="toggleDomingo(this)"><div class="tog-sl"></div></label>
+    </div>
+    <div id="horario-dom" style="display:none;margin-top:10px">
+      <div class="fg-row">
+        <div class="fg"><label>Apertura Dom</label><input id="c-dom-desde" type="time" value="09:00"></div>
+        <div class="fg"><label>Cierre Dom</label><input id="c-dom-hasta" type="time" value="13:00"></div>
+      </div>
+    </div>
   </div>
 
-  <!-- Tiempos entrega -->
+  <!-- TIEMPOS ENTREGA -->
   <div class="card">
     <div class="card-title">⏱ Tiempos de entrega</div>
-    <div style="font-size:10px;font-weight:800;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Delivery</div>
+    <div style="font-size:10px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Delivery</div>
     <div class="fg-row">
-      <div class="fg"><label>Mín (min)</label><input id="c-del-min" type="number" value="30"></div>
-      <div class="fg"><label>Máx (min)</label><input id="c-del-max" type="number" value="45"></div>
+      <div class="fg"><label>Mínimo (min)</label><input id="c-del-min" type="number" value="30"></div>
+      <div class="fg"><label>Máximo (min)</label><input id="c-del-max" type="number" value="45"></div>
     </div>
-    <div style="font-size:10px;font-weight:800;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Retiro</div>
+    <div style="font-size:10px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:.5px;margin:10px 0 8px">Retiro en local</div>
     <div class="fg-row">
-      <div class="fg"><label>Mín (min)</label><input id="c-ret-min" type="number" value="10"></div>
-      <div class="fg"><label>Máx (min)</label><input id="c-ret-max" type="number" value="20"></div>
+      <div class="fg"><label>Mínimo (min)</label><input id="c-ret-min" type="number" value="10"></div>
+      <div class="fg"><label>Máximo (min)</label><input id="c-ret-max" type="number" value="15"></div>
     </div>
   </div>
 
-  <!-- Delivery -->
+  <!-- DELIVERY Y PAGOS -->
   <div class="card">
-    <div class="card-title">🛵 Delivery</div>
+    <div class="card-title">🛵 Delivery y pagos</div>
     <div class="fg"><label>Monto mínimo para envío gratis ($)</label><input id="c-del-minimo" type="number" value="10000"></div>
     <div class="fg"><label>Costo de envío si no alcanza ($)</label><input id="c-del-costo" type="number" value="1500"></div>
     <div class="fg"><label>Recargo crédito 3 cuotas (%)</label><input id="c-recargo" type="number" value="20"></div>
+    <div class="fg"><label>Link MercadoPago</label><input id="c-mp-link" placeholder="https://mpago.la/..."></div>
+    <div class="fg"><label>Alias / CBU para transferencia</label><input id="c-mp-alias" placeholder="alpaso.mp"></div>
   </div>
 
-  <!-- Fidelidad -->
+  <!-- WHATSAPP -->
   <div class="card">
-    <div class="card-title">💛 Fidelidad</div>
-    <div class="fg"><label>Descuento bienvenida (%)</label><input id="c-bv-pct" type="number" value="10"></div>
-    <div class="toggle-row">
-      <div><div class="lbl">Descuento bienvenida activo</div><div class="sub">Si está apagado, los clientes nuevos no ven el descuento</div></div>
+    <div class="card-title">📲 WhatsApp</div>
+    <div class="fg"><label>Número principal (pedidos)</label><input id="c-wsp-local" placeholder="5491100000000"><div class="fg-hint">Sin + ni espacios. Ej: 5491155443322</div></div>
+    <div class="fg"><label>Cocina / Repartidor</label><input id="c-tel-cocina" placeholder="5491100000000"></div>
+  </div>
+
+  <!-- EMPANADAS -->
+  <div class="card">
+    <div class="card-title">🫓 Empanadas</div>
+    <div class="fg"><label>Unidades por caja / pedido</label><input id="c-emp-caja" type="number" value="6"><div class="fg-hint">Lo que el cliente selecciona es por unidad, pero el precio viene de Supabase como precio de caja. Este número se usa para calcular el precio por unidad.</div></div>
+  </div>
+
+  <button class="btn btn-gold btn-full" onclick="guardarSeccion('operaciones')">💾 Guardar operaciones</button>
+</div>
+
+<!-- ═══ PRODUCTOS ══════════════════════════════════ -->
+<div id="tab-productos" class="sec" style="display:none">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <div class="sec-title" style="margin:0">Activar / desactivar productos</div>
+  </div>
+  <div class="fg-row" style="margin-bottom:12px">
+    <input id="prod-buscar" placeholder="🔍 Buscar..." oninput="loadProductos()"
+      style="background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
+    <select id="prod-cat" onchange="loadProductos()"
+      style="background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:12px;color:#fff;outline:none">
+      <option value="">Todas las categorías</option>
+      <option>Empanadas</option><option>Carnicería</option><option>Carne al Vacío</option>
+      <option>Fiambres</option><option>Lácteos</option><option>Bebidas</option>
+      <option>Almacén</option><option>Limpieza</option><option>Kiosco</option><option>Panadería</option>
+    </select>
+  </div>
+  <div class="card" id="prod-list" style="padding:0 16px"><div class="loading-panel">⏳ Cargando...</div></div>
+</div>
+
+<!-- ═══ FIDELIDAD ══════════════════════════════════ -->
+<div id="tab-fidelidad" class="sec" style="display:none">
+  <div class="sec-title">Programa de Pasos</div>
+
+  <div class="card">
+    <div class="card-title">💛 Descuento bienvenida</div>
+    <div class="tog-row">
+      <div>
+        <div class="tog-lbl">Descuento bienvenida activo</div>
+        <div class="tog-sub">Si está apagado, los clientes nuevos no ven el descuento</div>
+      </div>
       <label class="tog"><input type="checkbox" id="c-bv-activa" checked><div class="tog-sl"></div></label>
+    </div>
+    <div class="fg" style="margin-top:12px">
+      <label>Porcentaje de descuento (%)</label>
+      <input id="c-bv-pct" type="number" value="10">
     </div>
   </div>
 
-  <!-- Home -->
   <div class="card">
-    <div class="card-title">🏠 Bloques del home</div>
-    <div style="font-size:10px;font-weight:800;color:#FA5200;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Bloque Empanadas</div>
-    <div class="fg"><label>Tag / etiqueta</label><input id="c-b1-tag" placeholder="🔥 OFERTA DEL DÍA"></div>
-    <div class="fg"><label>Título</label><input id="c-b1-titulo" placeholder="Empanadas artesanales"></div>
-    <div class="fg"><label>Precio destacado</label><input id="c-b1-precio" placeholder="$5.800 la caja x6"></div>
-    <div class="fg"><label>Empanadas por caja</label><input id="c-emp-caja" type="number" value="6"></div>
-    <div style="font-size:10px;font-weight:800;color:#FA5200;text-transform:uppercase;letter-spacing:.5px;margin:12px 0 8px">Bloque Carnes</div>
-    <div class="fg"><label>Título</label><input id="c-b2-titulo" placeholder="Cortes al vacío y carnicería"></div>
-    <div class="fg"><label>Subtítulo</label><input id="c-b2-sub" placeholder="Vacío · Nalga · Costeleta"></div>
-    <div class="fg"><label>Foto (URL de Supabase Storage)</label><input id="c-b2-foto" placeholder="https://..."></div>
+    <div class="card-title">👣 Configuración de Pasos</div>
+    <div class="fg"><label>Pasos por cada $100 gastados</label><input id="c-pts-x" type="number" value="1"></div>
+    <div class="fg"><label>Pasos necesarios para canjear</label><input id="c-pts-canje" type="number" value="500"></div>
+    <div class="fg"><label>Valor del canje ($)</label><input id="c-pts-val" type="number" value="500"></div>
+    <div class="fg"><label>Descuento cumpleaños (%)</label><input id="c-cumple-pct" type="number" value="10"></div>
   </div>
 
-  <button class="btn btn-brand" style="width:100%;justify-content:center;padding:14px" onclick="guardarConfig()">💾 Guardar configuración</button>
+  <div class="card">
+    <div class="card-title">📊 Clientes registrados</div>
+    <div id="clientes-stats"><div class="loading-panel">⏳</div></div>
+  </div>
+
+  <button class="btn btn-gold btn-full" onclick="guardarSeccion('fidelidad')">💾 Guardar fidelidad</button>
 </div>
 
-</div><!-- /app -->
+</div><!-- /wrap -->
 
 <div class="toast" id="toast"></div>
 
 <script>
+// ══════════════════════════════════════════════════
+// SUPABASE
+// ══════════════════════════════════════════════════
 const SB_URL = 'https://tlsyakbhceolczjzadpc.supabase.co';
 const SB_KEY = 'sb_publishable_pdCPXmVa47gh3rSURJsgaQ_axezH12Z';
 const db = supabase.createClient(SB_URL, SB_KEY);
 const $ = id => document.getElementById(id);
 const fmt = n => '$' + Math.round(n||0).toLocaleString('es-AR');
 
-function toast(msg, dur=2500) {
+function toast(msg, dur=2600) {
   const el = $('toast');
   el.textContent = msg;
   el.classList.add('on');
   setTimeout(() => el.classList.remove('on'), dur);
 }
 
-// ── TABS ──────────────────────────────────────────
-function showTab(btn, id) {
+// ══════════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════════
+function tab(btn, id) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
   btn.classList.add('on');
-  ['pedidos','dashboard','productos','config'].forEach(t => {
-    $('tab-'+t).style.display = t === id ? 'block' : 'none';
+  ['pedidos','dashboard','visual','operaciones','productos','fidelidad'].forEach(t => {
+    $(('tab-'+t)).style.display = t === id ? 'block' : 'none';
   });
-  if (id === 'pedidos')   loadPedidos();
-  if (id === 'dashboard') loadDashboard();
-  if (id === 'productos') loadProductos();
-  if (id === 'config')    loadConfig();
+  if (id === 'pedidos')     loadPedidos();
+  if (id === 'dashboard')   loadDashboard();
+  if (id === 'visual')      loadConfig();
+  if (id === 'operaciones') loadConfig();
+  if (id === 'productos')   loadProductos();
+  if (id === 'fidelidad')   { loadConfig(); loadClientesStats(); }
 }
 
-// ── ESTADO LOCAL ──────────────────────────────────
+// ══════════════════════════════════════════════════
+// ESTADO LOCAL
+// ══════════════════════════════════════════════════
 async function loadEstado() {
-  const { data } = await db.from('configuracion').select('clave,valor').eq('clave','acepta_pedidos').single().catch(() => ({data:null}));
+  const { data } = await db.from('configuracion').select('clave,valor')
+    .eq('clave','acepta_pedidos').single().catch(() => ({data:null}));
   const acepta = !data || data.valor !== 'false';
   $('tog-acepta').checked = acepta;
-  $('estado-dot').className = 'estado-dot' + (acepta ? '' : ' cerrado');
-  $('estado-txt').textContent = acepta ? 'Local abierto — aceptando pedidos' : 'Local cerrado';
+  updateEstadoUI(acepta);
+}
+
+function updateEstadoUI(acepta) {
+  $('estado-dot').className = 'dot' + (acepta ? '' : ' off');
+  $('estado-txt').textContent = acepta ? '🟢 Local abierto — aceptando pedidos' : '🔴 Local cerrado';
 }
 
 async function toggleAcepta(cb) {
-  const val = cb.checked ? 'true' : 'false';
-  await db.from('configuracion').upsert({ clave: 'acepta_pedidos', valor: val }, { onConflict: 'clave' });
-  $('estado-dot').className = 'estado-dot' + (cb.checked ? '' : ' cerrado');
-  $('estado-txt').textContent = cb.checked ? 'Local abierto — aceptando pedidos' : 'Local cerrado';
+  const valor = cb.checked ? 'true' : 'false';
+  await db.from('configuracion').upsert({clave:'acepta_pedidos',valor},{onConflict:'clave'});
+  updateEstadoUI(cb.checked);
   toast(cb.checked ? '✅ Local abierto' : '🔴 Local cerrado');
 }
 
-// ── PEDIDOS ───────────────────────────────────────
-async function loadPedidos() {
-  const el = $('pedidos-list');
-  el.innerHTML = '<div style="text-align:center;padding:40px;color:#444">Cargando...</div>';
+// ══════════════════════════════════════════════════
+// CONFIG — MAP completo
+// ══════════════════════════════════════════════════
+const CFG_MAP = {
+  // Visual
+  'header_foto':          'c-header-foto',
+  'local_nombre':         'c-nombre',
+  'local_logo_emoji':     'c-logo',
+  'local_subtitulo':      'c-subtitulo',
+  'b1_tag':               'c-b1-tag',
+  'b1_titulo':            'c-b1-titulo',
+  'b1_precio':            'c-b1-precio',
+  'bloque_carnes_foto':   'c-b2-foto',
+  'bloque_carnes_titulo': 'c-b2-titulo',
+  'bloque_carnes_sub':    'c-b2-sub',
+  'banner_titulo':        'c-wb-titulo',
+  'banner_texto':         'c-wb-texto',
+  // Operaciones
+  'mensaje_cierre':       'c-cierre',
+  'h_lv_desde':           'c-lv-desde',
+  'h_lv_hasta':           'c-lv-hasta',
+  'h_sab_desde':          'c-sab-desde',
+  'h_sab_hasta':          'c-sab-hasta',
+  'h_dom_desde':          'c-dom-desde',
+  'h_dom_hasta':          'c-dom-hasta',
+  't_del_min':            'c-del-min',
+  't_del_max':            'c-del-max',
+  't_ret_min':            'c-ret-min',
+  't_ret_max':            'c-ret-max',
+  'delivery_minimo':      'c-del-minimo',
+  'delivery_costo':       'c-del-costo',
+  'recargo_credito3':     'c-recargo',
+  'mp_link':              'c-mp-link',
+  'mp_alias':             'c-mp-alias',
+  'local_wsp':            'c-wsp-local',
+  'tel_cocina':           'c-tel-cocina',
+  'empanadas_por_caja':   'c-emp-caja',
+  // Fidelidad
+  'descuento_bv':         'c-bv-pct',
+  'puntos_x_peso':        'c-pts-x',
+  'puntos_canje':         'c-pts-canje',
+  'puntos_val':           'c-pts-val',
+  'descuento_cumple':     'c-cumple-pct',
+};
+
+let configCargado = {};
+
+async function loadConfig() {
   try {
-    const { data, error } = await db.from('pedidos')
-      .select('*')
-      .not('estado', 'in', '("entregado","cancelado")')
-      .order('created_at', { ascending: false })
-      .limit(50);
-    if (error) throw error;
-    if (!data?.length) {
-      el.innerHTML = '<div style="text-align:center;padding:40px;color:#444">Sin pedidos activos 🎉</div>';
-      return;
+    const { data } = await db.from('configuracion').select('*');
+    if (!data) return;
+    configCargado = {};
+    data.forEach(r => configCargado[r.clave] = r.valor);
+
+    // Llenar todos los campos
+    Object.entries(CFG_MAP).forEach(([clave, id]) => {
+      const el = $(id);
+      if (!el) return;
+      if (configCargado[clave] !== undefined) el.value = configCargado[clave];
+    });
+
+    // Toggles
+    if ($('tog-acepta')) $('tog-acepta').checked = configCargado.acepta_pedidos !== 'false';
+    if ($('c-bv-activa')) $('c-bv-activa').checked = configCargado.bv_activa !== 'false';
+    if ($('tog-dom')) {
+      const domAbierto = !!(configCargado.h_dom_desde);
+      $('tog-dom').checked = domAbierto;
+      $('horario-dom').style.display = domAbierto ? 'block' : 'none';
     }
-    el.innerHTML = data.map(p => renderPedido(p)).join('');
-  } catch(e) {
-    el.innerHTML = '<div style="text-align:center;padding:40px;color:#E53935">Error: ' + e.message + '</div>';
+
+    // Preview imágenes
+    if (configCargado.header_foto)        previewImg('c-header-foto','prev-header');
+    if (configCargado.bloque_carnes_foto) previewImg('c-b2-foto','prev-b2');
+
+    // Preview cierre
+    actualizarPreviewCierre();
+
+  } catch(e) { toast('⚠️ Error cargando config'); }
+}
+
+async function guardarSeccion(seccion) {
+  // Determinar qué claves guardar según la sección
+  const clavesPorSeccion = {
+    visual: ['header_foto','local_nombre','local_logo_emoji','local_subtitulo','b1_tag','b1_titulo','b1_precio','bloque_carnes_foto','bloque_carnes_titulo','bloque_carnes_sub','banner_titulo','banner_texto'],
+    operaciones: ['mensaje_cierre','h_lv_desde','h_lv_hasta','h_sab_desde','h_sab_hasta','h_dom_desde','h_dom_hasta','t_del_min','t_del_max','t_ret_min','t_ret_max','delivery_minimo','delivery_costo','recargo_credito3','mp_link','mp_alias','local_wsp','tel_cocina','empanadas_por_caja','acepta_pedidos'],
+    fidelidad: ['descuento_bv','bv_activa','puntos_x_peso','puntos_canje','puntos_val','descuento_cumple'],
+  };
+
+  const claves = clavesPorSeccion[seccion] || [];
+  let guardados = 0, errores = 0;
+
+  for (const clave of claves) {
+    let valor;
+    if (clave === 'acepta_pedidos') {
+      valor = $('tog-acepta')?.checked ? 'true' : 'false';
+    } else if (clave === 'bv_activa') {
+      valor = $('c-bv-activa')?.checked ? 'true' : 'false';
+    } else {
+      const id = CFG_MAP[clave];
+      const el = id ? $(id) : null;
+      if (!el) continue;
+      valor = el.value;
+    }
+
+    const { error } = await db.from('configuracion').upsert({clave, valor},{onConflict:'clave'});
+    if (error) { console.error('Error guardando', clave, error); errores++; }
+    else guardados++;
+  }
+
+  if (errores === 0) {
+    toast('✅ ' + guardados + ' campos guardados correctamente');
+    updateEstadoUI($('tog-acepta').checked);
+  } else {
+    toast('⚠️ ' + errores + ' errores — ' + (guardados) + ' guardados');
   }
 }
 
-function renderPedido(p) {
-  const estados = {
-    nuevo: { label: 'Nuevo', cls: 'estado-nuevo' },
-    preparando: { label: 'Preparando', cls: 'estado-preparando' },
-    listo: { label: 'Listo', cls: 'estado-listo' },
-    entregado: { label: 'Entregado', cls: 'estado-entregado' },
-    pendiente_pago: { label: 'Pend. pago', cls: 'estado-pendiente_pago' },
-  };
-  const est = estados[p.estado] || { label: p.estado, cls: '' };
-  const fecha = new Date(p.created_at).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-  const siguientes = { nuevo: 'preparando', preparando: 'listo', listo: 'entregado' };
-  const labels = { preparando: '👨‍🍳 Preparando', listo: '✅ Listo', entregado: '📦 Entregado' };
-  const sig = siguientes[p.estado];
+// ══════════════════════════════════════════════════
+// PEDIDOS
+// ══════════════════════════════════════════════════
+async function loadPedidos() {
+  const el = $('pedidos-list');
+  el.innerHTML = '<div class="loading-panel">⏳ Cargando pedidos...</div>';
+  try {
+    const { data, error } = await db.from('pedidos')
+      .select('*')
+      .not('estado','in','("entregado","cancelado")')
+      .order('created_at',{ascending:false})
+      .limit(50);
+    if (error) throw error;
+    if (!data?.length) {
+      el.innerHTML = '<div class="loading-panel" style="color:#555">Sin pedidos activos 🎉</div>';
+      return;
+    }
+    el.innerHTML = data.map(p => pedCard(p)).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="loading-panel" style="color:#E53935">Error: ' + e.message + '</div>';
+  }
+}
 
-  return `<div class="ped-card">
-    <div class="ped-hdr">
+function pedCard(p) {
+  const badges = {
+    nuevo:'b-nuevo',preparando:'b-preparando',listo:'b-listo',
+    entregado:'b-entregado',cancelado:'b-cancelado',pendiente_pago:'b-pendiente_pago'
+  };
+  const labels = {nuevo:'Nuevo',preparando:'Preparando',listo:'Listo',entregado:'Entregado',cancelado:'Cancelado',pendiente_pago:'Pend. pago'};
+  const siguientes = {nuevo:'preparando',preparando:'listo',listo:'entregado'};
+  const sigLabels  = {preparando:'👨‍🍳 Preparando',listo:'✅ Listo',entregado:'📦 Entregado'};
+  const hora = new Date(p.created_at).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+  const sig  = siguientes[p.estado];
+
+  return `<div class="ped">
+    <div class="ped-top">
       <div>
         <div class="ped-num">${p.numero}</div>
-        <div class="ped-cliente">${p.cliente_nombre || '—'}</div>
-        <div class="ped-info">${p.entrega || 'Delivery'} · ${p.pago || '—'} · ${fecha}hs</div>
+        <div class="ped-cliente">${p.cliente_nombre||'Sin nombre'}</div>
+        <div class="ped-meta">${p.entrega||'—'} · ${p.pago||'—'} · ${hora}hs · Tel: ${p.cliente_tel||'—'}</div>
       </div>
-      <div><span class="ped-estado ${est.cls}">${est.label}</span></div>
+      <span class="ped-badge ${badges[p.estado]||''}">${labels[p.estado]||p.estado}</span>
     </div>
-    <div class="ped-total">${fmt(p.total)}</div>
-    <div class="ped-actions">
-      ${sig ? `<button class="ped-btn btn-brand" onclick="cambiarEstado('${p.id}','${sig}')">${labels[sig]}</button>` : ''}
-      <button class="ped-btn btn-ghost" onclick="verItems('${p.id}')">📋 Ver items</button>
-      <button class="ped-btn btn-ghost" onclick="wsp('${p.cliente_tel}','${p.numero}')">💬 WhatsApp</button>
-      <button class="ped-btn btn-danger" onclick="cambiarEstado('${p.id}','cancelado')">✕ Cancelar</button>
+    <div class="ped-footer">
+      <div class="ped-total">${fmt(p.total)}</div>
+    </div>
+    <div class="ped-acts">
+      ${sig ? `<button class="ped-btn" style="background:#C9A84C;color:#0A0A0A" onclick="cambiarEstado('${p.id}','${sig}')">${sigLabels[sig]}</button>` : ''}
+      <button class="ped-btn" style="background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A" onclick="verItems('${p.id}')">📋 Items</button>
+      <button class="ped-btn" style="background:#1A2E1A;color:#81C784;border:1px solid #2A3A2A" onclick="wsp('${p.cliente_tel}','${p.numero}','${p.total}')">💬 WhatsApp</button>
+      <button class="ped-btn" style="background:rgba(229,57,53,.1);color:#EF9A9A;border:1px solid rgba(229,57,53,.2)" onclick="cambiarEstado('${p.id}','cancelado')">✕</button>
     </div>
   </div>`;
 }
 
 async function cambiarEstado(id, estado) {
-  await db.from('pedidos').update({ estado }).eq('id', id);
-  toast('✅ Estado actualizado: ' + estado);
+  const { error } = await db.from('pedidos').update({estado}).eq('id',id);
+  if (error) { toast('⚠️ Error: ' + error.message); return; }
+  toast('✅ ' + estado);
   loadPedidos();
 }
 
-async function verItems(id) {
-  const { data } = await db.from('pedido_items').select('*').eq('pedido_id', id);
+async function verItems(pedidoId) {
+  const { data } = await db.from('pedido_items').select('*').eq('pedido_id',pedidoId);
   if (!data?.length) { toast('Sin items'); return; }
-  const lines = data.map(i => '· ' + i.nombre + ' x' + i.cantidad + ' — ' + fmt(i.subtotal)).join('\n');
-  alert(lines);
+  const txt = data.map(i => `· ${i.nombre} x${i.cantidad} — ${fmt(i.subtotal)}`).join('\n');
+  alert('Items del pedido:\n\n' + txt);
 }
 
-function wsp(tel, num) {
-  if (!tel) { toast('Sin número de teléfono'); return; }
-  const msg = '📦 Tu pedido ' + num + ' de Al Paso está listo. ¡Vamos coordinando!';
+function wsp(tel, num, total) {
+  if (!tel) { toast('Sin teléfono registrado'); return; }
+  const msg = `📦 Hola! Tu pedido ${num} de Al Paso está listo.\nTotal: ${fmt(total)}\n¡Nos vemos pronto!`;
   window.open('https://wa.me/54' + tel.replace(/\D/g,'') + '?text=' + encodeURIComponent(msg), '_blank');
 }
 
-// ── DASHBOARD ─────────────────────────────────────
+// ══════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════
 async function loadDashboard() {
   try {
     const hoy = new Date().toISOString().split('T')[0];
-    const [ped, cli] = await Promise.all([
-      db.from('pedidos').select('total').gte('created_at', hoy).not('estado','eq','cancelado'),
-      db.from('clientes').select('id', { count: 'exact', head: true }),
+    const [pedRes, cliRes] = await Promise.all([
+      db.from('pedidos').select('total,estado,numero,cliente_nombre,entrega,created_at').gte('created_at',hoy).order('created_at',{ascending:false}),
+      db.from('clientes').select('id',{count:'exact',head:true}),
     ]);
-    const pedidos = ped.data || [];
-    const total = pedidos.reduce((s,p) => s + (p.total||0), 0);
-    const ticket = pedidos.length ? Math.round(total / pedidos.length) : 0;
-    $('kpi-pedidos').textContent = pedidos.length;
-    $('kpi-total').textContent   = fmt(total);
-    $('kpi-clientes').textContent = cli.count || 0;
-    $('kpi-ticket').textContent  = fmt(ticket);
-  } catch(e) { toast('Error cargando dashboard'); }
+    const peds = (pedRes.data||[]).filter(p => p.estado !== 'cancelado');
+    const total = peds.reduce((s,p) => s+(p.total||0), 0);
+    const ticket = peds.length ? Math.round(total/peds.length) : 0;
+
+    $('kpi-ped').textContent = peds.length;
+    $('kpi-vta').textContent = fmt(total);
+    $('kpi-cli').textContent = cliRes.count || 0;
+    $('kpi-tkt').textContent = fmt(ticket);
+
+    // Últimos pedidos
+    const dp = $('dash-pedidos');
+    if (!peds.length) { dp.innerHTML = '<div class="loading-panel" style="color:#555">Sin pedidos hoy</div>'; return; }
+    dp.innerHTML = peds.slice(0,10).map(p => {
+      const hora = new Date(p.created_at).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #1E1E1E">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:#C9A84C">${p.numero}</div>
+          <div style="font-size:10px;color:#555">${p.cliente_nombre||'—'} · ${hora}hs · ${p.entrega||'—'}</div>
+        </div>
+        <div style="font-size:14px;font-weight:900;color:#fff">${fmt(p.total)}</div>
+      </div>`;
+    }).join('');
+  } catch(e) { toast('Error dashboard: ' + e.message); }
 }
 
-// ── PRODUCTOS ─────────────────────────────────────
+// ══════════════════════════════════════════════════
+// PRODUCTOS
+// ══════════════════════════════════════════════════
 async function loadProductos() {
   const el = $('prod-list');
-  const cat = $('prod-cat-filter')?.value || '';
-  const q   = $('prod-buscar')?.value?.toLowerCase() || '';
+  const cat = $('prod-cat')?.value || '';
+  const q   = ($('prod-buscar')?.value || '').toLowerCase();
   try {
     let query = db.from('productos').select('id,nombre,cat,activo,precio_venta').order('cat').order('nombre');
     if (cat) query = query.eq('cat', cat);
     const { data, error } = await query;
     if (error) throw error;
     const prods = (data||[]).filter(p => !q || p.nombre.toLowerCase().includes(q));
-    if (!prods.length) { el.innerHTML = '<div style="text-align:center;padding:20px;color:#444">Sin resultados</div>'; return; }
-    el.innerHTML = `<div class="card" style="padding:0">` + prods.map(p => `
-      <div class="prod-row" style="padding:10px 14px">
-        <div style="flex:1;min-width:0">
-          <div class="prod-name" style="color:${p.activo?'#fff':'#555'}">${p.nombre}</div>
-          <div class="prod-cat">${p.cat} · ${fmt(p.precio_venta)}</div>
+    if (!prods.length) { el.innerHTML = '<div class="loading-panel" style="color:#555">Sin resultados</div>'; return; }
+    el.innerHTML = prods.map(p => `
+      <div class="prod-item">
+        <div class="prod-name">
+          <div class="prod-name-txt" style="color:${p.activo?'#fff':'#444'}">${p.nombre}</div>
+          <div class="prod-cat-txt">${p.cat} · ${fmt(p.precio_venta)}</div>
         </div>
         <label class="tog">
           <input type="checkbox" ${p.activo?'checked':''} onchange="toggleProd(${p.id},this)">
           <div class="tog-sl"></div>
         </label>
-      </div>`).join('') + '</div>';
+      </div>`).join('');
   } catch(e) {
-    el.innerHTML = '<div style="text-align:center;padding:20px;color:#E53935">Error: ' + e.message + '</div>';
+    el.innerHTML = '<div class="loading-panel" style="color:#E53935">Error: ' + e.message + '</div>';
   }
 }
 
 async function toggleProd(id, cb) {
-  const { error } = await db.from('productos').update({ activo: cb.checked }).eq('id', id);
-  if (error) { toast('⚠️ Error: ' + error.message); cb.checked = !cb.checked; return; }
+  const { error } = await db.from('productos').update({activo:cb.checked}).eq('id',id);
+  if (error) { toast('⚠️ Error'); cb.checked = !cb.checked; return; }
   toast(cb.checked ? '✅ Producto activado' : '🔴 Producto desactivado');
 }
 
-// ── CONFIG ────────────────────────────────────────
-const CFG = {
-  'local_nombre':       'c-nombre',
-  'local_logo_emoji':   'c-logo',
-  'local_subtitulo':    'c-sub',
-  'local_wsp':          'c-wsp',
-  'mp_link':            'c-mp',
-  'mensaje_cierre':     'c-cierre',
-  'h_lv_desde':         'c-lv-desde',
-  'h_lv_hasta':         'c-lv-hasta',
-  'h_sab_desde':        'c-sab-desde',
-  'h_sab_hasta':        'c-sab-hasta',
-  't_del_min':          'c-del-min',
-  't_del_max':          'c-del-max',
-  't_ret_min':          'c-ret-min',
-  't_ret_max':          'c-ret-max',
-  'delivery_minimo':    'c-del-minimo',
-  'delivery_costo':     'c-del-costo',
-  'recargo_credito3':   'c-recargo',
-  'descuento_bv':       'c-bv-pct',
-  'b1_tag':             'c-b1-tag',
-  'b1_titulo':          'c-b1-titulo',
-  'b1_precio':          'c-b1-precio',
-  'empanadas_por_caja': 'c-emp-caja',
-  'bloque_carnes_titulo':'c-b2-titulo',
-  'bloque_carnes_sub':  'c-b2-sub',
-  'bloque_carnes_foto': 'c-b2-foto',
-};
-
-async function loadConfig() {
+// ══════════════════════════════════════════════════
+// FIDELIDAD — STATS
+// ══════════════════════════════════════════════════
+async function loadClientesStats() {
+  const el = $('clientes-stats');
   try {
-    const { data } = await db.from('configuracion').select('*');
-    if (!data) return;
-    const cfg = {};
-    data.forEach(r => cfg[r.clave] = r.valor);
-    Object.entries(CFG).forEach(([clave, id]) => {
-      const el = $(id);
-      if (!el || cfg[clave] === undefined) return;
-      el.value = cfg[clave];
-    });
-    // Toggles especiales
-    if ($('tog-acepta')) $('tog-acepta').checked = cfg.acepta_pedidos !== 'false';
-    if ($('c-bv-activa')) $('c-bv-activa').checked = cfg.bv_activa !== 'false';
-  } catch(e) { toast('Error cargando config'); }
+    const { data } = await db.from('clientes').select('puntos,nivel,created_at').order('created_at',{ascending:false}).limit(5);
+    if (!data?.length) { el.innerHTML = '<div style="color:#555;font-size:12px;padding:8px 0">Sin clientes aún</div>'; return; }
+    const bronze = data.filter(c => (c.puntos||0) < 200).length;
+    const silver = data.filter(c => (c.puntos||0) >= 200 && (c.puntos||0) < 500).length;
+    const gold   = data.filter(c => (c.puntos||0) >= 500).length;
+    el.innerHTML = `
+      <div style="display:flex;gap:10px;margin-bottom:12px">
+        <div style="flex:1;background:#1E1E1E;border-radius:8px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:900;color:#C9A84C">${gold}</div><div style="font-size:10px;color:#555">🥇 Gold</div></div>
+        <div style="flex:1;background:#1E1E1E;border-radius:8px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:900;color:#C9A84C">${silver}</div><div style="font-size:10px;color:#555">🥈 Silver</div></div>
+        <div style="flex:1;background:#1E1E1E;border-radius:8px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:900;color:#C9A84C">${bronze}</div><div style="font-size:10px;color:#555">🥉 Bronze</div></div>
+      </div>
+      <div style="font-size:10px;color:#555;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Últimos registrados</div>
+      ${data.map(c => `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #1A1A1A">
+        <div style="font-size:12px;font-weight:600;color:#aaa">Cliente #${c.nivel||'Bronze'}</div>
+        <div style="font-size:12px;font-weight:800;color:#C9A84C">${c.puntos||0} Pasos</div>
+      </div>`).join('')}`;
+  } catch(e) { el.innerHTML = '<div style="color:#555;font-size:12px">Error cargando stats</div>'; }
 }
 
-async function guardarConfig() {
-  const vals = {};
-  Object.entries(CFG).forEach(([clave, id]) => {
-    const el = $(id);
-    if (el) vals[clave] = el.value;
-  });
-  // Toggles
-  vals.acepta_pedidos = $('tog-acepta')?.checked ? 'true' : 'false';
-  vals.bv_activa      = $('c-bv-activa')?.checked ? 'true' : 'false';
-
-  let errores = 0;
-  for (const [clave, valor] of Object.entries(vals)) {
-    const { error } = await db.from('configuracion').upsert({ clave, valor }, { onConflict: 'clave' });
-    if (error) { console.error('Error guardando', clave, error); errores++; }
-  }
-
-  if (errores === 0) {
-    toast('✅ Configuración guardada');
-    loadEstado();
+// ══════════════════════════════════════════════════
+// HELPERS UI
+// ══════════════════════════════════════════════════
+function previewImg(inputId, imgId) {
+  const url = $(inputId)?.value?.trim();
+  const img = $(imgId);
+  if (!img) return;
+  if (url) {
+    img.src = url;
+    img.style.display = 'block';
+    img.onerror = () => { img.style.display = 'none'; };
   } else {
-    toast('⚠️ ' + errores + ' campos no se guardaron');
+    img.style.display = 'none';
   }
 }
 
-// ── INIT ──────────────────────────────────────────
-$('fecha-hoy').textContent = new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+function actualizarPreviewCierre() {
+  const msg = $('c-cierre')?.value?.trim();
+  const prev = $('preview-cierre');
+  if (!prev) return;
+  if (msg) {
+    prev.textContent = '⚠️ ' + msg;
+    prev.style.display = 'block';
+  } else {
+    prev.style.display = 'none';
+  }
+}
+
+function toggleDomingo(cb) {
+  $('horario-dom').style.display = cb.checked ? 'block' : 'none';
+}
+
+// ══════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════
+$('fecha-hoy').textContent = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
 loadEstado();
 loadPedidos();
-// Refresh pedidos cada 30 seg
+
+// Auto-refresh pedidos cada 30 seg
 setInterval(() => {
   if ($('tab-pedidos').style.display !== 'none') loadPedidos();
 }, 30000);
