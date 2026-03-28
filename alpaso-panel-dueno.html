@@ -275,6 +275,7 @@ tr:last-child td{border:none}
               <div class="fg"><label>Emoji del logo</label><input id="c-logo" placeholder="👣"></div>
               <div class="fg"><label>Dirección</label><input id="c-direccion" placeholder="Av. Corrientes 1234"></div>
               <div class="fg"><label>WhatsApp del local</label><input id="c-wsp-local" placeholder="5491100000000"></div>
+              <div class="fg"><label>Link de cobro MercadoPago</label><input id="c-mp-link" placeholder="https://mpago.la/XXXXXXX"><div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:3px">MercadoPago → Cobrar → Compartir link · Los clientes que elijan MP son redirigidos acá</div></div>
               <div class="fg"><label>Descripción</label><input id="c-descripcion" placeholder="Tu mercado de barrio..."></div>
             </div>
           </div>
@@ -314,9 +315,32 @@ tr:last-child td{border:none}
           </div>
         </div>
         <button class="btn btn-gold" style="padding:11px 22px" onclick="guardarConfig()">💾 Guardar cambios</button>
-      </div>
 
-      <!-- TAB WHATSAPP -->
+        <!-- BLOQUES HOME -->
+        <div style="margin-top:24px;padding-top:20px;border-top:1px solid rgba(255,255,255,.08)">
+          <div class="sec-lbl">◆ Configuración de bloques del Home</div>
+          <div class="cfg-grid">
+            <div class="cfg-card">
+              <div class="cfg-card-hdr">🫓 Bloque 1 — Empanadas</div>
+              <div class="cfg-card-body">
+                <div class="fg"><label>Tag / etiqueta</label><input id="c-b1-tag" placeholder="🔥 OFERTA DEL DÍA"></div>
+                <div class="fg"><label>Título (HTML permitido)</label><input id="c-b1-titulo" placeholder="4 empanadas&lt;br&gt;+ bebida"></div>
+                <div class="fg"><label>Precio destacado</label><input id="c-b1-precio" placeholder="$7.500"></div>
+              </div>
+            </div>
+            <div class="cfg-card">
+              <div class="cfg-card-hdr">🥩 Bloque 2 — Carnes</div>
+              <div class="cfg-card-body">
+                <div class="fg"><label>Título</label><input id="c-b2-titulo" placeholder="Cortes al vacío&lt;br&gt;y carnicería"></div>
+                <div class="fg"><label>Subtítulo</label><input id="c-b2-sub" placeholder="Vacío · Nalga · Costeleta"></div>
+                <div class="fg"><label>URL de la foto</label><input id="c-b2-foto" placeholder="https://..."></div>
+                <div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:4px">Subí la foto en Supabase Storage → productos → copiá la URL pública</div>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-gold" style="padding:11px 22px" onclick="guardarConfig()">💾 Guardar bloques</button>
+        </div>
+      </div>
       <div class="cfg-pane" id="ct-wsp">
         <p style="font-size:12px;color:rgba(255,255,255,.3);margin-bottom:20px;line-height:1.6">Cuando entra un pedido, el sistema avisa automáticamente a cada rol.</p>
         <div class="rol-card on" id="rol-cocina">
@@ -374,7 +398,16 @@ tr:last-child td{border:none}
             </div>
           </div>
           <div class="cfg-card">
-            <div class="cfg-card-hdr">🏪 Horarios</div>
+            <div class="cfg-card-hdr">💙 MercadoPago</div>
+            <div class="cfg-card-body">
+              <div class="fg"><label>Tu link de cobro MP</label><input id="c-mp-link" placeholder="https://mpago.la/tu-link"></div>
+              <div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:4px;line-height:1.5">
+                En MercadoPago → Cobrar → Tu link de pago → Copiá la URL<br>
+                Los clientes que elijan MP van a ir directo a esa página.
+              </div>
+              <div class="fg" style="margin-top:10px"><label>Alias / CBU para transferencia</label><input id="c-mp-alias" placeholder="alpaso.mp"></div>
+            </div>
+          </div>
             <div class="cfg-card-body">
               <div class="form-row"><div class="fg"><label>Apertura Lun–Vie</label><input id="c-h-ap" type="time" value="08:00"></div><div class="fg"><label>Cierre Lun–Vie</label><input id="c-h-ci" type="time" value="21:00"></div></div>
               <div class="form-row"><div class="fg"><label>Apertura Sáb</label><input id="c-h-sap" type="time" value="08:00"></div><div class="fg"><label>Cierre Sáb</label><input id="c-h-sci" type="time" value="14:00"></div></div>
@@ -553,6 +586,7 @@ async function loadProgreso() {
 const CFG_MAP = {
   'local_nombre':'c-nombre','local_subtitulo':'c-subtitulo','local_logo_emoji':'c-logo',
   'local_direccion':'c-direccion','local_wsp':'c-wsp-local','local_descripcion':'c-descripcion',
+  'mp_link':'c-mp-link',
   'tema_color_header':'c-color-header','tema_color_acento':'c-color-acento',
   'banner_titulo':'c-banner-titulo','banner_texto':'c-banner-texto',
   'cat_emoji_empanadas':'c-cat-empanadas','cat_emoji_carne':'c-cat-carne',
@@ -563,6 +597,8 @@ const CFG_MAP = {
   'delivery_minimo':'c-del-min','delivery_costo':'c-del-costo',
   'recargo_credito3':'c-recargo','puntos_x_peso':'c-puntos-x',
   'puntos_canje':'c-puntos-canje','descuento_cumple':'c-cumple','descuento_bv':'c-bv',
+  'b1_tag':'c-b1-tag','b1_titulo':'c-b1-titulo','b1_precio':'c-b1-precio',
+  'bloque_carnes_titulo':'c-b2-titulo','bloque_carnes_sub':'c-b2-sub','bloque_carnes_foto':'c-b2-foto',
 };
 
 async function loadConfig() {
