@@ -792,10 +792,40 @@ function pedCard(p) {
 }
 
 async function cambiarEstado(id, estado) {
+  // Traer datos del pedido para notificar al cliente
+  const { data: ped } = await db.from('pedidos').select('numero,cliente_tel,cliente_nombre,total,entrega').eq('id',id).single();
+  
   const { error } = await db.from('pedidos').update({estado}).eq('id',id);
   if (error) { toast('⚠️ Error: ' + error.message); return; }
   toast('✅ ' + estado);
   loadPedidos();
+
+  // Notificar al cliente por WhatsApp según el estado
+  if (!ped?.cliente_tel) return;
+  const tel = ped.cliente_tel.replace(/\D/g,'');
+  if (!tel) return;
+
+  let msg = '';
+  if (estado === 'preparando') {
+    msg = `👨‍🍳 Hola ${ped.cliente_nombre||''}! Tu pedido *${ped.numero}* de Al Paso ya está en preparación. Te avisamos cuando esté listo! 🫓`;
+  } else if (estado === 'listo') {
+    if (ped.entrega === 'Retiro') {
+      msg = `✅ Hola ${ped.cliente_nombre||''}! Tu pedido *${ped.numero}* está listo para retirar en el local. ¡Te esperamos! 🏪`;
+    } else {
+      msg = `🛵 Hola ${ped.cliente_nombre||''}! Tu pedido *${ped.numero}* ya salió para entrega. Llegará en unos minutos! 📦`;
+    }
+  } else if (estado === 'entregado') {
+    msg = `⭐ Gracias por tu compra, ${ped.cliente_nombre||''}! Tu pedido *${ped.numero}* fue entregado. ¡Hasta la próxima! 👣`;
+  } else if (estado === 'cancelado') {
+    msg = `❌ Hola ${ped.cliente_nombre||''}. Lamentablemente tu pedido *${ped.numero}* fue cancelado. Comunicate con nosotros para más info.`;
+  }
+
+  if (msg) {
+    // Pequeña pausa para que el dueño vea el toast antes de abrir WhatsApp
+    setTimeout(() => {
+      window.open('https://wa.me/54' + tel + '?text=' + encodeURIComponent(msg), '_blank');
+    }, 600);
+  }
 }
 
 async function verItems(pedidoId) {

@@ -2312,8 +2312,10 @@ async function confirmarPedido() {
   const recargo  = pagoTipo==='credito3' ? Math.round(sub * parseFloat(CONFIG.recargo_credito3||'20') / 100) : 0;
   const total = sub - bv - ptsDes - descAmt + delCosto + recargo;
 
-  orderN++;
-  const pedidoNum = 'AP-' + String(orderN).padStart(4,'0');
+  // Número único: count + timestamp corto para evitar duplicados
+  const { count: totalPeds } = await db.from('pedidos').select('*', {count:'exact', head:true});
+  const ts = Date.now().toString().slice(-4);
+  const pedidoNum = 'AP-' + String((totalPeds || 0) + 1).padStart(4,'0') + '-' + ts;
   lastOrderNum = pedidoNum; lastOrderTotal = total;
 
   const pedidoData = {
@@ -2344,6 +2346,11 @@ async function confirmarPedido() {
   $('co-num').textContent = pedidoNum;
   $('co-pts').textContent = '+' + pts + ' Pasos ganados 👣';
   $('co-msg').textContent = entrega + ' · ' + (pagoTipo==='mp'?'MercadoPago':pagoTipo==='credito3'?'Crédito 3c':'Efectivo/Débito');
+
+  // Construir mensaje WSP antes de limpiar el carrito
+  const items_wsp = Object.values(cart);
+  const lines_wsp = items_wsp.map(it => '· ' + it.nombre + ' x' + it.qty + ' — ' + fmt(it.precio_venta * it.qty)).join('\n');
+  lastWspMsg = '🛒 *Pedido ' + pedidoNum + ' — Al Paso*\n\n' + lines_wsp + '\n\n📦 ' + entrega + '\n💰 Total: ' + fmt(total);
 
   if (pagoTipo === 'mp') {
     $('btn-pagar-mp').style.display = 'flex';
