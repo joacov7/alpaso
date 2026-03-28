@@ -841,7 +841,23 @@ function syncBar(msg, tipo='load') {
 function goTo(s) {
   document.querySelectorAll('.screen').forEach(x => x.classList.remove('active'));
   $('s-' + s).classList.add('active');
-  if (s === 'carrito')   renderCart();
+  if (s === 'carrito') {
+    // Refrescar estado bv_usada desde Supabase antes de renderizar
+    if (clienteActual) {
+      db.from('clientes').select('bv_usada,puntos').eq('id', clienteActual.id).single()
+        .then(({ data }) => {
+          if (data) {
+            bvUsada = data.bv_usada;
+            clienteActual.bv_usada = data.bv_usada;
+            clienteActual.puntos   = data.puntos;
+            localStorage.setItem('alpaso_cliente', JSON.stringify(clienteActual));
+          }
+          renderCart();
+        });
+    } else {
+      renderCart();
+    }
+  }
   if (s === 'catalogo')  renderCat();
   if (s === 'fidelidad') renderFid();
   updateBadges();
@@ -1419,6 +1435,13 @@ function renderCart() {
 // ══════════════════════════════════════════════════════
 async function showCheckout() {
   if (!cartCount()) { toast('Tu carrito está vacío'); return; }
+
+  // Requerir login para comprar
+  if (!clienteActual) {
+    toast('👣 Creá tu Tarjeta Al Paso para comprar');
+    setTimeout(() => goTo('registro'), 800);
+    return;
+  }
   orderN = Math.floor(Math.random()*9000)+1000;
   const sub      = cartTotal();
   const rec      = Math.round(sub * pagoRecargo / 100);
@@ -2101,8 +2124,12 @@ async function init() {
   } else {
     renderFid();
     actualizarUserBtn();
+    // Solo mostrar banner si el descuento NO fue usado
     if (bvActiva && !bvUsada) {
-      $('wb-btn').textContent = '✓ 10% off activado en tu primera compra';
+      $('wb').style.display = 'block';
+      if ($('wb-btn')) $('wb-btn').textContent = '✓ 10% off — primera compra';
+    } else {
+      $('wb').style.display = 'none';
     }
   }
 }
