@@ -280,20 +280,51 @@ tr:last-child td{border:none}
             </div>
           </div>
           <div class="cfg-card">
-            <div class="cfg-card-hdr">🎨 Colores</div>
+            <div class="cfg-card-hdr">🎨 Colores de la app</div>
             <div class="cfg-card-body">
-              <div class="fg"><label>Color header / nav</label>
-                <div class="color-row"><input id="c-color-header" type="text" placeholder="#1A1A1A" oninput="prevTema()"><input type="color" value="#1A1A1A" onchange="document.getElementById('c-color-header').value=this.value;prevTema()"></div>
+              <div class="fg">
+                <label>Color principal (marrón / header / nav)</label>
+                <div class="color-row">
+                  <input id="c-color-brown" type="text" placeholder="#3D2008" oninput="syncColorPicker('c-color-brown','cp-brown');prevTema()">
+                  <input type="color" id="cp-brown" value="#3D2008" oninput="document.getElementById('c-color-brown').value=this.value;prevTema()">
+                </div>
               </div>
-              <div class="fg"><label>Color de acento</label>
-                <div class="color-row"><input id="c-color-acento" type="text" placeholder="#C9A84C" oninput="prevTema()"><input type="color" value="#C9A84C" onchange="document.getElementById('c-color-acento').value=this.value;prevTema()"></div>
+              <div class="fg">
+                <label>Color de acento (dorado / botones)</label>
+                <div class="color-row">
+                  <input id="c-color-gold" type="text" placeholder="#D4911A" oninput="syncColorPicker('c-color-gold','cp-gold');prevTema()">
+                  <input type="color" id="cp-gold" value="#D4911A" oninput="document.getElementById('c-color-gold').value=this.value;prevTema()">
+                </div>
               </div>
               <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:10px;margin-top:6px">
                 <div style="font-size:9px;color:rgba(255,255,255,.25);font-weight:700;letter-spacing:1px;margin-bottom:8px">PREVIEW</div>
-                <div id="prev-tema" style="background:#1A1A1A;border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:8px">
-                  <div id="prev-logo" style="width:28px;height:28px;background:#C9A84C;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px">👣</div>
-                  <div id="prev-nombre" style="font-family:'Bebas Neue';font-size:18px;color:#C9A84C;letter-spacing:2px">AL PASO</div>
+                <div id="prev-tema" style="background:#3D2008;border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:8px">
+                  <div id="prev-logo" style="width:28px;height:28px;background:#D4911A;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px">👣</div>
+                  <div id="prev-nombre" style="font-family:'Bebas Neue';font-size:18px;color:#D4911A;letter-spacing:2px">AL PASO</div>
                 </div>
+              </div>
+            </div>
+          </div>
+          <div class="cfg-card">
+            <div class="cfg-card-hdr">🫓 Empanadas — configuración</div>
+            <div class="cfg-card-body">
+              <div class="fg">
+                <label>Cantidad por caja</label>
+                <input id="c-empanadas-por-caja" type="number" value="6" min="1" max="24" placeholder="6">
+                <div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:3px">El cliente ve: "caja x6" — cambialo si vendés de a 4, 8, 12, etc.</div>
+              </div>
+              <div class="fg">
+                <label>Precio base por caja ($)</label>
+                <input id="c-empanadas-precio-base" type="number" placeholder="5800" min="0">
+                <div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:3px">Precio por defecto si el sabor no tiene precio cargado en Supabase</div>
+              </div>
+              <div class="fg">
+                <label>Unidad mínima de venta</label>
+                <select id="c-empanadas-unidad" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;font-family:Nunito;font-size:13px;color:#fff;outline:none;width:100%">
+                  <option value="caja">Por caja (mínimo 1 caja)</option>
+                  <option value="unidad">Por unidad (el cliente elige cuántas)</option>
+                  <option value="docena">Por docena</option>
+                </select>
               </div>
             </div>
           </div>
@@ -729,6 +760,8 @@ async function loadProgreso() {
 // CONFIGURACIÓN
 const CFG_MAP = {
   'local_nombre':'c-nombre','local_subtitulo':'c-subtitulo','local_logo_emoji':'c-logo',
+  'color_brown':'c-color-brown','color_gold':'c-color-gold',
+  'empanadas_por_caja':'c-empanadas-por-caja','empanadas_precio_base':'c-empanadas-precio-base','empanadas_unidad':'c-empanadas-unidad',
   'local_direccion':'c-direccion','local_wsp':'c-wsp-local','local_descripcion':'c-descripcion',
   'mp_link':'c-mp-link',
   'tema_color_header':'c-color-header','tema_color_acento':'c-color-acento',
@@ -769,13 +802,22 @@ async function guardarConfig() {
   } catch(e) { toast('⚠️ Error: '+e.message); }
 }
 
+function syncColorPicker(txtId, cpId) {
+  const txt = $(txtId); const cp = $(cpId);
+  if (!txt || !cp) return;
+  const val = txt.value.trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(val)) cp.value = val;
+}
+
 function prevTema() {
-  const h=$('c-color-header')?.value||'#1A1A1A';
-  const a=$('c-color-acento')?.value||'#C9A84C';
-  const n=$('c-nombre')?.value||'AL PASO';
-  const l=$('c-logo')?.value||'👣';
-  const pt=$('prev-tema'); if(pt)pt.style.background=h;
-  const pl=$('prev-logo'); if(pl){pl.style.background=a;pl.textContent=l;}
+  const brown = $('c-color-brown')?.value || '#3D2008';
+  const gold  = $('c-color-gold')?.value  || '#D4911A';
+  const pt = $('prev-tema'); if(pt) pt.style.background = brown;
+  const pl = $('prev-logo'); if(pl) { pl.style.background = gold; if($('c-logo')) pl.textContent = $('c-logo').value || '👣'; }
+  const pn = $('prev-nombre'); if(pn) { pn.style.color = gold; if($('c-nombre')) pn.textContent = ($('c-nombre').value || 'AL PASO').toUpperCase(); }
+}
+// ---- (replaced below) ----
+
   const pn=$('prev-nombre'); if(pn){pn.style.color=a;pn.textContent=n.toUpperCase();}
 }
 
@@ -1070,7 +1112,19 @@ async function loadEstadoLocal() {
     const msgCierre = $('c-mensaje-cierre');
     if (msgCierre && cfg.mensaje_cierre) msgCierre.value = cfg.mensaje_cierre;
 
-    const mapFields = {
+    // Sync color pickers
+  if (cfg.color_brown) {
+    const el = $('c-color-brown'); if(el) { el.value = cfg.color_brown; const cp=$('cp-brown'); if(cp) cp.value=cfg.color_brown; }
+  }
+  if (cfg.color_gold) {
+    const el = $('c-color-gold'); if(el) { el.value = cfg.color_gold; const cp=$('cp-gold'); if(cp) cp.value=cfg.color_gold; }
+  }
+  if (cfg.empanadas_por_caja    && $('c-empanadas-por-caja'))    $('c-empanadas-por-caja').value    = cfg.empanadas_por_caja;
+  if (cfg.empanadas_precio_base && $('c-empanadas-precio-base')) $('c-empanadas-precio-base').value = cfg.empanadas_precio_base;
+  if (cfg.empanadas_unidad      && $('c-empanadas-unidad'))      $('c-empanadas-unidad').value      = cfg.empanadas_unidad;
+  prevTema();
+
+  const mapFields = {
       'c-h-lv-desde':  'h_lv_desde',  'c-h-lv-hasta':  'h_lv_hasta',
       'c-h-sab-desde': 'h_sab_desde', 'c-h-sab-hasta': 'h_sab_hasta',
       'c-h-dom-desde': 'h_dom_desde', 'c-h-dom-hasta': 'h_dom_hasta',

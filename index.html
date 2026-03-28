@@ -1110,6 +1110,8 @@ const db = createClient(SB_URL, SB_KEY);
 // STATE
 // ══════════════════════════════════════════════════════
 let PRODS = [], CONFIG = {}, COMBOS_DEF = [];
+let SABORES_ACTIVOS = []; // sabores desde Supabase
+let BANNERS_ACTIVOS = []; // banners desde Supabase
 let cart = {}, entrega = 'Delivery', entregaTiempo = '30-45 min';
 let pagoTipo = 'efectivo', pagoRecargo = 0;
 let clienteActual = null; // {id, nombre, telefono, puntos, bv_activa, bv_usada}
@@ -1221,22 +1223,55 @@ async function loadData() {
   try {
     syncBar('🔄 Conectando a mercadoalpaso.com.ar...', 'load');
 
-    // Cargar productos
-    const { data: prods, error: pe } = await db.from('productos').select('*').eq('activo', true).order('id');
-    if (pe) throw pe;
-    PRODS = prods || [];
+    // Cargar productos, config, sabores y banners en paralelo
+    const [prodsRes, cfgRes, saboresRes, bannersRes] = await Promise.all([
+      db.from('productos').select('*').eq('activo', true).order('orden').order('id'),
+      db.from('configuracion').select('*'),
+      db.from('sabores_empanada').select('*').eq('activo', true).order('orden').catch(() => ({data:[]})),
+      db.from('banners').select('*').eq('activo', true).order('orden').catch(() => ({data:[]})),
+    ]);
 
-    // Cargar configuración
-    const { data: cfg } = await db.from('configuracion').select('*');
-    if (cfg) cfg.forEach(c => CONFIG[c.clave] = c.valor);
+    if (prodsRes.error) throw prodsRes.error;
+    PRODS = prodsRes.data || [];
+
+    if (cfgRes.data) cfgRes.data.forEach(c => CONFIG[c.clave] = c.valor);
+    applyTheme();
+
+    // Sabores desde tabla dedicada (si existe)
+    if (saboresRes.data?.length) {
+      SABORES_ACTIVOS = saboresRes.data.map(s => {
+        const prod = PRODS.find(p => p.id === s.producto_id);
+        return {
+          id:     s.producto_id,
+          nombre: s.nombre,
+          emoji:  s.emoji || '🫓',
+          precio: prod?.precio_venta || 0,
+        };
+      });
+    } else {
+      // Fallback: usar empanadas de PRODS
+      SABORES_ACTIVOS = PRODS
+        .filter(p => p.cat === 'Empanadas')
+        .map(p => ({id: p.id, nombre: p.nombre.replace('Empanadas ','').replace(' x6',''), emoji:'🫓', precio: p.precio_venta}));
+      if (!SABORES_ACTIVOS.length) SABORES_ACTIVOS = SABORES; // fallback hardcoded
+    }
+
+    // Banners activos
+    if (bannersRes.data?.length) {
+      const hoy = new Date().toISOString().split('T')[0];
+      BANNERS_ACTIVOS = bannersRes.data.filter(b =>
+        (!b.fecha_desde || b.fecha_desde <= hoy) &&
+        (!b.fecha_hasta || b.fecha_hasta >= hoy)
+      );
+    }
 
     syncBar('✅ Conectado a mercadoalpaso.com.ar', 'ok');
     return true;
   } catch(e) {
     console.warn('Supabase error:', e);
     syncBar('⚠️ Sin conexión — modo local', 'err');
-    // Fallback con productos básicos
     PRODS = PRODS_FALLBACK;
+    SABORES_ACTIVOS = SABORES;
     return false;
   }
 }
@@ -1425,11 +1460,24 @@ function comboCard(c) {
 function addById(id) {
   const p = PRODS.find(x => x.id === id);
   if (!p) return;
+
+  // Verificar horario
+  if (!estaAbierto()) {
+    toast('🔴 ' + (CONFIG.mensaje_cierre || 'Estamos cerrados'));
+    return;
+  }
+
+  // Si se vende por peso → abrir modal de peso
+  if (p.vende_por_peso) {
+    abrirModalPeso(id);
+    return;
+  }
+
   if (!cart[id]) cart[id] = { ...p, qty: 0 };
   cart[id].qty++;
   updateBadges();
   toast(`${p.nombre} agregado`);
-  renderSugerencias(); // async, no bloqueante
+  renderSugerencias();
 }
 
 function addCombo(id) {
@@ -1590,8 +1638,189 @@ const SABORES = [
 ];
 let saboresQty = {}; // {id: cantidad}
 
+// ══════════════════════════════════════════════════════
+// HORARIO DE ATENCIÓN
+// ══════════════════════════════════════════════════════
+function estaAbierto() {
+  // Override manual del dueño
+  if (CONFIG.acepta_pedidos === 'false') return false;
+
+  const ahora = new Date();
+  const dia   = ahora.getDay(); // 0=dom, 1=lun...6=sab
+  const hhmm  = ahora.getHours() * 60 + ahora.getMinutes();
+
+  const toMin = str => {
+    if (!str) return null;
+    const [h,m] = str.split(':').map(Number);
+    return h*60+m;
+  };
+
+  if (dia >= 1 && dia <= 5) { // Lun-Vie
+    const desde = toMin(CONFIG.h_lv_desde || CONFIG.horario_lun_vier_desde || '08:00');
+    const hasta = toMin(CONFIG.h_lv_hasta || CONFIG.horario_lun_vier_hasta || '21:00');
+    return hhmm >= desde && hhmm < hasta;
+  }
+  if (dia === 6) { // Sábado
+    const desde = toMin(CONFIG.h_sab_desde || CONFIG.horario_sab_desde || '08:00');
+    const hasta = toMin(CONFIG.h_sab_hasta || CONFIG.horario_sab_hasta || '14:00');
+    return hhmm >= desde && hhmm < hasta;
+  }
+  if (dia === 0) { // Domingo
+    if ((CONFIG.horario_dom_abierto || 'false') === 'false') return false;
+    const desde = toMin(CONFIG.h_dom_desde || CONFIG.horario_dom_desde || '09:00');
+    const hasta = toMin(CONFIG.h_dom_hasta || CONFIG.horario_dom_hasta || '13:00');
+    return hhmm >= desde && hhmm < hasta;
+  }
+  return false;
+}
+
+function mostrarBannerCierre() {
+  const msg = CONFIG.mensaje_cierre || 'Estamos cerrados por el momento 🕗';
+  // Insertar banner de cierre arriba del bloque 1
+  const bloque1 = document.querySelector('.bloque-empanadas');
+  if (!bloque1) return;
+  const existing = document.getElementById('banner-cierre');
+  if (existing) return; // ya está
+  const div = document.createElement('div');
+  div.id = 'banner-cierre';
+  div.style.cssText = 'background:#3D2008;color:#E8B84B;padding:16px;text-align:center;font-size:14px;font-weight:700;line-height:1.5;position:sticky;top:0;z-index:50';
+  div.innerHTML = `🔴 ${msg}`;
+  bloque1.insertBefore(div, bloque1.firstChild);
+}
+
+function ocultarBannerCierre() {
+  const el = document.getElementById('banner-cierre');
+  if (el) el.remove();
+}
+
+function tiempoEntregaTexto() {
+  if (entrega === 'Delivery') {
+    const min = CONFIG.tiempo_delivery_min || CONFIG.t_del_min || '30';
+    const max = CONFIG.tiempo_delivery_max || CONFIG.t_del_max || '45';
+    return `${min}-${max} min`;
+  } else {
+    const min = CONFIG.tiempo_retiro_min || CONFIG.t_ret_min || '10';
+    const max = CONFIG.tiempo_retiro_max || CONFIG.t_ret_max || '15';
+    return `${min}-${max} min`;
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// VENTA POR PESO
+// ══════════════════════════════════════════════════════
+function abrirModalPeso(prodId) {
+  const prod = PRODS.find(p => p.id === prodId);
+  if (!prod) return;
+
+  const min  = parseFloat(prod.peso_minimo || 0.5);
+  const max  = parseFloat(prod.peso_maximo || 10);
+  const paso = parseFloat(prod.paso_peso   || 0.5);
+
+  // Crear modal de peso si no existe
+  let modal = document.getElementById('modal-peso');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modal-peso';
+    modal.className = 'wmodal';
+    document.querySelector('.phone').appendChild(modal);
+  }
+
+  let pesoActual = min;
+  const render = () => {
+    const total = Math.round(pesoActual * prod.precio_venta);
+    modal.innerHTML = `
+      <div class="wm-box">
+        <div style="text-align:center;margin-bottom:16px">
+          <div style="font-size:36px;margin-bottom:8px">🥩</div>
+          <div class="wm-title">${prod.nombre}</div>
+          <div style="font-size:12px;color:var(--g3);margin-top:4px">${fmt(prod.precio_venta)} por kg</div>
+        </div>
+        <div style="background:var(--cream2);border-radius:16px;padding:20px;margin-bottom:20px;text-align:center;border:1px solid var(--cream3)">
+          <div style="font-size:12px;font-weight:700;color:var(--g3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">¿Cuántos kilos?</div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:20px;margin-bottom:12px">
+            <button onclick="cambiarPeso(${prodId},-${paso})" style="width:44px;height:44px;border-radius:12px;border:none;background:var(--brown);color:var(--gold2);font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>
+            <div style="font-size:36px;font-weight:900;color:var(--brown);min-width:80px;text-align:center">${pesoActual.toFixed(1)} <span style="font-size:16px;color:var(--g3)">kg</span></div>
+            <button onclick="cambiarPeso(${prodId},${paso})" style="width:44px;height:44px;border-radius:12px;border:none;background:var(--gold);color:var(--brown);font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>
+          </div>
+          <div style="font-size:22px;font-weight:900;color:var(--brown)">${fmt(total)}</div>
+          <div style="font-size:10px;color:var(--g3);margin-top:2px">Precio estimado · El peso final puede variar</div>
+        </div>
+        <button onclick="agregarPorPeso(${prodId},${pesoActual})" class="wm-btn">🛒 Agregar ${pesoActual.toFixed(1)}kg — ${fmt(total)}</button>
+        <button onclick="cerrarModalPeso()" class="wm-skip">Cancelar</button>
+      </div>`;
+    modal.classList.add('show');
+    // Guardar referencia para los botones
+    window._pesoActual = pesoActual;
+    window._pesoProd   = {prodId, min, max, paso, precio: prod.precio_venta, nombre: prod.nombre};
+  };
+
+  window.cambiarPeso = (id, delta) => {
+    const p = window._pesoProd;
+    window._pesoActual = Math.min(p.max, Math.max(p.min, parseFloat((window._pesoActual + delta).toFixed(1))));
+    pesoActual = window._pesoActual;
+    render();
+  };
+
+  window.agregarPorPeso = (id, kg) => {
+    const prod2 = PRODS.find(x => x.id === id);
+    if (!prod2) return;
+    // Guardar como item especial con precio calculado por peso
+    const key = `peso_${id}_${Date.now()}`;
+    cart[key] = {
+      ...prod2,
+      id:          key,
+      id_original: id,
+      qty:         1,
+      peso_kg:     kg,
+      precio_venta: Math.round(kg * prod2.precio_venta),
+      nombre:      `${prod2.nombre} ~${kg.toFixed(1)}kg`,
+      es_por_peso: true,
+    };
+    updateBadges();
+    cerrarModalPeso();
+    toast(`🥩 ${prod2.nombre} ~${kg}kg agregado`);
+    goTo('carrito');
+  };
+
+  window.cerrarModalPeso = () => {
+    modal.classList.remove('show');
+  };
+
+  render();
+}
+
+
+// ── TEMA DE COLORES DINÁMICO ─────────────────────────────────────────────
+function applyTheme() {
+  const root = document.documentElement.style;
+  const brown = CONFIG.color_brown || '#3D2008';
+  const gold  = CONFIG.color_gold  || '#D4911A';
+
+  // Derivar variantes oscuras/claras automáticamente
+  function lighten(hex, amt) {
+    let c = parseInt(hex.slice(1), 16);
+    let r = Math.min(255, (c>>16)+amt), g = Math.min(255, ((c>>8)&0xff)+amt), b = Math.min(255, (c&0xff)+amt);
+    return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+  }
+
+  root.setProperty('--brown',  brown);
+  root.setProperty('--brown2', lighten(brown, 30));
+  root.setProperty('--brown3', lighten(brown, 70));
+  root.setProperty('--gold',   gold);
+  root.setProperty('--gold2',  lighten(gold, 30));
+  root.setProperty('--gold3',  lighten(gold, 60));
+}
+
 function renderHome() {
   buildNav('bn-home', 'home');
+
+  // Verificar horario
+  if (!estaAbierto()) {
+    mostrarBannerCierre();
+  } else {
+    ocultarBannerCierre();
+  }
+
   renderSaboresGrid();
   renderBloqueCarnes();
 }
@@ -1599,14 +1828,12 @@ function renderHome() {
 // Foto del bloque carnes (configurable desde Supabase)
 function renderBloqueCarnes() {
   const fotoUrl = CONFIG.bloque_carnes_foto || '';
-  const fotoEl = document.getElementById('b2-foto');
+  const fotoEl  = document.getElementById('b2-foto');
   if (fotoEl && fotoUrl) {
     fotoEl.innerHTML = `<img src="${fotoUrl}" alt="Carnes" onerror="this.parentElement.innerHTML='<div class=b2-placeholder>🥩</div>'">`;
   }
-  // Textos configurables
   if (CONFIG.bloque_carnes_titulo && $('b2-titulo')) $('b2-titulo').innerHTML = CONFIG.bloque_carnes_titulo;
   if (CONFIG.bloque_carnes_sub   && $('b2-sub'))    $('b2-sub').textContent  = CONFIG.bloque_carnes_sub;
-  // Oferta empanadas
   if (CONFIG.b1_titulo  && $('b1-titulo'))  $('b1-titulo').innerHTML  = CONFIG.b1_titulo;
   if (CONFIG.b1_precio  && $('b1-precio'))  $('b1-precio').textContent = CONFIG.b1_precio;
   if (CONFIG.b1_tag     && $('b1-tag'))     $('b1-tag').textContent    = CONFIG.b1_tag;
@@ -1653,20 +1880,30 @@ function renderSaboresGrid() {
   const grid = $('sabores-grid');
   if (!grid) return;
 
-  // Tomar precios reales de PRODS si están disponibles
-  SABORES.forEach(s => {
+  // Usar sabores dinámicos de Supabase, o fallback al array local
+  const lista = SABORES_ACTIVOS.length ? SABORES_ACTIVOS : SABORES;
+
+  // Actualizar precios desde PRODS
+  lista.forEach(s => {
     const prod = PRODS.find(p => p.id === s.id);
     if (prod) s.precio = prod.precio_venta;
   });
 
-  grid.innerHTML = SABORES.map(s => {
+  if (!lista.length) {
+    grid.innerHTML = '<div style="color:rgba(255,255,255,.4);font-size:12px;text-align:center;padding:16px">No hay sabores disponibles hoy</div>';
+    $('btn-rapido').classList.add('disabled');
+    $('btn-rapido-txt').textContent = 'Sin sabores disponibles hoy';
+    return;
+  }
+
+  grid.innerHTML = lista.map(s => {
     const qty = saboresQty[s.id] || 0;
     return `<div class="sabor-row${qty>0?' activo':''}" id="sabor-${s.id}">
       <div class="sabor-info">
         <span class="sabor-emoji">${s.emoji}</span>
         <div>
           <div class="sabor-nombre">${s.nombre}</div>
-          <div class="sabor-precio">${s.precio>0?'$'+Math.round(s.precio).toLocaleString('es-AR')+' · caja x6':'Cargando...'}</div>
+          <div class="sabor-precio">${s.precio>0?fmt(s.precio)+' · caja x'+(CONFIG.empanadas_por_caja||'6'):'Precio a confirmar'}</div>
         </div>
       </div>
       <div class="sabor-qty">
@@ -1714,8 +1951,14 @@ function agregarEmpanadasRapido() {
   const total = Object.values(saboresQty).reduce((s,q)=>s+q, 0);
   if (total === 0) return;
 
+  if (!estaAbierto()) {
+    toast('🔴 ' + (CONFIG.mensaje_cierre || 'Estamos cerrados por el momento'));
+    return;
+  }
+
+  const lista = SABORES_ACTIVOS.length ? SABORES_ACTIVOS : SABORES;
   let agregados = 0;
-  SABORES.forEach(s => {
+  lista.forEach(s => {
     const qty = saboresQty[s.id] || 0;
     if (qty > 0) {
       const prod = PRODS.find(p => p.id === s.id);
@@ -1728,11 +1971,10 @@ function agregarEmpanadasRapido() {
   });
 
   if (agregados > 0) {
-    // Resetear selección
     saboresQty = {};
     renderSaboresGrid();
     updateBadges();
-    toast(`🫓 ${agregados} empanada${agregados>1?'s':''} agregada${agregados>1?'s':''}  al carrito`);
+    toast(`🫓 ${agregados} caja${agregados>1?'s':''} agregada${agregados>1?'s':''} al carrito`);
     goTo('carrito');
   }
 }
