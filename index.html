@@ -123,7 +123,8 @@ body{font-family:'Nunito',sans-serif;background:var(--g);color:var(--n)}
 .pcard{background:#fff;border-radius:var(--radius);overflow:hidden;box-shadow:var(--sh);cursor:pointer;border:1px solid var(--g2);transition:box-shadow .15s}
 .pcard:hover{box-shadow:var(--sh2)}
 .pcard:active{transform:scale(.98)}
-.pimg{height:90px;display:flex;align-items:center;justify-content:center;font-size:42px;position:relative;background:var(--g)}
+.pimg{height:110px;display:flex;align-items:center;justify-content:center;font-size:42px;position:relative;background:var(--g);overflow:hidden}
+.pimg img{width:100%;height:100%;object-fit:contain;padding:6px}
 .obadge{position:absolute;top:6px;left:6px;background:var(--r);color:#fff;font-size:8px;font-weight:800;padding:2px 6px;border-radius:5px;letter-spacing:.3px}
 .dobadge{position:absolute;top:6px;left:6px;background:var(--n);color:var(--do);font-size:8px;font-weight:800;padding:2px 6px;border-radius:5px;letter-spacing:.3px}
 .pinfo{padding:8px 10px 10px}
@@ -1122,7 +1123,7 @@ function pc(p) {
 
   // Si tiene foto real, mostrarla; si no, mostrar emoji
   const imgContent = p.foto_url
-    ? `<img src="${p.foto_url}" alt="${p.nombre}" style="width:100%;height:100%;object-fit:cover" loading="lazy" onerror="this.parentElement.innerHTML='<span style=font-size:42px>${emoji}</span>'">${badge}`
+    ? `<img src="${p.foto_url}" alt="${p.nombre}" style="width:100%;height:100%;object-fit:contain;padding:8px" loading="lazy" onerror="this.parentElement.innerHTML='<span style=font-size:42px>${emoji}</span>'">${badge}`
     : `<span style="font-size:42px${isE||isV?';color:#C9A84C':''}">${emoji}</span>${badge}`;
 
   const imgStyle = p.foto_url ? 'background:#fff' : `background:${bg}`;
