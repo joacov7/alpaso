@@ -2320,11 +2320,11 @@ async function confirmarPedido() {
     cliente_id: clienteActual.id,
     cliente_nombre: clienteActual.nombre,
     cliente_tel: clienteActual.telefono,
-    entrega, pago: pagoTipo,
-    subtotal: sub, descuento_bv: bv, descuento_puntos: ptsDes, descuento_especial: descAmt,
-    recargo_amt: recargo, envio: delCosto, total,
+    entrega,
+    pago: pagoTipo,
+    subtotal: sub,
+    total,
     estado: pagoTipo==='mp' ? 'pendiente_pago' : 'nuevo',
-    notas: '',
   };
 
   const ped = await guardarPedido(pedidoData, items);
