@@ -390,9 +390,16 @@ function instalarPWA(){
             <div class="logo-ic" id="logo-ic">👣</div>
             <div class="logo-txt" id="logo-txt">Al Paso</div>
           </div>
-          <div class="notif" id="notif-btn">🔔<div class="ndot" id="notif-dot" style="display:none"></div></div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <!-- BOTÓN USUARIO — cambia según estado de login -->
+            <div id="user-btn" onclick="goTo('fidelidad')" style="display:flex;align-items:center;gap:6px;background:var(--g);border:1.5px solid var(--g2);border-radius:20px;padding:5px 12px 5px 6px;cursor:pointer;transition:all .15s">
+              <div id="user-avatar" style="width:26px;height:26px;border-radius:50%;background:var(--n);display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:800;flex-shrink:0">👤</div>
+              <span id="user-label" style="font-size:12px;font-weight:700;color:var(--n)">Entrar</span>
+            </div>
+            <div class="notif" id="notif-btn">🔔<div class="ndot" id="notif-dot" style="display:none"></div></div>
+          </div>
         </div>
-        <div class="greet" id="greet-txt">Bienvenido a<strong id="greet-sub">Tu mercado de proximidad</strong></div>
+        <div class="greet" id="greet-txt"><strong id="greet-sub">Tu mercado de proximidad</strong></div>
       </div>
       <div class="sbar" onclick="goTo('catalogo')"><span>🔍</span><span>Buscá productos...</span></div>
       <div class="hcontent">
@@ -829,16 +836,18 @@ function cartCount()  { return Object.values(cart).reduce((s,i) => s + i.qty, 0)
 function updateBadges(){ const n = cartCount(); document.querySelectorAll('.badge').forEach(b => b.textContent = n) }
 
 function buildNav(cid, active) {
+  const fidIc = clienteActual ? '👣' : '💳';
+  const fidLb = clienteActual ? clienteActual.nombre.split(' ')[0] : 'Tarjeta';
   const items = [
     {id:'home',     ic:'🏠', lb:'Inicio'},
     {id:'catalogo', ic:'🔍', lb:'Catálogo'},
-    {id:'carrito',  ic:'🛒', lb:'Carrito',   b:true},
-    {id:'fidelidad',ic:'💳', lb:'Fidelidad'},
+    {id:'carrito',  ic:'🛒', lb:'Carrito', b:true},
+    {id:'fidelidad',ic:fidIc, lb:fidLb},
   ];
   $(cid).innerHTML = items.map(i => `
     <div class="ni${i.id===active?' active':''}" onclick="goTo('${i.id}')">
       <span class="ic">${i.ic}</span><span class="lb">${i.lb}</span>
-      ${i.b ? '<span class="badge">0</span>' : ''}
+      ${i.b ? '<span class="badge" id="cart-badge">0</span>' : ''}
     </div>`).join('');
 }
 
@@ -910,6 +919,7 @@ async function registrarCliente() {
   }
 
   localStorage.setItem('alpaso_cliente', JSON.stringify(clienteActual));
+  actualizarUserBtn();
   goTo('fidelidad');
   toast(`👣 Tarjeta Al Paso creada con ${ptsBienvenida} Pasos de bienvenida`);
 }
@@ -932,6 +942,7 @@ async function actualizarPuntos(pts) {
   clienteActual.nivel  = nivel;
   localStorage.setItem('alpaso_cliente', JSON.stringify(clienteActual));
   // Actualizar UI de fidelidad si está visible
+  actualizarUserBtn();
   if (document.querySelector('#s-fidelidad.active')) renderFid();
 }
 
@@ -1445,8 +1456,54 @@ function closeCO() {
 // ══════════════════════════════════════════════════════
 function getNivel(p) { return p>=500?'🥇 Gold':p>=200?'🥈 Silver':'🥉 Bronze' }
 
+// Actualiza el botón de usuario en el header
+function actualizarUserBtn() {
+  const btn    = document.getElementById('user-btn');
+  const avatar = document.getElementById('user-avatar');
+  const label  = document.getElementById('user-label');
+  const greet  = document.getElementById('greet-txt');
+  if (!btn) return;
+
+  if (clienteActual) {
+    const inicial = (clienteActual.nombre||'?')[0].toUpperCase();
+    const pts = clienteActual.puntos || 0;
+    const nivel = getNivel(pts);
+    const nColor = pts>=500?'#B8860B':pts>=200?'#888':'#444';
+
+    // Avatar con inicial
+    avatar.textContent = inicial;
+    avatar.style.background = pts>=500?'#C9A84C':pts>=200?'#888':'var(--n)';
+    avatar.style.color = pts>=500?'var(--n)':'#fff';
+
+    // Label con nombre corto + pasos
+    label.innerHTML = `${clienteActual.nombre.split(' ')[0]} <span style="color:${nColor};font-size:10px">· ${pts} 👣</span>`;
+
+    // Borde dorado si es Gold
+    btn.style.borderColor = pts>=500?'#C9A84C':pts>=200?'#CCC':'var(--g2)';
+
+    // Saludo personalizado
+    const hora = new Date().getHours();
+    const saludo = hora<12?'Buenos días':hora<18?'Buenas tardes':'Buenas noches';
+    if (greet) greet.innerHTML = `<strong style="font-size:15px;color:var(--n)">${saludo}, ${clienteActual.nombre.split(' ')[0]} 👋</strong>`;
+  } else {
+    avatar.textContent = '👤';
+    avatar.style.background = 'var(--n)';
+    avatar.style.color = '#fff';
+    label.textContent = 'Entrar';
+    btn.style.borderColor = 'var(--g2)';
+    if (greet) greet.innerHTML = `<strong id="greet-sub">Tu mercado de proximidad</strong>`;
+  }
+}
+
 function renderFid() {
   buildNav('bn-fidelidad', 'fidelidad');
+
+  // Sin cliente → redirigir al registro
+  if (!clienteActual) {
+    goTo('registro');
+    return;
+  }
+
   const pts = clienteActual ? clienteActual.puntos : 0;
   const nombre = clienteActual ? clienteActual.nombre : 'Tu nombre';
 
@@ -1517,6 +1574,7 @@ function cerrarSesion() {
   historialCliente = [];
   historialCargado = false;
   localStorage.removeItem('alpaso_cliente');
+  actualizarUserBtn();
   goTo('home');
   toast('👋 Sesión cerrada');
   setTimeout(() => showWelcome(), 500);
@@ -2006,6 +2064,7 @@ async function init() {
     setTimeout(() => showWelcome(), 1000);
   } else {
     renderFid();
+    actualizarUserBtn();
     if (bvActiva && !bvUsada) {
       $('wb-btn').textContent = '✓ 10% off activado en tu primera compra';
     }
