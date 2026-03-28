@@ -853,34 +853,54 @@ async function loadConfig() {
     // Toggles especiales
     const togAcepta=$('tog-acepta-pedidos'); if(togAcepta) togAcepta.checked = cfg.acepta_pedidos!=='false';
     const togDom=$('tog-dom'); if(togDom) { togDom.checked = !!(cfg.h_dom_desde); const dw=$('horario-dom-wrap'); if(dw) dw.style.display=togDom.checked?'block':'none'; }
-    // Color pickers sync
-    if(cfg.color_brown){const t=$('c-color-brown');const p=$('cp-brown');if(t)t.value=cfg.color_brown;if(p)p.value=cfg.color_brown;}
-    if(cfg.color_gold) {const t=$('c-color-gold'); const p=$('cp-gold'); if(t)t.value=cfg.color_gold; if(p)p.value=cfg.color_gold;}
-    // Empanadas fields
-    if(cfg.empanadas_por_caja   &&$('c-empanadas-por-caja'))   $('c-empanadas-por-caja').value   =cfg.empanadas_por_caja;
-    if(cfg.empanadas_precio_base&&$('c-empanadas-precio-base'))$('c-empanadas-precio-base').value =cfg.empanadas_precio_base;
-    if(cfg.empanadas_unidad     &&$('c-empanadas-unidad'))     $('c-empanadas-unidad').value      =cfg.empanadas_unidad;
+    // Sync color pickers (los inputs text y color deben estar sincronizados)
+    ['brown','gold'].forEach(k => {
+      const val = cfg['color_'+k];
+      if (!val) return;
+      const txt = $('c-color-'+k); if(txt) txt.value = val;
+      const cp  = $('cp-'+k);     if(cp)  cp.value  = val;
+    });
     prevTema();
     localStorage.setItem('alpaso_cfg',JSON.stringify(cfg));
   } catch(e) { toast('⚠️ Error config: '+e.message); }
 }
 
 async function guardarConfig() {
-  const vals={};
-  Object.entries(CFG_MAP).forEach(([clave,id])=>{ const el=$(id); if(el) {
-    vals[clave] = el.type==='checkbox' ? (el.checked?'true':'false') : el.value;
-  }});
-  // Toggles no enlazados en CFG_MAP
-  const togAcepta=$('tog-acepta-pedidos'); if(togAcepta) vals.acepta_pedidos = togAcepta.checked?'true':'false';
+  // Recolectar todos los valores actuales de la UI
+  const vals = {};
+  Object.entries(CFG_MAP).forEach(([clave, id]) => {
+    const el = $(id);
+    if (el) vals[clave] = el.type === 'checkbox' ? (el.checked ? 'true' : 'false') : el.value;
+  });
+  // Toggle acepta_pedidos (fuera del CFG_MAP)
+  const togAcepta = $('tog-acepta-pedidos');
+  if (togAcepta) vals.acepta_pedidos = togAcepta.checked ? 'true' : 'false';
+
+  // Guardar en lote: un solo upsert con todos los registros
+  const rows = Object.entries(vals).map(([clave, valor]) => ({ clave, valor }));
+  
   try {
-    for (const [clave,valor] of Object.entries(vals)) {
-      await db.from('configuracion').upsert({clave,valor},{onConflict:'clave'});
+    const { error } = await db.from('configuracion').upsert(rows, { onConflict: 'clave' });
+    if (error) throw error;
+    // Guardar en localStorage (fuente de verdad local)
+    localStorage.setItem('alpaso_cfg', JSON.stringify(vals));
+    toast('✅ Guardado');
+    // NO recargar de Supabase — los valores ya están bien en la UI
+  } catch(e) {
+    // Si falla el lote, intentar uno por uno para identificar el problema
+    console.error('Batch upsert failed, trying one by one:', e);
+    let errores = 0;
+    for (const [clave, valor] of Object.entries(vals)) {
+      const { error } = await db.from('configuracion').upsert({ clave, valor }, { onConflict: 'clave' });
+      if (error) { console.error('Error saving', clave, error); errores++; }
     }
-    localStorage.setItem('alpaso_cfg',JSON.stringify(vals));
-    toast('💾 Configuración guardada');
-    // Reload para confirmar lo guardado
-    await loadConfig();
-  } catch(e) { toast('⚠️ Error: '+e.message); }
+    if (errores === 0) {
+      localStorage.setItem('alpaso_cfg', JSON.stringify(vals));
+      toast('✅ Guardado (modo individual)');
+    } else {
+      toast(`⚠️ ${errores} campos no se pudieron guardar — revisá la consola`);
+    }
+  }
 }
 
 function syncColorPicker(txtId, cpId) {
