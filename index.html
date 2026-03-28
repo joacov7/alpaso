@@ -17,7 +17,7 @@
 <meta property="og:url" content="https://mercadoalpaso.com.ar">
 <title>Al Paso — Mercado de Proximidad</title>
 <!-- v2.2 - parametrizacion, listas, sugerencias - 20260328-0011 -->
-<link rel="manifest" href="/manifest.json">
+<!-- manifest removido — agregar cuando exista /manifest.json -->
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' fill='%231A1A1A' rx='40'/><text y='125' x='50%' text-anchor='middle' font-size='100'>👣</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1615,13 +1615,14 @@ async function getSugerencias() {
 }
 
 async function renderSugerencias() {
-  if (!Object.keys(cart).length) { $('sugerencias-box').style.display='none'; return; }
+  if (!Object.keys(cart).length) { const sb=$('sugerencias-box'); if(sb) sb.style.display='none'; return; }
 
   const [prods, combosRec] = await Promise.all([getSugerencias(), Promise.resolve(getCombosRecomendados())]);
   const desc = calcularDescuentoPersonal();
 
-  if (!prods.length && !combosRec.length && !desc) { $('sugerencias-box').style.display='none'; return; }
-  $('sugerencias-box').style.display='block';
+  const sugEl = $('sugerencias-box');
+  if (!prods.length && !combosRec.length && !desc) { if(sugEl) sugEl.style.display='none'; return; }
+  if(sugEl) sugEl.style.display='block';
 
   const emo = p => {
     if (!p) return '🛒';
@@ -1669,8 +1670,8 @@ async function renderSugerencias() {
     </div>`;
   }
 
-  if ($('sg-title')) $('sg-title').style.display = 'none';
-  $('sugerencias-items').innerHTML = html;
+  const sugBox = $('sugerencias-box');
+  if (sugBox) sugBox.innerHTML = html;
 }
 
 // ══════════════════════════════════════════════════════
@@ -2321,7 +2322,6 @@ async function confirmarPedido() {
     cliente_nombre: clienteActual.nombre,
     cliente_tel: clienteActual.telefono,
     entrega,
-    pago: pagoTipo,
     subtotal: sub,
     total,
     estado: pagoTipo==='mp' ? 'pendiente_pago' : 'nuevo',
