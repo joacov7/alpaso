@@ -495,10 +495,10 @@ function instalarPWA(){
         <!-- CANJE DE PUNTOS -->
         <div class="pts-canje-box" id="pts-canje-box">
           <div class="pcb-top">
-            <div class="pcb-title">💛 Tenés <span id="pcb-pts">0</span> puntos disponibles</div>
-            <button class="pcb-btn" id="pcb-btn" onclick="aplicarPuntos()">Aplicar $500 off</button>
+            <div class="pcb-title">👣 Tenés <span id="pcb-pts">0</span> Pasos disponibles</div>
+            <button class="pcb-btn" id="pcb-btn" onclick="aplicarPuntos()">Usar 500 Pasos → $500 off</button>
           </div>
-          <div style="font-size:9px;color:rgba(255,255,255,.3)">500 puntos = $500 de descuento directo en este pedido</div>
+          <div style="font-size:9px;color:rgba(255,255,255,.3)">500 Pasos = $500 de descuento directo en este pedido</div>
         </div>
         <div class="ent-sec">
           <div class="ent-tit">¿Cómo recibís?</div>
@@ -525,8 +525,8 @@ function instalarPWA(){
           <div class="rrow" id="r-env-row"><span>Envío</span><span class="rv" id="r-env">$0</span></div>
           <div class="rrow" id="r-rec-row" style="display:none"><span>Recargo 3 cuotas (20%)</span><span class="rv" id="r-rec" style="color:var(--r)">$0</span></div>
           <div class="rrow" id="r-bv-row" style="display:none"><span>Desc. bienvenida (10%)</span><span class="rv" id="r-bv" style="color:var(--gr)">-$0</span></div>
-          <div class="rrow" id="r-pts-canje-row" style="display:none"><span>Canje puntos (-500 pts)</span><span class="rv" id="r-pts-canje" style="color:var(--gr)">-$500</span></div>
-          <div class="rrow"><span>Puntos a ganar</span><span class="rv" style="color:var(--am)" id="r-pts">+0 pts</span></div>
+          <div class="rrow" id="r-pts-canje-row" style="display:none"><span>Canje Pasos (-500 👣)</span><span class="rv" id="r-pts-canje" style="color:var(--gr)">-$500</span></div>
+          <div class="rrow"><span>Pasos a ganar 👣</span><span class="rv" style="color:var(--am)" id="r-pts">+0 Pasos 👣</span></div>
           <div class="rrow rtot"><span>TOTAL</span><span class="rv" id="r-tot">$0</span></div>
         </div>
         <button class="btn-main" onclick="showCheckout()" id="btn-pagar">Confirmar pedido</button>
@@ -540,37 +540,96 @@ function instalarPWA(){
   <!-- FIDELIDAD -->
   <div class="screen" id="s-fidelidad">
     <div class="fid-hdr">
-      <div class="fid-top"><h1>Tarjeta Al Paso</h1><span style="font-size:18px;color:var(--do)">◆</span></div>
+      <div class="fid-top"><h1>Tarjeta Al Paso</h1><span style="font-size:18px;color:var(--do)">👣</span></div>
       <div class="tarjeta">
-        <div class="t-top"><div class="t-logo">◆ AL PASO</div><div class="t-tipo" id="t-tipo">🥈 SILVER</div></div>
+        <div class="t-top"><div class="t-logo">◆ AL PASO</div><div class="t-tipo" id="t-tipo">🥉 BRONZE</div></div>
         <div class="t-num" id="t-num">**** **** **** 0000</div>
-        <div class="t-bot"><div class="t-nombre" id="t-nombre">Tu nombre</div><div class="t-pts"><div class="pts" id="fid-pts">0</div><div class="ptslb">PUNTOS</div></div></div>
+        <div class="t-bot">
+          <div class="t-nombre" id="t-nombre">Tu nombre</div>
+          <div class="t-pts"><div class="pts" id="fid-pts">0</div><div class="ptslb">PASOS 👣</div></div>
+        </div>
       </div>
     </div>
     <div class="scroll-area">
       <div class="fid-body">
+
+        <!-- Nivel y progreso -->
         <div class="nivel-box">
-          <div class="nrow"><div class="nbadge" id="nivel-badge">🥉 Bronze</div><div class="ninfo" id="nivel-next">Próximo: <strong>🥈 Silver (200 pts)</strong></div></div>
+          <div class="nrow">
+            <div class="nbadge" id="nivel-badge">🥉 Bronze</div>
+            <div class="ninfo" id="nivel-next">Próximo: <strong>🥈 Silver (200 Pasos)</strong></div>
+          </div>
           <div class="pbar"><div class="pfill" id="pfill"></div></div>
-          <div class="plabels"><span id="pl-from">Bronze (0)</span><span id="pts-actual">0 pts</span><span id="pl-to">Silver (200)</span></div>
+          <div class="plabels"><span id="pl-from">Bronze (0)</span><span id="pts-actual">0 Pasos</span><span id="pl-to">Silver (200)</span></div>
         </div>
-        <div class="bentit">Beneficios</div>
-        <div class="benitem"><div class="benic" style="background:#F0FFF4">🎁</div><div class="beninfo"><h4>Bienvenida — 10% off</h4><p>Primera compra en la app</p></div><button class="benact" id="bv-benact" onclick="showWelcome()">Activar</button></div>
-        <div class="benitem"><div class="benic" style="background:#FFF0F0">🎂</div><div class="beninfo"><h4>Cumpleaños</h4><p>10% off ese día</p></div><div class="benact">Activo</div></div>
-        <div class="benitem"><div class="benic" style="background:#E8F5FF">🛵</div><div class="beninfo"><h4>Delivery gratis</h4><p>Compras de $10.000 o más</p></div><div class="benact">Activo</div></div>
-        <div class="benitem" id="ben-gold"><div class="benic" style="background:#1A1500">🏆</div><div class="beninfo"><h4>Premio Gold</h4><p id="ben-gold-txt">Necesitás 500 puntos</p></div><div class="benact" id="ben-gold-btn" style="background:var(--g2);color:var(--g3)">Bloq.</div></div>
-        <div id="canje-box" style="display:none;background:linear-gradient(135deg,var(--n),#1A1500);border-radius:12px;padding:12px;margin-top:4px;border:1px solid rgba(201,168,76,.25)">
-          <div style="font-size:9px;font-weight:800;letter-spacing:2px;color:var(--do);margin-bottom:5px">CANJE DISPONIBLE</div>
-          <div style="font-size:12px;font-weight:800;color:#fff;margin-bottom:2px">$500 de descuento listos</div>
-          <div style="font-size:9px;color:#555;margin-bottom:10px">Aplicalo directo en el carrito o generá un código para el local</div>
+
+        <!-- Canje disponible -->
+        <div id="canje-box" style="display:none;background:linear-gradient(135deg,var(--n),#1A1500);border-radius:12px;padding:14px;margin-bottom:12px;border:1px solid rgba(201,168,76,.25)">
+          <div style="font-size:9px;font-weight:800;letter-spacing:2px;color:var(--do);margin-bottom:5px">🎉 CANJE DISPONIBLE</div>
+          <div style="font-size:14px;font-weight:800;color:#fff;margin-bottom:2px">$500 de descuento listos</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.4);margin-bottom:12px">500 Pasos · Aplicalo en el carrito o generá un código para el local</div>
           <div style="display:flex;gap:8px">
-            <button onclick="goTo('carrito');aplicarPuntos()" style="flex:1;background:var(--gr);color:#fff;border:none;border-radius:9px;padding:10px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer">🛒 Aplicar en carrito</button>
-            <button onclick="generarCodigo()" style="flex:1;background:var(--do);color:var(--n);border:none;border-radius:9px;padding:10px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer">📱 Código local</button>
+            <button onclick="goTo('carrito');aplicarPuntos()" style="flex:1;background:var(--gr);color:#fff;border:none;border-radius:9px;padding:10px;font-family:'Nunito';font-size:12px;font-weight:800;cursor:pointer">🛒 Usar en carrito</button>
+            <button onclick="generarCodigo()" style="flex:1;background:var(--do);color:var(--n);border:none;border-radius:9px;padding:10px;font-family:'Nunito';font-size:12px;font-weight:800;cursor:pointer">📱 Código local</button>
           </div>
         </div>
-        <div class="bentit" style="margin-top:12px">Últimas compras</div>
-        <div style="background:#fff;border-radius:12px;padding:6px 11px;box-shadow:var(--sh2)" id="hist-list">
-          <div class="empty-st" style="padding:20px"><div class="ei">🛒</div><p>Aún no tenés compras</p></div>
+
+        <!-- Cómo ganar Pasos -->
+        <div style="background:#fff;border-radius:12px;padding:14px;box-shadow:var(--sh);margin-bottom:12px;border:1px solid var(--g2)">
+          <div class="bentit" style="margin-bottom:10px">👣 Cómo ganás Pasos</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px">
+              <span style="color:var(--n2)">Cada $100 de compra</span>
+              <span style="font-weight:800;color:var(--n)">+1 Paso 👣</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px">
+              <span style="color:var(--n2)">Registrarte (nuevo)</span>
+              <span style="font-weight:800;color:var(--n)">+50 Pasos 👣</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px">
+              <span style="color:var(--n2)">Cliente habitual migrado</span>
+              <span style="font-weight:800;color:var(--n)">+100 Pasos 👣</span>
+            </div>
+            <div style="height:1px;background:var(--g2);margin:2px 0"></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px">
+              <span style="color:var(--n2)">500 Pasos = descuento</span>
+              <span style="font-weight:800;color:var(--gr)">$500 OFF 🎁</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Beneficios -->
+        <div class="bentit">Beneficios de tu tarjeta</div>
+        <div class="benitem">
+          <div class="benic" style="background:#F0FFF4">🎁</div>
+          <div class="beninfo"><h4>Bienvenida — 10% off</h4><p>Primera compra en la app</p></div>
+          <button class="benact" id="bv-benact" onclick="showWelcome()">Activar</button>
+        </div>
+        <div class="benitem">
+          <div class="benic" style="background:#FFF0F0">🎂</div>
+          <div class="beninfo"><h4>Cumpleaños</h4><p>10% off ese día</p></div>
+          <div class="benact">Activo</div>
+        </div>
+        <div class="benitem">
+          <div class="benic" style="background:#E8F5FF">🛵</div>
+          <div class="beninfo"><h4>Delivery gratis</h4><p>En compras de $10.000 o más</p></div>
+          <div class="benact">Activo</div>
+        </div>
+        <div class="benitem" id="ben-gold">
+          <div class="benic" style="background:#1A1500">🏆</div>
+          <div class="beninfo"><h4>Nivel Gold</h4><p id="ben-gold-txt">Necesitás 500 Pasos</p></div>
+          <div class="benact" id="ben-gold-btn" style="background:var(--g2);color:var(--g3)">Bloq.</div>
+        </div>
+
+        <!-- Historial -->
+        <div class="bentit" style="margin-top:6px">Historial de compras</div>
+        <div id="fid-hist">
+          <div class="empty-st"><div class="ei">🛒</div><p>Aún no tenés compras</p></div>
+        </div>
+
+        <!-- Botón cerrar sesión -->
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--g2);text-align:center">
+          <button onclick="cerrarSesion()" style="background:none;border:none;color:var(--g3);font-family:'Nunito';font-size:11px;font-weight:700;cursor:pointer;text-decoration:underline">Cerrar sesión / Cambiar cuenta</button>
         </div>
         <div style="height:14px"></div>
       </div>
@@ -580,25 +639,65 @@ function instalarPWA(){
 
   <!-- REGISTRO -->
   <div class="screen" id="s-registro">
-    <div class="reg-hdr"><h1>◆ Crear mi tarjeta</h1></div>
+    <div class="reg-hdr" style="display:flex;align-items:center;gap:10px">
+      <span style="font-size:22px;cursor:pointer" onclick="goTo('fidelidad')">←</span>
+      <h1>Crear Tarjeta Al Paso</h1>
+    </div>
     <div class="scroll-area">
       <div class="reg-body">
-        <p style="font-size:12px;color:var(--g3);margin-bottom:20px;line-height:1.6">Creá tu tarjeta Al Paso y empezá a acumular puntos en cada compra. 100% gratis.</p>
+
+        <!-- Preview tarjeta -->
+        <div style="background:linear-gradient(135deg,#1A1500,#0A0A0A);border-radius:18px;padding:18px;margin-bottom:22px;border:1px solid rgba(201,168,76,.2);position:relative;overflow:hidden">
+          <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#C9A84C,transparent)"></div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+            <div style="font-family:'Bebas Neue';font-size:20px;color:#C9A84C;letter-spacing:2px">◆ AL PASO</div>
+            <div style="background:rgba(201,168,76,.12);color:#C9A84C;font-size:9px;font-weight:700;padding:3px 9px;border-radius:20px;border:1px solid rgba(201,168,76,.2)">🥉 BRONZE</div>
+          </div>
+          <div style="font-size:11px;color:rgba(255,255,255,.2);letter-spacing:3px;margin-bottom:14px">**** **** **** ****</div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-end">
+            <div style="color:rgba(255,255,255,.4);font-size:11px;font-weight:700">TU NOMBRE</div>
+            <div style="text-align:right">
+              <div style="font-size:26px;font-weight:900;color:#C9A84C;line-height:1">0</div>
+              <div style="font-size:8px;color:rgba(255,255,255,.25);letter-spacing:2px">PASOS</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Beneficios -->
+        <div style="background:#F8F9FA;border-radius:12px;padding:14px;margin-bottom:20px;border:1px solid var(--g2)">
+          <div style="font-size:11px;font-weight:800;color:var(--n);margin-bottom:10px">¿Qué ganás?</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:10px;font-size:11px;color:var(--n2)"><span style="font-size:18px">👣</span><span><strong>$100 = 1 Paso</strong> · Acumulás en cada compra</span></div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:11px;color:var(--n2)"><span style="font-size:18px">🎁</span><span><strong>10% off</strong> en tu primera compra</span></div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:11px;color:var(--n2)"><span style="font-size:18px">🎂</span><span><strong>10% off</strong> en tu cumpleaños</span></div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:11px;color:var(--n2)"><span style="font-size:18px">🏆</span><span><strong>500 Pasos = $500 off</strong> · Canjeá cuando quieras</span></div>
+          </div>
+        </div>
+
+        <!-- Formulario -->
         <div class="reg-form">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div class="fg"><label>Nombre</label><input id="r-nombre" placeholder="Juan"></div>
-            <div class="fg"><label>Apellido</label><input id="r-apellido" placeholder="Pérez"></div>
+            <div class="fg"><label>Nombre *</label><input id="r-nombre" placeholder="Juan" autocomplete="given-name"></div>
+            <div class="fg"><label>Apellido</label><input id="r-apellido" placeholder="Pérez" autocomplete="family-name"></div>
           </div>
-          <div class="fg"><label>WhatsApp</label><input id="r-tel" placeholder="11-XXXX-XXXX" type="tel"></div>
-          <div class="fg"><label>Cumpleaños</label><input id="r-cumple" type="date"></div>
+          <div class="fg">
+            <label>WhatsApp *</label>
+            <div style="position:relative">
+              <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;font-weight:700;color:var(--g3)">+54</span>
+              <input id="r-tel" placeholder="11 XXXX XXXX" type="tel" autocomplete="tel" style="padding-left:44px">
+            </div>
+            <div style="font-size:10px;color:var(--g3);margin-top:3px">Para avisarte cuando tu pedido esté listo</div>
+          </div>
+          <div class="fg"><label>Cumpleaños <span style="color:var(--g3);font-weight:400">(opcional — para tu descuento)</span></label><input id="r-cumple" type="date" autocomplete="bday"></div>
           <div class="fg">
             <label>¿Eras cliente del local anterior?</label>
             <select id="r-anterior">
-              <option value="true">Sí, era cliente habitual</option>
+              <option value="true">Sí — quiero mis puntos de bienvenida extra</option>
               <option value="false">No, soy cliente nuevo</option>
             </select>
           </div>
-          <button class="btn-main" style="margin:8px 0 0" onclick="registrarCliente()">◆ Crear mi tarjeta fidelidad</button>
+          <button class="btn-main" style="margin:8px 0 0;border-radius:12px" onclick="registrarCliente()">👣 Crear mi Tarjeta Al Paso — gratis</button>
+          <div style="font-size:10px;color:var(--g3);text-align:center;margin-top:6px;line-height:1.5">Al registrarte aceptás recibir notificaciones de tus pedidos por WhatsApp</div>
         </div>
       </div>
     </div>
@@ -626,7 +725,7 @@ function instalarPWA(){
     <h2>Pedido confirmado</h2>
     <p>Guardado en el sistema · Equipo avisado</p>
     <div class="order-num" id="co-num">Pedido #AP-0000</div>
-    <div class="co-pts" id="co-pts">+0 puntos ganados</div>
+    <div class="co-pts" id="co-pts">+0 Pasos ganados 👣</div>
     <button class="btn-wsp" onclick="abrirWsp()"><span style="font-size:17px">💬</span>Confirmar por WhatsApp</button>
     <button class="btn-v2" onclick="closeCO()">Volver al inicio</button>
   </div>
@@ -812,13 +911,13 @@ async function registrarCliente() {
 
   localStorage.setItem('alpaso_cliente', JSON.stringify(clienteActual));
   goTo('fidelidad');
-  toast(`✅ Tarjeta creada con ${ptsBienvenida} puntos de bienvenida`);
+  toast(`👣 Tarjeta Al Paso creada con ${ptsBienvenida} Pasos de bienvenida`);
 }
 
 async function actualizarPuntos(pts) {
   if (!clienteActual) {
     // Cliente sin registrar — mostrar aviso
-    toast('💳 Registrate para acumular ' + pts + ' puntos');
+    toast('👣 Registrate para acumular ' + pts + ' Pasos');
     return;
   }
   const nuevos = clienteActual.puntos + pts;
@@ -1224,7 +1323,7 @@ function renderCart() {
   else { $('bv-strip').style.display='none'; $('r-bv-row').style.display='none'; }
 
   $('r-pts-canje-row').style.display = canjeAmt > 0 ? 'flex' : 'none';
-  $('r-pts').textContent = '+' + Math.floor(sub/100) + ' pts';
+  $('r-pts').textContent = '+' + Math.floor(sub/100) + ' Pasos 👣';
   $('r-tot').textContent = fmt(total);
   const cuotas = pagoTipo==='c3' ? ' (3 × '+fmt(total/3)+')' : '';
   $('btn-pagar').textContent = total>0 ? 'Confirmar — '+fmt(total)+cuotas : 'Confirmar pedido';
@@ -1316,7 +1415,7 @@ async function showCheckout() {
   puntosAplicados = false;
 
   $('co-num').textContent  = 'Pedido #AP-' + orderN;
-  $('co-pts').textContent  = '+' + pts + ' puntos ganados';
+  $('co-pts').textContent  = '+' + pts + ' Pasos ganados 👣';
   $('co').classList.add('show');
 }
 
@@ -1344,7 +1443,7 @@ function closeCO() {
 // ══════════════════════════════════════════════════════
 // FIDELIDAD
 // ══════════════════════════════════════════════════════
-function getNivel(p)  { return p>=500?'🥇 Gold':p>=200?'🥈 Silver':'🥉 Bronze' }
+function getNivel(p) { return p>=500?'🥇 Gold':p>=200?'🥈 Silver':'🥉 Bronze' }
 
 function renderFid() {
   buildNav('bn-fidelidad', 'fidelidad');
@@ -1352,48 +1451,75 @@ function renderFid() {
   const nombre = clienteActual ? clienteActual.nombre : 'Tu nombre';
 
   $('fid-pts').textContent  = pts;
-  $('t-nombre').textContent = nombre;
-  $('t-num').textContent    = clienteActual ? '**** **** **** ' + String(clienteActual.id).padStart(4,'0') : '**** **** **** 0000';
+  $('t-nombre').textContent = nombre.toUpperCase();
+  $('t-num').textContent    = clienteActual
+    ? '**** **** **** ' + String(clienteActual.id).padStart(4,'0')
+    : '**** **** **** 0000';
 
   const nivel = getNivel(pts);
   $('nivel-badge').textContent = nivel;
   $('t-tipo').textContent      = nivel;
-  $('pts-actual').textContent  = pts + ' pts';
+  $('pts-actual').textContent  = pts + ' Pasos 👣';
 
   // Progress bar
-  let from=0, to=200, fromLbl='Bronze (0)', toLbl='Silver (200)', nextTxt='Próximo: 🥈 Silver (200 pts)', pct=0;
-  if (pts >= 500) { from=200; to=500; fromLbl='Silver (200)'; toLbl='Gold (500)'; nextTxt='🥇 ¡Sos Gold!'; pct=100; }
-  else if (pts >= 200) { from=200; to=500; fromLbl='Silver (200)'; toLbl='Gold (500)'; nextTxt='Próximo: 🥇 Gold (500 pts)'; pct=((pts-200)/300)*100; }
-  else { pct = (pts/200)*100; }
-  $('pfill').style.width     = Math.min(100,pct) + '%';
-  $('pl-from').textContent   = fromLbl;
-  $('pl-to').textContent     = toLbl;
-  $('nivel-next').innerHTML  = nextTxt;
+  let from=0, to=200, fromLbl='Bronze (0)', toLbl='Silver (200)', nextTxt='', pct=0;
+  if (pts >= 500) {
+    from=500; to=500; fromLbl='Silver (200)'; toLbl='Gold (500)';
+    nextTxt = '🥇 ¡Sos Gold! Tenés $500 para canjear'; pct=100;
+  } else if (pts >= 200) {
+    from=200; to=500; fromLbl='Silver (200)'; toLbl='Gold (500)';
+    nextTxt = `Próximo: 🥇 Gold · faltan <strong>${500-pts} Pasos</strong>`;
+    pct = ((pts-200)/300)*100;
+  } else {
+    nextTxt = `Próximo: 🥈 Silver · faltan <strong>${200-pts} Pasos</strong>`;
+    pct = (pts/200)*100;
+  }
+  $('pfill').style.width    = Math.min(100,pct) + '%';
+  $('pl-from').textContent  = fromLbl;
+  $('pl-to').textContent    = toLbl;
+  $('nivel-next').innerHTML = nextTxt;
 
-  // Ben gold
+  // Canje
   if (pts >= 500) {
     $('ben-gold-txt').textContent = '$500 disponibles para canjear';
-    $('ben-gold-btn').textContent = 'Disponible';
+    $('ben-gold-btn').textContent = 'Canjear';
     $('ben-gold-btn').style.background = 'var(--n)';
     $('ben-gold-btn').style.color = 'var(--do)';
     $('canje-box').style.display = 'block';
   } else {
-    $('ben-gold-txt').textContent = 'Necesitás ' + (500-pts) + ' puntos más';
+    $('ben-gold-txt').textContent = `Necesitás ${500-pts} Pasos más 👣`;
     $('ben-gold-btn').textContent = 'Bloq.';
     $('ben-gold-btn').style.background = 'var(--g2)';
     $('ben-gold-btn').style.color = 'var(--g3)';
     $('canje-box').style.display = 'none';
   }
 
-  // Bienvenida badge
+  // Bienvenida
   if (bvActiva && !bvUsada) {
-    $('bv-benact').textContent = 'Activo';
+    $('bv-benact').textContent = '¡Activo!';
     $('bv-benact').style.background = 'var(--gr)';
     $('bv-benact').style.color = '#fff';
+  } else if (bvUsada) {
+    $('bv-benact').textContent = 'Usado';
+    $('bv-benact').style.background = 'var(--g2)';
+    $('bv-benact').style.color = 'var(--g3)';
   }
 
   // Historial
   if (clienteActual) loadHistorial();
+}
+
+function cerrarSesion() {
+  if (!confirm('¿Cerrar sesión?')) return;
+  clienteActual = null;
+  bvActiva = false;
+  bvUsada = false;
+  historialCliente = [];
+  historialCargado = false;
+  localStorage.removeItem('alpaso_cliente');
+  goTo('home');
+  toast('👋 Sesión cerrada');
+  setTimeout(() => showWelcome(), 500);
 }
 
 async function loadHistorial() {
@@ -1401,14 +1527,25 @@ async function loadHistorial() {
     .select('numero,total,puntos_ganados,created_at,entrega')
     .eq('cliente_id', clienteActual.id)
     .order('created_at', {ascending:false})
-    .limit(5);
+    .limit(8);
 
-  if (!data || !data.length) return;
-  $('hist-list').innerHTML = data.map(p => `
+  const container = $('fid-hist');
+  if (!container) return;
+  if (!data || !data.length) {
+    container.innerHTML = '<div class="empty-st"><div class="ei">🛒</div><p>Aún no tenés compras</p></div>';
+    return;
+  }
+  container.innerHTML = `<div style="background:#fff;border-radius:12px;padding:6px 12px;box-shadow:var(--sh);border:1px solid var(--g2)">` +
+    data.map(p => `
     <div class="histitem">
       <div class="histic">${p.entrega==='Delivery'?'🛵':'🛒'}</div>
       <div class="histinfo">
-        <h4>#${p.numero}</h4>
+        <h4>${p.numero}</h4>
+        <p>${new Date(p.created_at).toLocaleDateString('es-AR')} · ${fmt(p.total)}</p>
+      </div>
+      <div class="histpts">+${p.puntos_ganados||0} 👣</div>
+    </div>`).join('') + '</div>';
+}
         <p>${new Date(p.created_at).toLocaleDateString('es-AR')} · ${fmt(p.total)}</p>
       </div>
       <div class="histpts">+${p.puntos_ganados} pts</div>
