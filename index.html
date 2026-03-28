@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#FA5200">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -1273,6 +1276,7 @@ async function loadData() {
     refreshCombos();
 
     if (cfgRes.data) cfgRes.data.forEach(c => CONFIG[c.clave] = c.valor);
+    console.log('[Al Paso] CONFIG cargado — color_brown:', CONFIG.color_brown, '| bv_activa:', CONFIG.bv_activa);
     applyTheme();
 
     // Sabores desde tabla dedicada (si existe)
@@ -1851,15 +1855,42 @@ function lighten(hex, amt) {
 function applyTheme() {
   const brown = CONFIG.color_brown || '#FA5200';
   const gold  = CONFIG.color_gold  || '#FA5200';
+  console.log('[Al Paso] applyTheme — brown:', brown, '| gold:', gold);
 
-  // Pisar las variables CSS del :root directamente en el elemento html
-  const root = document.documentElement;
-  root.style.setProperty('--brown',  brown);
-  root.style.setProperty('--brown2', lighten(brown, 20));
-  root.style.setProperty('--brown3', lighten(brown, 50));
-  root.style.setProperty('--gold',   gold);
-  root.style.setProperty('--gold2',  lighten(gold, 30));
-  root.style.setProperty('--gold3',  lighten(gold, 60));
+  // Reemplazar el bloque :root en la hoja de estilos existente
+  // Es el método más confiable — modifica el CSS directamente
+  try {
+    const sheet = document.styleSheets[0];
+    for (let i = 0; i < sheet.cssRules.length; i++) {
+      const rule = sheet.cssRules[i];
+      if (rule.selectorText === ':root') {
+        rule.style.setProperty('--brown',  brown);
+        rule.style.setProperty('--brown2', lighten(brown, 20));
+        rule.style.setProperty('--brown3', lighten(brown, 50));
+        rule.style.setProperty('--gold',   gold);
+        rule.style.setProperty('--gold2',  lighten(gold, 30));
+        rule.style.setProperty('--gold3',  lighten(gold, 60));
+        break;
+      }
+    }
+  } catch(e) {
+    // Fallback: inyectar un <style> nuevo al final del <head>
+    const old = document.getElementById('theme-dyn');
+    if (old) old.remove();
+    const s = document.createElement('style');
+    s.id = 'theme-dyn';
+    s.textContent = [
+      ':root{',
+      `--brown:${brown};`,
+      `--brown2:${lighten(brown,20)};`,
+      `--brown3:${lighten(brown,50)};`,
+      `--gold:${gold};`,
+      `--gold2:${lighten(gold,30)};`,
+      `--gold3:${lighten(gold,60)}`,
+      '}'
+    ].join('');
+    document.head.appendChild(s);
+  }
 
   // Foto de fondo del header
   const hdrEl = document.getElementById('app-hdr');
