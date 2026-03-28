@@ -1690,8 +1690,8 @@ async function renderSugerencias() {
     </div>`;
   }
 
-  if ($('sg-title')) $('sg-title').style.display = 'none';
-  $('sugerencias-items').innerHTML = html;
+  if (null) null.style.display = 'none';
+  $('sugerencias-box').innerHTML = html;
 }
 
 // ══════════════════════════════════════════════════════
@@ -2039,7 +2039,7 @@ function renderCat() {
   if (ftabs) ftabs.innerHTML = CATS.map(c => `<div class="ftab${c===activeCat?' active':''}" onclick="setCat('${c}')">${CE[c]} ${c}</div>`).join('');
   const q = ($('sinput')||{value:''}).value.toLowerCase();
   let prods = PRODS.filter(p => (activeCat==='Todos'||p.cat===activeCat) && (!q||p.nombre.toLowerCase().includes(q)));
-  const grid = $('pgrid');
+  const grid = $('cat-grid');
   if (!grid) return;
   if (!prods.length) {
     grid.innerHTML = '<div class="empty-st"><div class="ei">🔍</div><p>Sin resultados para "'+q+'"</p></div>';
@@ -2073,138 +2073,140 @@ function explorarCarnes() { activeCat='Carne al Vacío'; goTo('catalogo'); }
 // CARRITO
 // ══════════════════════════════════════════════════════
 function renderCart() {
-  const wrap = $('cart-wrap');
-  if (!wrap) return;
-  buildNav('bn-carrito', 'carrito');
-
   const items = Object.values(cart);
+  const cartEmpty = $('cart-empty');
+  const cartArea  = $('cart-area');
+
   if (!items.length) {
-    wrap.innerHTML = `<div class="cart-empty">
-      <div class="emp-ic">🛒</div>
-      <h3>Tu carrito está vacío</h3>
-      <p>Agregá empanadas, carnes o productos del supermercado</p>
-      <button onclick="goTo('home')" style="margin-top:12px;background:var(--brown);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-family:'Nunito';font-size:13px;font-weight:800;cursor:pointer">Ver productos</button>
-    </div>`;
+    if (cartEmpty) cartEmpty.style.display = 'flex';
+    if (cartArea)  cartArea.style.display  = 'none';
+    if ($('cart-count-hdr')) $('cart-count-hdr').textContent = '0 productos';
     return;
   }
+  if (cartEmpty) cartEmpty.style.display = 'none';
+  if (cartArea)  cartArea.style.display  = 'block';
+  if ($('cart-count-hdr')) $('cart-count-hdr').textContent = items.length + ' producto' + (items.length>1?'s':'');
 
+  // Render items
+  const cartList = $('cart-list');
+  if (cartList) {
+    cartList.innerHTML = items.map(it => {
+      const emoji = it.nombre.includes('Empanada')?'🫓':(it.cat==='Carnicería'||it.cat==='Carne al Vacío')?'🥩':it.cat==='Fiambres'?'🧀':it.cat==='Lácteos'?'🥛':it.cat==='Bebidas'?'🥤':'🌾';
+      const img = it.foto_url ? `<img src="${it.foto_url}" style="width:100%;height:100%;object-fit:cover">` : emoji;
+      return `<div class="cart-item">
+        <div class="ci-emoji">${img}</div>
+        <div class="ci-info">
+          <div class="ci-name">${it.nombre}</div>
+          <div class="ci-price">${fmt(it.precio_venta)} c/u</div>
+        </div>
+        <div class="ci-right">
+          <div class="ci-total">${fmt(it.precio_venta * it.qty)}</div>
+          <div class="ci-qty">
+            <button class="qty-btn" onclick="cambiarQty(${it.id},-1)">−</button>
+            <span class="qty-val">${it.qty}</span>
+            <button class="qty-btn" onclick="cambiarQty(${it.id},1)">+</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Actualizar resumen
+  updateResumen();
+  renderUpsell();
+  renderSugerencias();
+}
+
+function updateResumen() {
+  const items = Object.values(cart);
   const sub = cartTotal();
   const bvPct = parseFloat(CONFIG.descuento_bv||'10')/100;
   const bvGlobal = CONFIG.bv_activa !== 'false';
   const bv  = bvGlobal && bvActiva && !bvUsada ? Math.round(sub * bvPct) : 0;
   const ptsDes = puntosAplicados && clienteActual?.puntos >= 500 ? 500 : 0;
-  const desc = calcularDescuentoPersonal();
-  const descAmt = desc ? Math.round(sub * desc.pct / 100) : 0;
-  const delCosto = entrega==='Delivery' ? (sub >= parseFloat(CONFIG.delivery_minimo||'10000') ? 0 : parseFloat(CONFIG.delivery_costo||'1500')) : 0;
-  const recargo  = pasoTipo==='credito3' ? Math.round(sub * parseFloat(CONFIG.recargo_credito3||'20') / 100) : 0;
-  const total = sub - bv - ptsDes - descAmt + delCosto + recargo;
-  const tiempoTxt = tiempoEntregaTexto();
+  const delMin  = parseFloat(CONFIG.delivery_minimo||'10000');
+  const delCost = parseFloat(CONFIG.delivery_costo||'1500');
+  const delCosto = entrega==='Delivery' ? (sub >= delMin ? 0 : delCost) : 0;
+  const recargo  = pagoTipo==='c3' ? Math.round(sub * parseFloat(CONFIG.recargo_credito3||'20') / 100) : 0;
+  const total = sub - bv - ptsDes + delCosto + recargo;
+  const pts = Math.floor(total / 100);
 
-  let html = '';
+  if ($('r-sub'))  $('r-sub').textContent  = fmt(sub);
+  if ($('r-tot'))  $('r-tot').textContent  = fmt(total);
+  if ($('r-pts'))  $('r-pts').textContent  = '+' + pts + ' Pasos 👣';
 
-  // Items
-  html += `<div class="cart-section">
-    <div class="cart-section-hdr"><span>Tu pedido</span><button class="cart-link" onclick="cart={};updateBadges();renderCart()">Vaciar</button></div>`;
-  items.forEach(it => {
-    const emoji = it.nombre.includes('Empanada')?'🫓':(it.cat==='Carnicería'||it.cat==='Carne al Vacío')?'🥩':it.cat==='Fiambres'?'🧀':it.cat==='Lácteos'?'🥛':it.cat==='Bebidas'?'🥤':'🌾';
-    const img = it.foto_url ? `<img src="${it.foto_url}" style="width:100%;height:100%;object-fit:cover">` : emoji;
-    html += `<div class="cart-item">
-      <div class="ci-emoji">${img}</div>
-      <div class="ci-info">
-        <div class="ci-name">${it.nombre}</div>
-        <div class="ci-price">${fmt(it.precio_venta)} c/u</div>
-      </div>
-      <div class="ci-right">
-        <div class="ci-total">${fmt(it.precio_venta * it.qty)}</div>
-        <div class="ci-qty">
-          <button class="qty-btn" onclick="cambiarQty(${it.id},-1)">−</button>
-          <span class="qty-val">${it.qty}</span>
-          <button class="qty-btn" onclick="cambiarQty(${it.id},1)">+</button>
-        </div>
-      </div>
-    </div>`;
-  });
-  html += '</div>';
-
-  // Upsell
-  html += '<div id="upsell-box" style="display:none"><div class="cart-upsell"><div class="cart-upsell-titulo">💡 ¿Querés agregar algo más?</div><div class="cart-upsell-scroll" id="upsell-items"></div></div></div>';
-
-  // Pasos canje
-  if (clienteActual && clienteActual.puntos >= 500) {
-    html += `<div class="cart-section cart-pasos" style="margin:8px 12px;border-radius:14px;padding:14px">
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <div><div style="font-size:13px;font-weight:800;color:#fff">🏆 Tus Pasos</div>
-        <div style="font-size:11px;color:rgba(255,255,255,.6)">${clienteActual.puntos} pasos = $500 off</div></div>
-        <button class="cart-pasos-btn" onclick="togglePuntos()">${puntosAplicados?'✓ Aplicado':'Canjear -$500'}</button>
-      </div></div>`;
+  // Envío
+  const envRow = $('r-env-row');
+  if (envRow) {
+    if (entrega === 'Delivery') {
+      envRow.style.display = 'flex';
+      const envEl = $('r-env');
+      if (envEl) envEl.textContent = delCosto === 0 ? 'Gratis 🎉' : fmt(delCosto);
+    } else {
+      envRow.style.display = 'none';
+    }
   }
 
-  // Entrega
-  html += `<div class="cart-section" style="margin:8px 12px;border-radius:14px;overflow:hidden">
-    <div class="cart-section-hdr"><span>Entrega</span></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 16px">
-      <div class="eopt${entrega==='Delivery'?' sel':''}" onclick="setEntrega('Delivery')">
-        <div style="font-size:20px;margin-bottom:4px">🛵</div>
-        <div style="font-size:12px;font-weight:800;color:var(--brown)">Delivery</div>
-        <div style="font-size:10px;color:var(--g3)">${tiempoTxt.delivery}</div>
-      </div>
-      <div class="eopt${entrega==='Retiro'?' sel':''}" onclick="setEntrega('Retiro')">
-        <div style="font-size:20px;margin-bottom:4px">🏪</div>
-        <div style="font-size:12px;font-weight:800;color:var(--brown)">Retiro</div>
-        <div style="font-size:10px;color:var(--g3)">${tiempoTxt.retiro}</div>
-      </div>
-    </div>
-  </div>`;
+  // Recargo
+  if ($('r-rec-row')) $('r-rec-row').style.display = recargo > 0 ? 'flex' : 'none';
+  if ($('r-rec'))     $('r-rec').textContent = '+' + fmt(recargo);
 
-  // Pago
-  const mpLink = CONFIG.mp_link || '';
-  html += `<div class="cart-section" style="margin:8px 12px;border-radius:14px;overflow:hidden">
-    <div class="cart-section-hdr"><span>Forma de pago</span></div>
-    <div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px">
-      <div class="popt${pagoTipo==='efectivo'?' sel':''}" onclick="setPago('efectivo')">
-        <div style="font-size:20px">💵</div>
-        <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--brown)">Efectivo / Débito / Transferencia</div></div>
-      </div>
-      ${mpLink ? `<div class="popt popt-mp${pagoTipo==='mp'?' sel':''}" onclick="setPago('mp')">
-        <div class="popt-mp-logo">💙</div>
-        <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--brown)">MercadoPago</div></div>
-      </div>` : ''}
-      <div class="popt${pagoTipo==='credito3'?' sel':''}" onclick="setPago('credito3')">
-        <div style="font-size:20px">💳</div>
-        <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--brown)">Crédito 3 cuotas</div>
-        <div style="font-size:10px;color:var(--g3)">Recargo ${CONFIG.recargo_credito3||'20'}%</div></div>
-      </div>
-    </div>
-  </div>`;
+  // BV strip
+  if ($('bv-strip'))  $('bv-strip').style.display = bv > 0 ? 'flex' : 'none';
+  if ($('bv-val'))    $('bv-val').textContent = '-' + fmt(bv);
+  if ($('r-bv-row'))  $('r-bv-row').style.display = bv > 0 ? 'flex' : 'none';
+  if ($('r-bv'))      $('r-bv').textContent = '-' + fmt(bv);
 
-  // Resumen
-  html += `<div class="cart-section" style="margin:8px 12px;border-radius:14px">
-    <div class="cart-resumen">
-      <div class="resumen-filas">
-        <div class="resumen-fila"><span>Subtotal</span><span>${fmt(sub)}</span></div>
-        ${bv>0?`<div class="resumen-fila green" id="r-bv-row"><span>Desc. bienvenida (${Math.round(bvPct*100)}%)</span><span>-${fmt(bv)}</span></div>`:''}
-        ${ptsDes>0?`<div class="resumen-fila green"><span>Pasos canjeados</span><span>-${fmt(ptsDes)}</span></div>`:''}
-        ${descAmt>0?`<div class="resumen-fila green"><span>${desc.label}</span><span>-${fmt(descAmt)}</span></div>`:''}
-        ${delCosto>0?`<div class="resumen-fila"><span>Envío</span><span>${fmt(delCosto)}</span></div>`:''}
-        ${delCosto===0&&entrega==='Delivery'?`<div class="resumen-fila green"><span>Envío</span><span>Gratis 🎉</span></div>`:''}
-        ${recargo>0?`<div class="resumen-fila red"><span>Recargo 3c</span><span>+${fmt(recargo)}</span></div>`:''}
-      </div>
-      <div class="resumen-total"><span>Total</span><span>${fmt(total)}</span></div>
-    </div>
-  </div>`;
+  // Pasos canje box
+  const ptsCanje = $('pts-canje-box');
+  if (ptsCanje) {
+    if (clienteActual && clienteActual.puntos >= 500) {
+      ptsCanje.style.display = 'block';
+      if ($('pcb-pts')) $('pcb-pts').textContent = clienteActual.puntos;
+      if ($('pcb-btn')) $('pcb-btn').textContent = puntosAplicados ? '✓ Aplicado (-$500)' : 'Usar 500 Pasos';
+    } else {
+      ptsCanje.style.display = 'none';
+    }
+  }
+  if ($('r-pts-canje-row')) $('r-pts-canje-row').style.display = ptsDes > 0 ? 'flex' : 'none';
+}
 
-  // Botón confirmar
-  html += `<div class="cart-actions">
-    <button class="btn-main" onclick="confirmarPedido()" style="border-radius:14px;padding:16px;font-size:15px">
-      ${pagoTipo==='mp'?'💙 Pagar con MercadoPago':'✅ Confirmar pedido'}
-    </button>
-    <div class="cart-actions-note">Al confirmar coordinamos por WhatsApp 💬</div>
-  </div>
-  <div id="sugerencias-box" style="display:none;padding:0 12px 20px"></div>`;
+function selEnt(el, tipo, tiempo) {
+  entrega = tipo; entregaTiempo = tiempo;
+  document.querySelectorAll('.eopt').forEach(e => e.classList.remove('sel'));
+  el.classList.add('sel');
+  // Update etm text dynamically from CONFIG
+  const tiempos = tiempoEntregaTexto();
+  document.querySelectorAll('.eopt').forEach(e => {
+    const lbl = e.querySelector('.elb')?.textContent;
+    const etm = e.querySelector('.etm');
+    if (etm) etm.textContent = lbl==='Delivery' ? tiempos.delivery : tiempos.retiro;
+  });
+  updateResumen();
+}
 
-  wrap.innerHTML = html;
-  renderSugerencias();
-  renderUpsell();
+function selPago(el, tipo, recargoPct) {
+  pagoTipo = tipo; pagoRecargo = recargoPct;
+  document.querySelectorAll('.popt').forEach(e => { e.classList.remove('sel'); e.querySelector('.popt-check')&&(e.querySelector('.popt-check').textContent=''); });
+  el.classList.add('sel');
+  if (el.querySelector('.popt-check')) el.querySelector('.popt-check').textContent = '✓';
+  const mpWrap = $('btn-mp-wrap');
+  if (mpWrap) mpWrap.style.display = tipo==='mp' ? 'block' : 'none';
+  updateResumen();
+}
+
+function aplicarPuntos() {
+  if (!clienteActual || clienteActual.puntos < 500) return;
+  puntosAplicados = !puntosAplicados;
+  updateResumen();
+}
+
+async function showCheckout() {
+  if (!clienteActual) { toast('👣 Registrate para hacer un pedido'); goTo('fidelidad'); return; }
+  if (!estaAbierto())  { toast('🔴 ' + (CONFIG.mensaje_cierre||'Estamos cerrados')); return; }
+  const items = Object.values(cart);
+  if (!items.length)   { toast('El carrito está vacío'); return; }
+  await confirmarPedido();
 }
 
 function cambiarQty(id, delta) {
@@ -2394,57 +2396,98 @@ function actualizarUserBtn() {
 
 function renderFid() {
   buildNav('bn-fidelidad', 'fidelidad');
-  const body = $('fid-body');
-  if (!body) return;
   if (!clienteActual) {
-    body.innerHTML = `<div style="text-align:center;padding:32px 16px">
-      <div style="font-size:48px;margin-bottom:12px">👣</div>
-      <h2 style="font-size:18px;font-weight:800;color:var(--brown);margin-bottom:8px">Tarjeta Al Paso</h2>
-      <p style="font-size:13px;color:var(--g3);margin-bottom:20px">Acumulá Pasos en cada compra y accedé a descuentos exclusivos</p>
-      <button onclick="goTo('registro')" class="btn-main" style="border-radius:12px">👣 Crear mi Tarjeta — gratis</button>
-    </div>`;
+    // No logueado — mostrar pantalla de registro
+    if ($('s-fidelidad')) {
+      const body = document.querySelector('#s-fidelidad .fid-body');
+      if (body) body.innerHTML = `
+        <div style="text-align:center;padding:32px 16px">
+          <div style="font-size:56px;margin-bottom:12px">👣</div>
+          <h2 style="font-size:18px;font-weight:800;color:var(--brown);margin-bottom:8px">Tarjeta Al Paso</h2>
+          <p style="font-size:13px;color:var(--g3);margin-bottom:20px">Acumulá Pasos en cada compra y accedé a descuentos exclusivos</p>
+          <button onclick="goTo('registro')" class="btn-main" style="border-radius:12px;width:100%">👣 Crear mi Tarjeta — gratis</button>
+        </div>`;
+    }
     return;
   }
+
   const pts   = clienteActual.puntos || 0;
   const nivel = getNivel(pts);
-  const nextLvl = pts<200?200:pts<500?500:null;
-  const pct   = nextLvl ? Math.min(100, Math.round(pts/nextLvl*100)) : 100;
-  body.innerHTML = `
-    <div style="background:linear-gradient(135deg,var(--brown),var(--brown2));border-radius:16px;padding:18px;margin-bottom:16px;color:#fff">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-        <div>
-          <div style="font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:1px">Tarjeta Al Paso</div>
-          <div style="font-size:18px;font-weight:800;margin-top:2px">${clienteActual.nombre}</div>
-        </div>
-        <div style="background:rgba(255,255,255,.15);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700">${nivel}</div>
-      </div>
-      <div style="font-size:36px;font-weight:900;color:var(--gold2)">${pts} <span style="font-size:14px;opacity:.7">Pasos</span></div>
-      ${nextLvl ? `
-        <div style="margin-top:10px">
-          <div class="pbar"><div style="height:100%;background:var(--gold2);width:${pct}%;border-radius:3px"></div></div>
-          <div style="font-size:10px;opacity:.6;margin-top:3px">${pts}/${nextLvl} para ${getNivel(nextLvl)}</div>
-        </div>` : '<div style="font-size:11px;opacity:.6;margin-top:8px">🥇 Nivel máximo alcanzado</div>'}
-    </div>
-    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
-      <div style="background:#fff;border-radius:12px;padding:14px;border:1px solid #E0E0E0;display:flex;align-items:center;justify-content:space-between">
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--brown)">🎁 Descuento bienvenida</div>
-          <div style="font-size:11px;color:var(--g3)">10% off en tu primera compra</div>
-        </div>
-        <button class="benact" id="bv-benact" onclick="showWelcome()" style="background:${bvActiva&&!bvUsada?'var(--gr)':'#E0E0E0'};color:#fff">${bvActiva&&!bvUsada?'Activo':bvUsada?'Usado':''}</button>
-      </div>
-      ${pts>=500?`<div id="canje-box" style="background:linear-gradient(135deg,var(--brown),var(--brown2));border-radius:12px;padding:14px;border:1px solid rgba(212,145,26,.25)">
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          <div style="color:#fff;font-size:13px;font-weight:700">🏆 Canjear 500 Pasos = $500 off</div>
-          <button onclick="generarCodigo()" style="flex-shrink:0;background:var(--gold);color:var(--brown);border:none;border-radius:9px;padding:8px 12px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer">📱 Código local</button>
-        </div>
-      </div>`:''}
-    </div>
-    <div style="text-align:center;margin-top:8px">
-      <button onclick="cerrarSesion()" style="background:none;border:none;color:var(--g3);font-family:'Nunito';font-size:11px;font-weight:700;cursor:pointer;text-decoration:underline">Cerrar sesión</button>
-    </div>`;
+  const nextPts = pts < 200 ? 200 : pts < 500 ? 500 : null;
+  const pct     = nextPts ? Math.min(100, Math.round(pts / nextPts * 100)) : 100;
+
+  // Tarjeta header
+  if ($('fid-pts'))    $('fid-pts').textContent    = pts;
+  if ($('t-tipo'))     $('t-tipo').textContent     = nivel;
+  if ($('t-nombre'))   $('t-nombre').textContent   = clienteActual.nombre || '';
+  if ($('nivel-badge'))$('nivel-badge').textContent = nivel;
+  if ($('pts-actual')) $('pts-actual').textContent  = pts + ' Pasos';
+
+  // Progress bar
+  if ($('pfill')) $('pfill').style.width = pct + '%';
+  if ($('pl-from')) $('pl-from').textContent = pts < 200 ? 'Bronze (0)' : pts < 500 ? 'Silver (200)' : 'Gold (500)';
+  if ($('pl-to'))   $('pl-to').textContent   = nextPts ? getNivel(nextPts) + ' (' + nextPts + ')' : '🥇 Máximo';
+  if ($('nivel-next')) $('nivel-next').innerHTML = nextPts
+    ? 'Próximo: <strong>' + getNivel(nextPts) + ' (' + nextPts + ' Pasos)</strong>'
+    : '<strong>🥇 Nivel máximo alcanzado</strong>';
+
+  // Canje box
+  if ($('canje-box')) $('canje-box').style.display = pts >= 500 ? 'block' : 'none';
+
+  // Gold
+  if ($('ben-gold-txt')) $('ben-gold-txt').textContent = pts >= 500 ? '¡Nivel alcanzado! 🏆' : 'Necesitás ' + Math.max(0, 500 - pts) + ' Pasos más';
+  if ($('ben-gold-btn')) {
+    $('ben-gold-btn').style.background = pts >= 500 ? 'var(--gr)' : 'var(--g2)';
+    $('ben-gold-btn').style.color      = pts >= 500 ? '#fff' : 'var(--g3)';
+    $('ben-gold-btn').textContent      = pts >= 500 ? '✓ Activo' : 'Bloq.';
+  }
+
+  // BV button
+  if ($('bv-benact')) {
+    const bvGlobal = CONFIG.bv_activa !== 'false';
+    if (!bvGlobal) {
+      $('bv-benact').textContent = 'No disponible';
+      $('bv-benact').style.background = 'var(--g2)';
+    } else if (bvUsada) {
+      $('bv-benact').textContent = 'Usado';
+      $('bv-benact').style.background = 'var(--g3)';
+    } else if (bvActiva) {
+      $('bv-benact').textContent = 'Activo ✓';
+      $('bv-benact').style.background = 'var(--gr)';
+      $('bv-benact').style.color = '#fff';
+    } else {
+      $('bv-benact').textContent = 'Activar';
+    }
+  }
+
+  // Historial (async)
+  cargarHistorialFid();
 }
 
+async function cargarHistorialFid() {
+  if (!clienteActual) return;
+  try {
+    const { data } = await db.from('pedidos')
+      .select('numero, total, entrega, created_at')
+      .eq('cliente_id', clienteActual.id)
+      .order('created_at', {ascending: false})
+      .limit(10);
+    const hist = $('fid-hist');
+    if (!hist) return;
+    if (!data?.length) {
+      hist.innerHTML = '<div class="empty-st"><div class="ei">🛒</div><p>Aún no tenés compras</p></div>';
+      return;
+    }
+    hist.innerHTML = data.map(p => `
+      <div style="background:#fff;border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;border:1px solid #E0E0E0">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--brown)">${p.numero}</div>
+          <div style="font-size:10px;color:var(--g3)">${new Date(p.created_at).toLocaleDateString('es-AR')} · ${p.entrega||'Delivery'}</div>
+        </div>
+        <div style="font-size:14px;font-weight:900;color:var(--brown)">${fmt(p.total)}</div>
+      </div>`).join('');
+  } catch(e) { console.warn('Error cargando historial:', e); }
+}
 function cerrarSesion() {
   clienteActual = null; bvActiva = false; bvUsada = false;
   localStorage.removeItem('alpaso_cliente');
@@ -2602,7 +2645,7 @@ async function init() {
       $('wb').style.display = 'block';
       const pct = CONFIG.descuento_bv || '10';
       if ($('wb-btn')) $('wb-btn').textContent = `✓ ${pct}% off — primera compra`;
-      if ($('wb-title')) $('wb-title').textContent = `${pct}% off en tu primera compra`;
+      if (document.querySelector('.wb-title')) document.querySelector('.wb-title').textContent = `${pct}% off en tu primera compra`;
     } else {
       $('wb').style.display = 'none';
     }
