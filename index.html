@@ -1281,19 +1281,22 @@ async function loadData() {
     syncBar('🔄 Conectando a mercadoalpaso.com.ar...', 'load');
 
     // Cargar productos, config, sabores y banners en paralelo
-    const [prodsRes, cfgRes, saboresRes, bannersRes] = await Promise.all([
+    const [prodsRes, cfgRes] = await Promise.all([
       db.from('productos').select('*').eq('activo', true).order('orden').order('id'),
       db.from('configuracion').select('*'),
-      db.from('sabores_empanada').select('*').eq('activo', true).order('orden').catch(() => ({data:[]})),
-      db.from('banners').select('*').eq('activo', true).order('orden').catch(() => ({data:[]})),
     ]);
+
+    // Tablas opcionales — no rompen si no existen
+    let saboresRes = {data:[]};
+    let bannersRes = {data:[]};
+    try { saboresRes = await db.from('sabores_empanada').select('*').eq('activo', true).order('orden'); } catch(e) {}
+    try { bannersRes = await db.from('banners').select('*').eq('activo', true).order('orden'); } catch(e) {}
 
     if (prodsRes.error) throw prodsRes.error;
     PRODS = prodsRes.data || [];
     refreshCombos();
 
     if (cfgRes.data) cfgRes.data.forEach(c => CONFIG[c.clave] = c.valor);
-    console.log('[Al Paso] CONFIG cargado — color_brown:', CONFIG.color_brown, '| bv_activa:', CONFIG.bv_activa);
     applyTheme();
 
     // Sabores desde tabla dedicada (si existe)
