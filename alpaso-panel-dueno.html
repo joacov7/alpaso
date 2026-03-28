@@ -1119,6 +1119,8 @@ function cfgTab(n) {
     }
   });
 }
+
+function toggleRol(rol, cb) {
   const card = $('rol-'+rol);
   if (card) card.classList.toggle('active-rol', cb.checked);
   toast(cb.checked ? `✅ Rol ${rol} activado` : `⚠️ Rol ${rol} desactivado`);
