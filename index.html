@@ -2244,6 +2244,12 @@ function setPago(tipo) {
   renderCart();
 }
 
+// Aliases para el HTML estático del carrito
+function selEnt(el, tipo) { setEntrega(tipo); }
+function selPago(el, tipo) { setPago(tipo); }
+function aplicarPuntos() { togglePuntos(); }
+function showCheckout() { confirmarPedido(); }
+
 // ══════════════════════════════════════════════════════
 // UPSELL
 // ══════════════════════════════════════════════════════
