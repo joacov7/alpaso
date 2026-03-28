@@ -506,7 +506,16 @@ tr:last-child td{border:none}
               <div class="fg"><label>Pasos por cada $100 gastados</label><input id="c-puntos-x" type="number" value="1"></div>
               <div class="fg"><label>Pasos para canjear</label><input id="c-puntos-canje" type="number" value="500"></div>
               <div class="fg"><label>Descuento cumpleaños (%)</label><input id="c-cumple" type="number" value="10"></div>
-              <div class="fg"><label>Descuento bienvenida (%)</label><input id="c-bv" type="number" value="10"></div>
+              <div style="border-top:1px solid rgba(255,255,255,.07);margin:10px 0;padding-top:10px">
+                <div class="toggle-row" style="margin-bottom:8px">
+                  <div>
+                    <div class="toggle-lbl">🎁 Descuento bienvenida</div>
+                    <div style="font-size:10px;color:rgba(255,255,255,.25);margin-top:2px">Se aplica automáticamente a clientes nuevos</div>
+                  </div>
+                  <label class="toggle"><input type="checkbox" id="c-bv-activa" checked><div class="toggle-sl"></div></label>
+                </div>
+                <div class="fg"><label>Porcentaje de descuento (%)</label><input id="c-bv" type="number" value="10"></div>
+              </div>
             </div>
           </div>
 
@@ -776,6 +785,14 @@ const CFG_MAP = {
   'puntos_canje':'c-puntos-canje','descuento_cumple':'c-cumple','descuento_bv':'c-bv',
   'b1_tag':'c-b1-tag','b1_titulo':'c-b1-titulo','b1_precio':'c-b1-precio',
   'bloque_carnes_titulo':'c-b2-titulo','bloque_carnes_sub':'c-b2-sub','bloque_carnes_foto':'c-b2-foto',
+  'mensaje_cierre':'c-mensaje-cierre',
+  'h_lv_desde':'c-h-lv-desde','h_lv_hasta':'c-h-lv-hasta',
+  'h_sab_desde':'c-h-sab-desde','h_sab_hasta':'c-h-sab-hasta',
+  'h_dom_desde':'c-h-dom-desde','h_dom_hasta':'c-h-dom-hasta',
+  't_del_min':'c-t-del-min','t_del_max':'c-t-del-max',
+  't_ret_min':'c-t-ret-min','t_ret_max':'c-t-ret-max',
+  'mp_alias':'c-mp-alias',
+  'bv_activa':'c-bv-activa',
 };
 
 async function loadConfig() {
@@ -784,7 +801,20 @@ async function loadConfig() {
     if (error) throw error;
     const cfg={};
     (data||[]).forEach(c=>cfg[c.clave]=c.valor);
-    Object.entries(CFG_MAP).forEach(([clave,id])=>{ const el=$(id); if(el&&cfg[clave]!==undefined)el.value=cfg[clave]; });
+    Object.entries(CFG_MAP).forEach(([clave,id])=>{ const el=$(id); if(el&&cfg[clave]!==undefined) {
+      if (el.type==='checkbox') el.checked = cfg[clave]==='true';
+      else el.value=cfg[clave];
+    }});
+    // Toggles especiales
+    const togAcepta=$('tog-acepta-pedidos'); if(togAcepta) togAcepta.checked = cfg.acepta_pedidos!=='false';
+    const togDom=$('tog-dom'); if(togDom) { togDom.checked = !!(cfg.h_dom_desde); const dw=$('horario-dom-wrap'); if(dw) dw.style.display=togDom.checked?'block':'none'; }
+    // Color pickers sync
+    if(cfg.color_brown){const t=$('c-color-brown');const p=$('cp-brown');if(t)t.value=cfg.color_brown;if(p)p.value=cfg.color_brown;}
+    if(cfg.color_gold) {const t=$('c-color-gold'); const p=$('cp-gold'); if(t)t.value=cfg.color_gold; if(p)p.value=cfg.color_gold;}
+    // Empanadas fields
+    if(cfg.empanadas_por_caja   &&$('c-empanadas-por-caja'))   $('c-empanadas-por-caja').value   =cfg.empanadas_por_caja;
+    if(cfg.empanadas_precio_base&&$('c-empanadas-precio-base'))$('c-empanadas-precio-base').value =cfg.empanadas_precio_base;
+    if(cfg.empanadas_unidad     &&$('c-empanadas-unidad'))     $('c-empanadas-unidad').value      =cfg.empanadas_unidad;
     prevTema();
     localStorage.setItem('alpaso_cfg',JSON.stringify(cfg));
   } catch(e) { toast('⚠️ Error config: '+e.message); }
@@ -792,7 +822,11 @@ async function loadConfig() {
 
 async function guardarConfig() {
   const vals={};
-  Object.entries(CFG_MAP).forEach(([clave,id])=>{ const el=$(id); if(el)vals[clave]=el.value; });
+  Object.entries(CFG_MAP).forEach(([clave,id])=>{ const el=$(id); if(el) {
+    vals[clave] = el.type==='checkbox' ? (el.checked?'true':'false') : el.value;
+  }});
+  // Toggles no enlazados en CFG_MAP
+  const togAcepta=$('tog-acepta-pedidos'); if(togAcepta) vals.acepta_pedidos = togAcepta.checked?'true':'false';
   try {
     for (const [clave,valor] of Object.entries(vals)) {
       await db.from('configuracion').upsert({clave,valor},{onConflict:'clave'});
@@ -816,10 +850,7 @@ function prevTema() {
   const pl = $('prev-logo'); if(pl) { pl.style.background = gold; if($('c-logo')) pl.textContent = $('c-logo').value || '👣'; }
   const pn = $('prev-nombre'); if(pn) { pn.style.color = gold; if($('c-nombre')) pn.textContent = ($('c-nombre').value || 'AL PASO').toUpperCase(); }
 }
-// ---- (replaced below) ----
 
-  const pn=$('prev-nombre'); if(pn){pn.style.color=a;pn.textContent=n.toUpperCase();}
-}
 
 function toggleRol(rol,cb) {
   const card=$('rol-'+rol); if(card)card.classList.toggle('on',cb.checked);
@@ -1138,27 +1169,7 @@ async function loadEstadoLocal() {
 }
 
 // Guardar horarios y tiempos junto con la config general
-const _guardarConfigOriginal = guardarConfig;
-guardarConfig = async function() {
-  // Guardar campos operativos adicionales
-  const opsCfg = {
-    'mensaje_cierre': $('c-mensaje-cierre')?.value||'',
-    'h_lv_desde':  $('c-h-lv-desde')?.value||'08:00',
-    'h_lv_hasta':  $('c-h-lv-hasta')?.value||'21:00',
-    'h_sab_desde': $('c-h-sab-desde')?.value||'08:00',
-    'h_sab_hasta': $('c-h-sab-hasta')?.value||'14:00',
-    'h_dom_desde': $('c-h-dom-desde')?.value||'',
-    'h_dom_hasta': $('c-h-dom-hasta')?.value||'',
-    't_del_min':   $('c-t-del-min')?.value||'30',
-    't_del_max':   $('c-t-del-max')?.value||'45',
-    't_ret_min':   $('c-t-ret-min')?.value||'10',
-    't_ret_max':   $('c-t-ret-max')?.value||'15',
-  };
-  for (const [clave,valor] of Object.entries(opsCfg)) {
-    await db.from('configuracion').upsert({clave,valor},{onConflict:'clave'});
-  }
-  await _guardarConfigOriginal();
-};
+
 
 // ── ZONAS DE DELIVERY ─────────────────────────────────────────────────────
 let zonas = [];

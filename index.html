@@ -1067,7 +1067,7 @@ function instalarPWA(){
         <div class="big">10% OFF</div>
         <div class="desc">En tu primera compra en la app. Válido en el local actual y en el nuevo Al Paso.</div>
       </div>
-      <button class="wm-btn" onclick="activarBV()">Activar mi 10% off</button>
+      <button class="wm-btn" onclick="activarBV()">Activar mi descuento de bienvenida</button>
       <button class="wm-skip" onclick="closeWelcome()">Ahora no</button>
     </div>
   </div>
@@ -2152,7 +2152,8 @@ function renderCart() {
   const DM      = parseInt(CONFIG.delivery_minimo || 10000);
   const DC      = parseInt(CONFIG.delivery_costo  || 1500);
   const env     = entrega === 'Delivery' && sub < DM ? DC : 0;
-  const bv      = bvActiva && !bvUsada ? Math.round(sub * .10) : 0;
+  const bvPct = parseFloat(CONFIG.descuento_bv||'10')/100;
+  const bv      = CONFIG.bv_activa!=='false' && bvActiva && !bvUsada ? Math.round(sub * bvPct) : 0;
   const canjeAmt = puntosAplicados ? 500 : 0;
   const total   = sub + rec + env - bv - canjeAmt;
   const cnt     = cartCount();
@@ -2251,7 +2252,8 @@ async function showCheckout() {
   const DM       = parseInt(CONFIG.delivery_minimo || 10000);
   const DC       = parseInt(CONFIG.delivery_costo  || 1500);
   const env      = entrega==='Delivery' && sub<DM ? DC : 0;
-  const bv       = bvActiva && !bvUsada ? Math.round(sub*.10) : 0;
+  const bvPct2 = parseFloat(CONFIG.descuento_bv||'10')/100;
+  const bv       = CONFIG.bv_activa!=='false' && bvActiva && !bvUsada ? Math.round(sub*bvPct2) : 0;
   const canjeAmt = puntosAplicados ? 500 : 0;
   const total    = sub + rec + env - bv - canjeAmt;
   const pts      = Math.floor(sub/100);
@@ -2317,7 +2319,8 @@ function abrirWsp() {
   const DM      = parseInt(CONFIG.delivery_minimo || 10000);
   const DC      = parseInt(CONFIG.delivery_costo  || 1500);
   const env     = entrega==='Delivery' && sub<DM ? DC : 0;
-  const bv      = bvUsada ? Math.round(sub*.10) : 0;
+  const bvPct3 = parseFloat(CONFIG.descuento_bv||'10')/100;
+  const bv      = CONFIG.bv_activa!=='false' && bvUsada ? Math.round(sub*bvPct3) : 0;
   const total   = sub + rec + env - bv - (puntosAplicados?500:0);
   const pagoLabel = {
     efectivo: 'Efectivo / Débito / Transferencia',
