@@ -575,9 +575,9 @@ function instalarPWA(){
           </div>
           <div style="display:flex;align-items:center;gap:8px">
             <!-- BOTÓN USUARIO — cambia según estado de login -->
-            <div id="user-btn" onclick="goTo('fidelidad')" style="display:flex;align-items:center;gap:6px;background:var(--g);border:1.5px solid var(--g2);border-radius:20px;padding:5px 12px 5px 6px;cursor:pointer;transition:all .15s">
-              <div id="user-avatar" style="width:26px;height:26px;border-radius:50%;background:var(--n);display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:800;flex-shrink:0">👤</div>
-              <span id="user-label" style="font-size:12px;font-weight:700;color:var(--n)">Entrar</span>
+            <div id="user-btn" onclick="goTo('fidelidad')" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.25);border-radius:20px;padding:5px 12px 5px 6px;cursor:pointer;transition:all .15s">
+              <div id="user-avatar" style="width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:800;flex-shrink:0">👤</div>
+              <span id="user-label" style="font-size:12px;font-weight:700;color:#fff">Entrar</span>
             </div>
             <div class="notif" id="notif-btn">🔔<div class="ndot" id="notif-dot" style="display:none"></div></div>
           </div>
@@ -2408,57 +2408,102 @@ function actualizarUserBtn() {
 
 function renderFid() {
   buildNav('bn-fidelidad', 'fidelidad');
-  const body = $('fid-body');
-  if (!body) return;
+
   if (!clienteActual) {
-    body.innerHTML = `<div style="text-align:center;padding:32px 16px">
-      <div style="font-size:48px;margin-bottom:12px">👣</div>
-      <h2 style="font-size:18px;font-weight:800;color:var(--brown);margin-bottom:8px">Tarjeta Al Paso</h2>
-      <p style="font-size:13px;color:var(--g3);margin-bottom:20px">Acumulá Pasos en cada compra y accedé a descuentos exclusivos</p>
-      <button onclick="goTo('registro')" class="btn-main" style="border-radius:12px">👣 Crear mi Tarjeta — gratis</button>
-    </div>`;
+    // Sin cliente: mostrar botón de crear tarjeta y ocultar elementos de cliente
+    const fidHist = $('fid-hist');
+    if (fidHist) fidHist.innerHTML = `
+      <div style="text-align:center;padding:24px 0">
+        <div style="font-size:48px;margin-bottom:12px">👣</div>
+        <p style="font-size:13px;color:var(--g3);margin-bottom:16px">Registrate para acumular Pasos y acceder a descuentos exclusivos</p>
+        <button onclick="goTo('registro')" class="btn-main" style="border-radius:12px;width:100%">👣 Crear mi Tarjeta — gratis</button>
+      </div>`;
+    if ($('fid-pts'))     $('fid-pts').textContent     = '0';
+    if ($('t-tipo'))      $('t-tipo').textContent      = '🥉 BRONZE';
+    if ($('t-nombre'))    $('t-nombre').textContent    = 'Tu nombre';
+    if ($('nivel-badge')) $('nivel-badge').textContent = '🥉 Bronze';
+    if ($('pfill'))       $('pfill').style.width       = '0%';
+    if ($('canje-box'))   $('canje-box').style.display = 'none';
     return;
   }
-  const pts   = clienteActual.puntos || 0;
-  const nivel = getNivel(pts);
-  const nextLvl = pts<200?200:pts<500?500:null;
-  const pct   = nextLvl ? Math.min(100, Math.round(pts/nextLvl*100)) : 100;
-  body.innerHTML = `
-    <div style="background:linear-gradient(135deg,var(--brown),var(--brown2));border-radius:16px;padding:18px;margin-bottom:16px;color:#fff">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-        <div>
-          <div style="font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:1px">Tarjeta Al Paso</div>
-          <div style="font-size:18px;font-weight:800;margin-top:2px">${clienteActual.nombre}</div>
-        </div>
-        <div style="background:rgba(255,255,255,.15);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700">${nivel}</div>
-      </div>
-      <div style="font-size:36px;font-weight:900;color:var(--gold2)">${pts} <span style="font-size:14px;opacity:.7">Pasos</span></div>
-      ${nextLvl ? `
-        <div style="margin-top:10px">
-          <div class="pbar"><div style="height:100%;background:var(--gold2);width:${pct}%;border-radius:3px"></div></div>
-          <div style="font-size:10px;opacity:.6;margin-top:3px">${pts}/${nextLvl} para ${getNivel(nextLvl)}</div>
-        </div>` : '<div style="font-size:11px;opacity:.6;margin-top:8px">🥇 Nivel máximo alcanzado</div>'}
-    </div>
-    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
-      <div style="background:#fff;border-radius:12px;padding:14px;border:1px solid #E0E0E0;display:flex;align-items:center;justify-content:space-between">
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--brown)">🎁 Descuento bienvenida</div>
-          <div style="font-size:11px;color:var(--g3)">10% off en tu primera compra</div>
-        </div>
-        <button class="benact" id="bv-benact" onclick="showWelcome()" style="background:${bvActiva&&!bvUsada?'var(--gr)':'#E0E0E0'};color:#fff">${bvActiva&&!bvUsada?'Activo':bvUsada?'Usado':''}</button>
-      </div>
-      ${pts>=500?`<div id="canje-box" style="background:linear-gradient(135deg,var(--brown),var(--brown2));border-radius:12px;padding:14px;border:1px solid rgba(212,145,26,.25)">
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          <div style="color:#fff;font-size:13px;font-weight:700">🏆 Canjear 500 Pasos = $500 off</div>
-          <button onclick="generarCodigo()" style="flex-shrink:0;background:var(--gold);color:var(--brown);border:none;border-radius:9px;padding:8px 12px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer">📱 Código local</button>
-        </div>
-      </div>`:''}
-    </div>
-    <div style="text-align:center;margin-top:8px">
-      <button onclick="cerrarSesion()" style="background:none;border:none;color:var(--g3);font-family:'Nunito';font-size:11px;font-weight:700;cursor:pointer;text-decoration:underline">Cerrar sesión</button>
-    </div>`;
+
+  const pts    = clienteActual.puntos || 0;
+  const nivel  = getNivel(pts);
+  const nextLvl = pts < 200 ? 200 : pts < 500 ? 500 : null;
+  const pct     = nextLvl ? Math.min(100, Math.round(pts / nextLvl * 100)) : 100;
+  const bvGlobal = CONFIG.bv_activa !== 'false';
+
+  // Actualizar tarjeta
+  if ($('fid-pts'))  $('fid-pts').textContent  = pts;
+  if ($('t-tipo'))   $('t-tipo').textContent   = nivel;
+  if ($('t-nombre')) $('t-nombre').textContent = clienteActual.nombre || '';
+
+  // Nivel y barra de progreso
+  if ($('nivel-badge')) $('nivel-badge').textContent = nivel;
+  if ($('pfill'))       $('pfill').style.width       = pct + '%';
+  if ($('pts-actual'))  $('pts-actual').textContent  = pts + ' Pasos';
+  if ($('pl-from'))     $('pl-from').textContent     = nivel + ' (0)';
+  if ($('pl-to'))       $('pl-to').textContent       = nextLvl ? getNivel(nextLvl) + ' (' + nextLvl + ')' : '🥇 Gold ✓';
+  if ($('nivel-next'))  $('nivel-next').innerHTML    = nextLvl
+    ? 'Próximo: <strong>' + getNivel(nextLvl) + ' (' + nextLvl + ' Pasos)</strong>'
+    : '<strong>🥇 Nivel máximo alcanzado</strong>';
+
+  // Canje
+  if ($('canje-box')) $('canje-box').style.display = pts >= 500 ? 'block' : 'none';
+
+  // Gold
+  if ($('ben-gold-txt')) $('ben-gold-txt').textContent = pts >= 500 ? '¡Nivel alcanzado! 🏆' : 'Necesitás ' + Math.max(0, 500 - pts) + ' Pasos más';
+  if ($('ben-gold-btn')) {
+    $('ben-gold-btn').style.background = pts >= 500 ? 'var(--gr)' : 'var(--g2)';
+    $('ben-gold-btn').style.color      = pts >= 500 ? '#fff' : 'var(--g3)';
+    $('ben-gold-btn').textContent      = pts >= 500 ? '✓ Activo' : 'Bloq.';
+  }
+
+  // BV button
+  if ($('bv-benact')) {
+    if (!bvGlobal) {
+      $('bv-benact').textContent         = 'No disp.';
+      $('bv-benact').style.background    = 'var(--g2)';
+      $('bv-benact').style.color         = 'var(--g3)';
+    } else if (bvUsada) {
+      $('bv-benact').textContent         = 'Usado';
+      $('bv-benact').style.background    = 'var(--g2)';
+      $('bv-benact').style.color         = 'var(--g3)';
+    } else if (bvActiva) {
+      $('bv-benact').textContent         = 'Activo ✓';
+      $('bv-benact').style.background    = 'var(--gr)';
+      $('bv-benact').style.color         = '#fff';
+    }
+  }
+
+  // Historial
+  loadHistorial();
 }
 
+async function loadHistorial() {
+  if (!clienteActual) return;
+  const el = $('fid-hist');
+  if (!el) return;
+  try {
+    const { data } = await db.from('pedidos')
+      .select('numero,total,estado,entrega,created_at')
+      .eq('cliente_id', clienteActual.id)
+      .order('created_at', { ascending: false })
+      .limit(5);
+    if (!data?.length) {
+      el.innerHTML = '<div class="empty-st"><div class="ei">🛒</div><p>Aún no tenés compras</p></div>';
+      return;
+    }
+    el.innerHTML = data.map(p => `
+      <div style="background:#fff;border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;border:1px solid var(--g2)">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--brown)">${p.numero}</div>
+          <div style="font-size:10px;color:var(--g3)">${new Date(p.created_at).toLocaleDateString('es-AR')} · ${p.entrega||'—'}</div>
+        </div>
+        <div style="font-size:14px;font-weight:900;color:var(--brown)">${fmt(p.total)}</div>
+      </div>`).join('');
+  } catch(e) { console.warn('Error historial:', e); }
+}
 function cerrarSesion() {
   clienteActual = null; bvActiva = false; bvUsada = false;
   localStorage.removeItem('alpaso_cliente');
