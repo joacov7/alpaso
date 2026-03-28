@@ -1856,27 +1856,19 @@ function applyTheme() {
   const brown = CONFIG.color_brown || '#FA5200';
   const gold  = CONFIG.color_gold  || '#FA5200';
 
-  console.log('[Al Paso] applyTheme brown='+brown+' gold='+gold);
-
-  // Método definitivo: reemplazar texto del <style> directamente
-  const styleEl = document.querySelector('style');
-  if (styleEl) {
-    styleEl.textContent = styleEl.textContent
-      .replace(/--brown:\s*[^;]+;/,  '--brown:' + brown + ';')
-      .replace(/--brown2:\s*[^;]+;/, '--brown2:' + lighten(brown, 20) + ';')
-      .replace(/--brown3:\s*[^;]+;/, '--brown3:' + lighten(brown, 50) + ';')
-      .replace(/--gold:\s*[^;]+;/,   '--gold:' + gold + ';')
-      .replace(/--gold2:\s*[^;]+;/,  '--gold2:' + lighten(gold, 30) + ';')
-      .replace(/--gold3:\s*[^;]+;/,  '--gold3:' + lighten(gold, 60) + ';');
-  }
-
-  // También actualizar variables del sistema viejo (--n, --do)
+  // Actualizar variables CSS — todos los sistemas
   const r = document.documentElement;
-  r.style.setProperty('--n',   brown);
-  r.style.setProperty('--do',  gold);
-  r.style.setProperty('--do2', gold + 'CC');
+  r.style.setProperty('--brown',  brown);
+  r.style.setProperty('--brown2', lighten(brown, 20));
+  r.style.setProperty('--brown3', lighten(brown, 50));
+  r.style.setProperty('--gold',   gold);
+  r.style.setProperty('--gold2',  lighten(gold, 30));
+  r.style.setProperty('--gold3',  lighten(gold, 60));
+  r.style.setProperty('--n',      brown);
+  r.style.setProperty('--do',     gold);
+  r.style.setProperty('--do2',    gold + 'CC');
 
-  // Logo y nombre
+  // Logo y nombre del local
   const logoIc  = document.getElementById('logo-ic');
   const logoTxt = document.getElementById('logo-txt');
   if (logoIc  && CONFIG.local_logo_emoji) logoIc.textContent  = CONFIG.local_logo_emoji;
@@ -1888,23 +1880,12 @@ function applyTheme() {
 
   // Banner bienvenida
   const wbTitle = document.querySelector('.wb-title');
-  const wbSub   = document.querySelector('.wb-sub');
   if (wbTitle && CONFIG.banner_titulo) wbTitle.textContent = CONFIG.banner_titulo;
-  if (wbSub   && CONFIG.banner_texto)  wbSub.textContent   = CONFIG.banner_texto;
-
-  // Emojis por categoría
-  const catMap = {
-    cat_emoji_empanadas:'Empanadas', cat_emoji_carne:'Carne al Vacío',
-    cat_emoji_carniceria:'Carnicería', cat_emoji_fiambres:'Fiambres',
-    cat_emoji_lacteos:'Lácteos', cat_emoji_panaderia:'Panadería',
-    cat_emoji_bebidas:'Bebidas', cat_emoji_almacen:'Almacén',
-  };
-  Object.entries(catMap).forEach(([key, cat]) => { if (CONFIG[key]) CE[cat] = CONFIG[key]; });
 
   // Meta theme-color
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', brown);
 
-  // Foto de fondo del header
+  // Foto header
   const hdrEl = document.getElementById('app-hdr');
   const hdrOv = document.getElementById('hdr-overlay');
   const hdrFoto = CONFIG.header_foto || '';
@@ -1916,6 +1897,93 @@ function applyTheme() {
     if (hdrOv) hdrOv.style.display = 'none';
   }
 }
+
+function renderHome() {
+  buildNav('bn-home', 'home');
+  if (!estaAbierto()) mostrarBannerCierre(); else ocultarBannerCierre();
+  renderSaboresGrid();
+  renderBloqueCarnes();
+}
+
+function renderSaboresGrid() {
+  const grid = $('sabores-grid');
+  if (!grid) return;
+  const lista = SABORES_ACTIVOS.length ? SABORES_ACTIVOS : SABORES;
+  if (!lista.length) {
+    grid.innerHTML = '<div style="color:rgba(255,255,255,.4);font-size:12px;text-align:center;padding:16px">No hay sabores disponibles hoy</div>';
+    return;
+  }
+  grid.innerHTML = lista.map(s => {
+    const qty = saboresQty[s.id] || 0;
+    const pxc = CONFIG.empanadas_por_caja || '6';
+    return '<div class="sabor-row' + (qty>0?' activo':'') + '" id="sabor-'+s.id+'">' +
+      '<div class="sabor-info">' +
+        '<span class="sabor-emoji">' + (s.emoji||'\u{1FAD3}') + '</span>' +
+        '<div>' +
+          '<div class="sabor-nombre">' + s.nombre + '</div>' +
+          '<div class="sabor-precio">' + (s.precio>0 ? fmt(s.precio)+' · caja x'+pxc : 'Precio a confirmar') + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="sabor-qty">' +
+        '<button class="sqbtn minus" onclick="cambiarSabor(' + s.id + ',-1)"' + (qty===0?' style="opacity:.3"':'') + '>−</button>' +
+        '<span class="sqnum">' + qty + '</span>' +
+        '<button class="sqbtn plus" onclick="cambiarSabor(' + s.id + ',1)">+</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  actualizarBtnRapido();
+}
+
+function cambiarSabor(id, delta) {
+  saboresQty[id] = Math.max(0, (saboresQty[id]||0) + delta);
+  renderSaboresGrid();
+}
+
+function actualizarBtnRapido() {
+  const btn = $('btn-rapido'), txt = $('btn-rapido-txt');
+  if (!btn || !txt) return;
+  const lista = SABORES_ACTIVOS.length ? SABORES_ACTIVOS : SABORES;
+  const total = Object.values(saboresQty).reduce((s,q)=>s+q, 0);
+  const monto = lista.reduce((s,sb)=> s + (saboresQty[sb.id]||0)*sb.precio, 0);
+  if (total === 0) { btn.classList.add('disabled'); txt.textContent = 'Elegí un sabor para empezar'; }
+  else { btn.classList.remove('disabled'); txt.innerHTML = '\u{1F6D2} Agregar · ' + (monto>0?fmt(monto):'—'); }
+}
+
+function agregarEmpanadasRapido() {
+  const lista = SABORES_ACTIVOS.length ? SABORES_ACTIVOS : SABORES;
+  const total = Object.values(saboresQty).reduce((s,q)=>s+q, 0);
+  if (total === 0) return;
+  if (!estaAbierto()) { toast('\u{1F534} ' + (CONFIG.mensaje_cierre||'Estamos cerrados')); return; }
+  if (!clienteActual) { toast('Creá tu Tarjeta Al Paso para comprar'); goTo('fidelidad'); return; }
+  lista.forEach(s => {
+    const qty = saboresQty[s.id]||0;
+    if (qty > 0) {
+      const prod = PRODS.find(p => p.id === s.id);
+      if (prod) { if (!cart[s.id]) cart[s.id]={...prod,qty:0}; cart[s.id].qty+=qty; }
+    }
+  });
+  saboresQty = {};
+  renderSaboresGrid();
+  updateBadges();
+  toast('Empanadas agregadas al carrito');
+  goTo('carrito');
+}
+
+function renderBloqueCarnes() {
+  const fotoUrl = CONFIG.bloque_carnes_foto || '';
+  const fotoEl  = document.getElementById('b2-foto');
+  if (fotoEl && fotoUrl) { const img=document.createElement("img"); img.src=fotoUrl; img.alt="Carnes"; img.style="width:100%;height:100%;object-fit:cover"; img.onerror=function(){fotoEl.innerHTML='<div class="b2-placeholder">&#x1F969;</div>'}; fotoEl.innerHTML=""; fotoEl.appendChild(img); }
+  if (CONFIG.bloque_carnes_titulo && $('b2-titulo')) $('b2-titulo').innerHTML = CONFIG.bloque_carnes_titulo;
+  if (CONFIG.bloque_carnes_sub   && $('b2-sub'))    $('b2-sub').textContent  = CONFIG.bloque_carnes_sub;
+}
+
+function explorar(cat) { activeCat = cat; goTo('catalogo'); }
+function homeCat(el, cat) {
+  document.querySelectorAll('#home-cats .cat').forEach(c => c.classList.remove('sel'));
+  if (el) el.classList.add('sel');
+  activeCat = cat; goTo('catalogo');
+}
+
 
 // aplicarTema() merged into applyTheme()
 function aplicarTema() { /* vacía — ver applyTheme */ }
