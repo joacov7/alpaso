@@ -277,6 +277,16 @@ tr:last-child td{border:none}
               <div class="fg"><label>WhatsApp del local</label><input id="c-wsp-local" placeholder="5491100000000"></div>
               <div class="fg"><label>Link de cobro MercadoPago</label><input id="c-mp-link" placeholder="https://mpago.la/XXXXXXX"><div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:3px">MercadoPago → Cobrar → Compartir link · Los clientes que elijan MP son redirigidos acá</div></div>
               <div class="fg"><label>Descripción</label><input id="c-descripcion" placeholder="Tu mercado de barrio..."></div>
+              <div class="fg" style="margin-top:4px">
+                <label>📸 Foto de fondo del header (URL)</label>
+                <input id="c-header-foto" placeholder="https://... (foto que reemplaza el color marrón del header)" oninput="prevHeaderFoto()">
+                <div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:3px">Subí la foto en Supabase Storage → copiá la URL pública. Recomendado: 800×200px horizontal. Dejá vacío para usar el color sólido.</div>
+                <div id="prev-header-foto" style="margin-top:8px;display:none;border-radius:10px;overflow:hidden;height:80px;background-size:cover;background-position:center;position:relative">
+                  <div style="position:absolute;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center">
+                    <div style="font-family:'Bebas Neue';font-size:22px;color:#D4911A;letter-spacing:2px">AL PASO</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           <div class="cfg-card">
@@ -370,6 +380,39 @@ tr:last-child td{border:none}
             </div>
           </div>
           <button class="btn btn-gold" style="padding:11px 22px" onclick="guardarConfig()">💾 Guardar bloques</button>
+        </div>
+
+        <!-- FOTOS DE COMBOS -->
+        <div style="margin-top:20px;padding-top:20px;border-top:1px solid rgba(255,255,255,.08)">
+          <div class="sec-lbl">◆ Fotos de combos</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.3);margin-bottom:14px;line-height:1.5">URL pública de Supabase Storage. Recomendado: 220×120px. Dejá vacío para usar el emoji.</div>
+          <div class="cfg-grid">
+            <div class="cfg-card">
+              <div class="cfg-card-hdr">⚡ Combo Almuerzo Rápido</div>
+              <div class="cfg-card-body">
+                <div class="fg"><label>URL de foto</label><input id="c-combo-foto-alm" placeholder="https://..."></div>
+              </div>
+            </div>
+            <div class="cfg-card">
+              <div class="cfg-card-hdr">📅 Combo Semana</div>
+              <div class="cfg-card-body">
+                <div class="fg"><label>URL de foto</label><input id="c-combo-foto-sem" placeholder="https://..."></div>
+              </div>
+            </div>
+            <div class="cfg-card">
+              <div class="cfg-card-hdr">☕ Combo Desayuno</div>
+              <div class="cfg-card-body">
+                <div class="fg"><label>URL de foto</label><input id="c-combo-foto-des" placeholder="https://..."></div>
+              </div>
+            </div>
+            <div class="cfg-card">
+              <div class="cfg-card-hdr">🎉 Combo Viernes</div>
+              <div class="cfg-card-body">
+                <div class="fg"><label>URL de foto</label><input id="c-combo-foto-vie" placeholder="https://..."></div>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-gold" style="padding:11px 22px;margin-top:12px" onclick="guardarConfig()">💾 Guardar fotos</button>
         </div>
       </div>
       <div class="cfg-pane" id="ct-wsp">
@@ -784,6 +827,8 @@ const CFG_MAP = {
   'recargo_credito3':'c-recargo','puntos_x_peso':'c-puntos-x',
   'puntos_canje':'c-puntos-canje','descuento_cumple':'c-cumple','descuento_bv':'c-bv',
   'b1_tag':'c-b1-tag','b1_titulo':'c-b1-titulo','b1_precio':'c-b1-precio',
+  'header_foto':'c-header-foto',
+  'combo_foto_alm':'c-combo-foto-alm','combo_foto_sem':'c-combo-foto-sem','combo_foto_des':'c-combo-foto-des','combo_foto_vie':'c-combo-foto-vie',
   'bloque_carnes_titulo':'c-b2-titulo','bloque_carnes_sub':'c-b2-sub','bloque_carnes_foto':'c-b2-foto',
   'mensaje_cierre':'c-mensaje-cierre',
   'h_lv_desde':'c-h-lv-desde','h_lv_hasta':'c-h-lv-hasta',
@@ -843,6 +888,18 @@ function syncColorPicker(txtId, cpId) {
   if (!txt || !cp) return;
   const val = txt.value.trim();
   if (/^#[0-9a-fA-F]{6}$/.test(val)) cp.value = val;
+}
+
+function prevHeaderFoto() {
+  const url = $('c-header-foto')?.value?.trim();
+  const prev = $('prev-header-foto');
+  if (!prev) return;
+  if (url) {
+    prev.style.display = 'block';
+    prev.style.backgroundImage = `url('${url}')`;
+  } else {
+    prev.style.display = 'none';
+  }
 }
 
 function prevTema() {

@@ -52,7 +52,9 @@ body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--brown)}
 .badge{position:absolute;top:-2px;right:2px;background:var(--r);color:#fff;font-size:8px;font-weight:800;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;border:2px solid var(--brown)}
 
 /* HEADER */
-.hdr{background:var(--brown);padding:max(env(safe-area-inset-top),14px) 16px 14px;position:relative;overflow:hidden}
+.hdr{background:var(--brown);padding:max(env(safe-area-inset-top),14px) 16px 14px;position:relative;overflow:hidden;background-size:cover;background-position:center}
+.hdr-overlay{position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:0}
+.hdr-top,.greet{position:relative;z-index:1}
 .hdr::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold2),transparent)}
 .hdr-bot{display:none}
 .hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:0}
@@ -111,7 +113,10 @@ body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--brown)}
 .emp-precio span{font-size:11px;color:rgba(255,255,255,.4);font-weight:600}
 
 /* COMBOS */
-.combo{background:var(--w);border-radius:var(--radius);padding:14px;margin-bottom:10px;box-shadow:var(--sh);cursor:pointer;border:1px solid var(--cream3);position:relative;overflow:hidden}
+.combo{background:var(--w);border-radius:var(--radius);margin-bottom:10px;box-shadow:var(--sh);cursor:pointer;border:1px solid var(--cream3);position:relative;overflow:hidden;display:flex;gap:0}
+.combo-foto{width:110px;min-height:120px;flex-shrink:0;object-fit:cover;display:block}
+.combo-foto-placeholder{width:110px;min-height:120px;flex-shrink:0;background:linear-gradient(135deg,var(--brown),var(--brown3));display:flex;align-items:center;justify-content:center;font-size:40px}
+.combo-body{flex:1;padding:12px;display:flex;flex-direction:column;justify-content:space-between;min-width:0}
 .combo::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--gold)}
 .co-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;padding-left:10px}
 .co-title{font-size:14px;font-weight:800;color:var(--brown)}
@@ -555,7 +560,8 @@ function instalarPWA(){
   <!-- HOME -->
   <div class="screen active" id="s-home">
     <div class="scroll-area">
-      <div class="hdr">
+      <div class="hdr" id="app-hdr">
+        <div class="hdr-overlay" id="hdr-overlay" style="display:none"></div>
         <div class="hdr-bot"></div>
         <div class="hdr-top">
           <div class="logo-area">
@@ -1476,16 +1482,26 @@ function activarBV() {
 // COMBOS
 // ══════════════════════════════════════════════════════
 function comboCard(c) {
+  const fotoKey = 'combo_foto_' + c.id;
+  const foto = CONFIG[fotoKey] || '';
+  const fotoHtml = foto
+    ? `<img class="combo-foto" src="${foto}" alt="${c.nombre}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`+
+      `<div class="combo-foto-placeholder" style="display:none">${c.e}</div>`
+    : `<div class="combo-foto-placeholder">${c.e}</div>`;
+
   return `<div class="combo" onclick="addCombo('${c.id}')">
-    <div class="co-hdr"><div class="co-title">${c.e} ${c.nombre}</div><div class="co-badge">${c.pct}</div></div>
-    <div class="co-items">${c.desc.map(d => `<div class="co-item">${d}</div>`).join('')}</div>
-    <div class="co-footer">
-      <div style="display:flex;align-items:baseline;gap:6px">
-        <div class="co-old">${fmt(c.normal)}</div>
-        <div class="co-new">${fmt(c.combo)}</div>
-        <div class="co-ahorro">Ahorrás ${fmt(c.ahorro)}</div>
+    ${fotoHtml}
+    <div class="combo-body">
+      <div class="co-hdr"><div class="co-title">${c.nombre}</div><div class="co-badge">${c.pct}</div></div>
+      <div class="co-items">${c.desc.map(d => `<div class="co-item">· ${d}</div>`).join('')}</div>
+      <div class="co-footer">
+        <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap">
+          <div class="co-old">${fmt(c.normal)}</div>
+          <div class="co-new">${fmt(c.combo)}</div>
+          <div class="co-ahorro">Ahorrás ${fmt(c.ahorro)}</div>
+        </div>
+        <button class="co-btn" onclick="event.stopPropagation();addCombo('${c.id}')">Agregar</button>
       </div>
-      <button class="co-btn" onclick="event.stopPropagation();addCombo('${c.id}')">Agregar</button>
     </div>
   </div>`;
 }
@@ -1833,10 +1849,26 @@ function lighten(hex, amt) {
 }
 
 function applyTheme() {
-  const brown = CONFIG.color_brown || '#3D2008';
-  const gold  = CONFIG.color_gold  || '#D4911A';
+  const brown = CONFIG.color_brown || localStorage.getItem('t_brown') || '#3D2008';
+  const gold  = CONFIG.color_gold  || localStorage.getItem('t_gold')  || '#D4911A';
 
-  // Inyectar como <style> para pisar el :root con máxima prioridad
+  // Guardar en localStorage para carga inmediata próxima vez
+  if (CONFIG.color_brown) localStorage.setItem('t_brown', CONFIG.color_brown);
+  if (CONFIG.color_gold)  localStorage.setItem('t_gold',  CONFIG.color_gold);
+
+  // Foto de fondo del header
+  const hdrEl = document.getElementById('app-hdr');
+  const hdrOv = document.getElementById('hdr-overlay');
+  const hdrFoto = CONFIG.header_foto || localStorage.getItem('t_hdr_foto') || '';
+  if (hdrFoto && hdrEl) {
+    hdrEl.style.backgroundImage = `url('${hdrFoto}')`;
+    if (hdrOv) hdrOv.style.display = 'block';
+    localStorage.setItem('t_hdr_foto', hdrFoto);
+  } else if (hdrEl) {
+    hdrEl.style.backgroundImage = '';
+    if (hdrOv) hdrOv.style.display = 'none';
+  }
+
   let styleEl = document.getElementById('theme-override');
   if (!styleEl) {
     styleEl = document.createElement('style');
@@ -1852,6 +1884,19 @@ function applyTheme() {
     --gold3:  ${lighten(gold, 60)} !important;
   }`;
 }
+
+// Aplicar colores guardados ANTES de que cargue Supabase (evita flash)
+(function() {
+  const b = localStorage.getItem('t_brown');
+  const g = localStorage.getItem('t_gold');
+  if (!b && !g) return;
+  const brown = b || '#3D2008', gold = g || '#D4911A';
+  function lx(hex,amt){try{let c=parseInt(hex.replace('#',''),16);let r=Math.min(255,(c>>16)+amt),gr=Math.min(255,((c>>8)&0xff)+amt),bl=Math.min(255,(c&0xff)+amt);return '#'+[r,gr,bl].map(x=>x.toString(16).padStart(2,'0')).join('');}catch(e){return hex;}}
+  const s = document.createElement('style');
+  s.id = 'theme-override';
+  s.textContent = `:root{--brown:${brown}!important;--brown2:${lx(brown,30)}!important;--brown3:${lx(brown,70)}!important;--gold:${gold}!important;--gold2:${lx(gold,30)}!important;--gold3:${lx(gold,60)}!important;}`;
+  document.head.appendChild(s);
+})();
 
 function renderHome() {
   buildNav('bn-home', 'home');
