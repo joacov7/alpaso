@@ -295,15 +295,15 @@ tr:last-child td{border:none}
               <div class="fg">
                 <label>Color principal (marrón / header / nav)</label>
                 <div class="color-row">
-                  <input id="c-color-brown" type="text" placeholder="#3D2008" oninput="syncColorPicker('c-color-brown','cp-brown');prevTema()">
-                  <input type="color" id="cp-brown" value="#3D2008" oninput="document.getElementById('c-color-brown').value=this.value;prevTema()">
+                  <input id="c-color-brown" type="text" placeholder="#FA5200" oninput="syncColorPicker('c-color-brown','cp-brown');prevTema()">
+                  <input type="color" id="cp-brown" value="#FA5200" oninput="document.getElementById('c-color-brown').value=this.value;prevTema()">
                 </div>
               </div>
               <div class="fg">
                 <label>Color de acento (dorado / botones)</label>
                 <div class="color-row">
-                  <input id="c-color-gold" type="text" placeholder="#D4911A" oninput="syncColorPicker('c-color-gold','cp-gold');prevTema()">
-                  <input type="color" id="cp-gold" value="#D4911A" oninput="document.getElementById('c-color-gold').value=this.value;prevTema()">
+                  <input id="c-color-gold" type="text" placeholder="#FA5200" oninput="syncColorPicker('c-color-gold','cp-gold');prevTema()">
+                  <input type="color" id="cp-gold" value="#FA5200" oninput="document.getElementById('c-color-gold').value=this.value;prevTema()">
                 </div>
               </div>
               <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:10px;margin-top:6px">
@@ -903,8 +903,8 @@ function prevHeaderFoto() {
 }
 
 function prevTema() {
-  const brown = $('c-color-brown')?.value || '#3D2008';
-  const gold  = $('c-color-gold')?.value  || '#D4911A';
+  const brown = $('c-color-brown')?.value || '#FA5200';
+  const gold  = $('c-color-gold')?.value  || '#FA5200';
   const pt = $('prev-tema'); if(pt) pt.style.background = brown;
   const pl = $('prev-logo'); if(pl) { pl.style.background = gold; if($('c-logo')) pl.textContent = $('c-logo').value || '👣'; }
   const pn = $('prev-nombre'); if(pn) { pn.style.color = gold; if($('c-nombre')) pn.textContent = ($('c-nombre').value || 'AL PASO').toUpperCase(); }
