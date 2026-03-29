@@ -359,21 +359,125 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
 
 <!-- ═══ PRODUCTOS ══════════════════════════════════ -->
 <div id="tab-productos" class="sec" style="display:none">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-    <div class="sec-title" style="margin:0">Activar / desactivar productos</div>
+
+  <!-- SUB-TABS -->
+  <div style="display:flex;gap:6px;margin-bottom:16px">
+    <button class="prod-stab on" onclick="prodSubTab(this,'lista')" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:12px;font-weight:800;cursor:pointer;border:none;background:#C9A84C;color:#0A0A0A">📋 Lista</button>
+    <button class="prod-stab" onclick="prodSubTab(this,'scanner')" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:12px;font-weight:800;cursor:pointer;border:1px solid #2A2A2A;background:#1E1E1E;color:#aaa">📷 Cargar producto</button>
   </div>
-  <div class="fg-row" style="margin-bottom:12px">
-    <input id="prod-buscar" placeholder="🔍 Buscar..." oninput="loadProductos()"
-      style="background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
-    <select id="prod-cat" onchange="loadProductos()"
-      style="background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:12px;color:#fff;outline:none">
-      <option value="">Todas las categorías</option>
-      <option>Empanadas</option><option>Carnicería</option><option>Carne al Vacío</option>
-      <option>Fiambres</option><option>Lácteos</option><option>Bebidas</option>
-      <option>Almacén</option><option>Limpieza</option><option>Kiosco</option><option>Panadería</option>
-    </select>
+
+  <!-- LISTA -->
+  <div id="prod-panel-lista">
+    <div class="fg-row" style="margin-bottom:12px">
+      <input id="prod-buscar" placeholder="🔍 Buscar..." oninput="loadProductos()"
+        style="background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
+      <select id="prod-cat" onchange="loadProductos()"
+        style="background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:12px;color:#fff;outline:none">
+        <option value="">Todas las categorías</option>
+        <option>Empanadas</option><option>Carnicería</option><option>Carne al Vacío</option>
+        <option>Fiambres</option><option>Lácteos</option><option>Bebidas</option>
+        <option>Almacén</option><option>Limpieza</option><option>Kiosco</option><option>Panadería</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <select id="prod-filtro-activo" onchange="loadProductos()"
+        style="background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:8px 10px;font-family:'Nunito';font-size:12px;color:#fff;outline:none">
+        <option value="">Todos</option>
+        <option value="true">✅ Activos en app</option>
+        <option value="false">⭕ Inactivos</option>
+      </select>
+      <div style="flex:1;background:#1A1A1A;border-radius:9px;padding:8px 12px;font-size:11px;color:#555;display:flex;align-items:center" id="prod-count">—</div>
+    </div>
+    <div class="card" id="prod-list" style="padding:0 16px"><div class="loading-panel">⏳ Cargando...</div></div>
   </div>
-  <div class="card" id="prod-list" style="padding:0 16px"><div class="loading-panel">⏳ Cargando...</div></div>
+
+  <!-- CARGAR PRODUCTO -->
+  <div id="prod-panel-scanner" style="display:none">
+    <div class="card">
+      <div class="card-title">📷 Buscar por código de barra</div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <input id="scan-cod" placeholder="Escaneá o escribí el código..." type="text"
+          style="flex:1;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:14px;color:#fff;outline:none;letter-spacing:2px"
+          oninput="buscarPorCodigo(this.value)" autocomplete="off">
+        <button onclick="$('scan-cod').value='';$('scan-resultado').innerHTML='';$('scan-form').style.display='none'"
+          style="padding:10px 14px;background:#2A2A2A;border:none;border-radius:9px;color:#aaa;font-size:16px;cursor:pointer">✕</button>
+      </div>
+      <div style="font-size:10px;color:#555">Usá un lector de código de barra USB o escribí el número manualmente</div>
+    </div>
+
+    <!-- Resultado búsqueda -->
+    <div id="scan-resultado"></div>
+
+    <!-- Formulario editar/crear -->
+    <div id="scan-form" style="display:none">
+      <div class="card">
+        <div class="card-title" id="scan-form-titulo">✏️ Editar producto</div>
+        <input type="hidden" id="scan-id">
+
+        <div class="fg">
+          <label>Nombre del producto</label>
+          <input id="scan-nombre" placeholder="Nombre como aparece en la app">
+        </div>
+
+        <div class="fg">
+          <label>Código de barras</label>
+          <input id="scan-codbarras" placeholder="7790000000000" readonly style="color:#555">
+        </div>
+
+        <div class="fg-row">
+          <div class="fg">
+            <label>Precio de costo ($)</label>
+            <input id="scan-costo" type="number" placeholder="0" oninput="calcularPrecioVenta()">
+          </div>
+          <div class="fg">
+            <label>Margen de ganancia (%)</label>
+            <input id="scan-margen" type="number" placeholder="30" value="30" oninput="calcularPrecioVenta()">
+          </div>
+        </div>
+
+        <div class="fg">
+          <label>Precio de venta ($) — calculado automáticamente</label>
+          <div style="position:relative">
+            <input id="scan-precio" type="number" placeholder="0"
+              style="background:#1E1E1E;border:1.5px solid #C9A84C;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:16px;font-weight:900;color:#C9A84C;outline:none;width:100%">
+            <div style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:10px;color:#555">editable</div>
+          </div>
+          <div class="fg-hint" id="scan-margen-real">Margen real: —</div>
+        </div>
+
+        <div class="fg">
+          <label>Categoría</label>
+          <select id="scan-cat"
+            style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
+            <option value="Sin categoría">Sin categoría</option>
+            <option value="Empanadas">🫓 Empanadas</option>
+            <option value="Carnicería">🥩 Carnicería</option>
+            <option value="Carne al Vacío">🥩 Carne al Vacío</option>
+            <option value="Fiambres">🧀 Fiambres</option>
+            <option value="Lácteos">🥛 Lácteos</option>
+            <option value="Bebidas">🥤 Bebidas</option>
+            <option value="Almacén">🌾 Almacén</option>
+            <option value="Limpieza">🧹 Limpieza</option>
+            <option value="Kiosco">🍬 Kiosco</option>
+            <option value="Panadería">🍞 Panadería</option>
+          </select>
+        </div>
+
+        <div class="tog-row">
+          <div>
+            <div class="tog-lbl">Visible en la app cliente</div>
+            <div class="tog-sub">Si está activo, los clientes pueden verlo y comprarlo</div>
+          </div>
+          <label class="tog"><input type="checkbox" id="scan-activo"><div class="tog-sl"></div></label>
+        </div>
+
+        <div style="margin-top:16px;display:flex;gap:8px">
+          <button onclick="guardarProducto()" class="btn btn-gold" style="flex:1;justify-content:center;padding:13px">💾 Guardar</button>
+          <button onclick="$('scan-form').style.display='none'" class="btn btn-ghost" style="padding:13px 16px">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ═══ FIDELIDAD ══════════════════════════════════ -->
@@ -1289,6 +1393,189 @@ async function loadPedidosConAlert() {
       c.style.animation = 'pulse 1s ease 3';
     }
   });
+}
+
+
+// ══════════════════════════════════════════════════
+// PRODUCTOS — SUB-TABS
+// ══════════════════════════════════════════════════
+function prodSubTab(btn, id) {
+  document.querySelectorAll('.prod-stab').forEach(b => {
+    b.style.background = '#1E1E1E';
+    b.style.color = '#aaa';
+    b.style.border = '1px solid #2A2A2A';
+  });
+  btn.style.background = '#C9A84C';
+  btn.style.color = '#0A0A0A';
+  btn.style.border = 'none';
+  $('prod-panel-lista').style.display    = id === 'lista'   ? 'block' : 'none';
+  $('prod-panel-scanner').style.display  = id === 'scanner' ? 'block' : 'none';
+  if (id === 'lista') loadProductos();
+}
+
+// ══════════════════════════════════════════════════
+// PRODUCTOS — LISTA (reemplaza la anterior)
+// ══════════════════════════════════════════════════
+async function loadProductos() {
+  const el     = $('prod-list');
+  const cat    = $('prod-cat')?.value || '';
+  const q      = ($('prod-buscar')?.value || '').toLowerCase();
+  const activo = $('prod-filtro-activo')?.value || '';
+  if (!el) return;
+  el.innerHTML = '<div class="loading-panel">⏳</div>';
+  try {
+    let query = db.from('productos').select('id,nombre,cat,activo,precio_venta,cod_barras').order('nombre').limit(200);
+    if (cat)    query = query.eq('cat', cat);
+    if (activo) query = query.eq('activo', activo === 'true');
+    const { data, error } = await query;
+    if (error) throw error;
+    let prods = (data||[]).filter(p => !q || (p.nombre||'').toLowerCase().includes(q));
+    if ($('prod-count')) $('prod-count').textContent = prods.length + ' productos';
+    if (!prods.length) { el.innerHTML = '<div class="loading-panel" style="color:#555">Sin resultados</div>'; return; }
+    el.innerHTML = prods.map(p => `
+      <div class="prod-item" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1A1A1A">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:700;color:${p.activo?'#fff':'#444'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nombre||'—'}</div>
+          <div style="font-size:10px;color:#555">${p.cat||'—'} · ${fmt(p.precio_venta)}</div>
+        </div>
+        <button onclick="abrirEditar(${p.id})" style="padding:5px 10px;border-radius:7px;font-family:'Nunito';font-size:10px;font-weight:700;cursor:pointer;background:#1A1A2E;color:#64B5F6;border:1px solid #2A2A3A;flex-shrink:0">✏️</button>
+        <label class="tog" style="flex-shrink:0">
+          <input type="checkbox" ${p.activo?'checked':''} onchange="toggleProd(${p.id},this)">
+          <div class="tog-sl"></div>
+        </label>
+      </div>`).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="loading-panel" style="color:#E53935">Error: ' + e.message + '</div>';
+  }
+}
+
+async function toggleProd(id, cb) {
+  const { error } = await db.from('productos').update({activo:cb.checked}).eq('id',id);
+  if (error) { toast('⚠️ Error'); cb.checked = !cb.checked; return; }
+  toast(cb.checked ? '✅ Visible en app' : '⭕ Ocultado de app');
+}
+
+// ══════════════════════════════════════════════════
+// PRODUCTOS — SCANNER / ABM
+// ══════════════════════════════════════════════════
+let scanTimeout = null;
+
+async function buscarPorCodigo(cod) {
+  clearTimeout(scanTimeout);
+  if (!cod || cod.length < 4) { $('scan-resultado').innerHTML = ''; $('scan-form').style.display='none'; return; }
+  scanTimeout = setTimeout(async () => {
+    const { data } = await db.from('productos').select('*').eq('cod_barras', cod).limit(1);
+    const res = $('scan-resultado');
+    if (data?.length) {
+      const p = data[0];
+      res.innerHTML = `<div class="card" style="border-color:#C9A84C44;margin-bottom:0">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:13px;font-weight:800;color:#fff;margin-bottom:3px">${p.nombre}</div>
+            <div style="font-size:11px;color:#555">${p.cat||'Sin cat.'} · ${fmt(p.precio_venta)} · ${p.activo?'<span style="color:#43A047">✅ Activo</span>':'<span style="color:#555">⭕ Inactivo</span>'}</div>
+          </div>
+          <button onclick="abrirEditar(${p.id})" style="padding:8px 14px;border-radius:9px;font-family:'Nunito';font-size:12px;font-weight:800;cursor:pointer;background:#C9A84C;color:#0A0A0A;border:none">✏️ Editar</button>
+        </div>
+      </div>`;
+      $('scan-form').style.display = 'none';
+    } else {
+      res.innerHTML = `<div class="card" style="margin-bottom:0">
+        <div style="font-size:12px;color:#555;margin-bottom:10px">⭕ Producto no encontrado con código <strong style="color:#fff">${cod}</strong></div>
+        <button onclick="abrirNuevo('${cod}')" style="width:100%;padding:10px;border-radius:9px;font-family:'Nunito';font-size:13px;font-weight:800;cursor:pointer;background:#C9A84C;color:#0A0A0A;border:none">+ Crear producto nuevo</button>
+      </div>`;
+      $('scan-form').style.display = 'none';
+    }
+  }, 400);
+}
+
+async function abrirEditar(id) {
+  const { data } = await db.from('productos').select('*').eq('id',id).single();
+  if (!data) return;
+  $('scan-form-titulo').textContent = '✏️ Editar producto';
+  $('scan-id').value          = data.id;
+  $('scan-nombre').value      = data.nombre || '';
+  $('scan-codbarras').value   = data.cod_barras || '';
+  $('scan-precio').value      = data.precio_venta || '';
+  $('scan-costo').value       = data.precio_costo || '';
+  $('scan-margen').value      = data.margen || '30';
+  $('scan-cat').value         = data.cat || 'Sin categoría';
+  $('scan-activo').checked    = data.activo || false;
+  actualizarMargenReal();
+  $('scan-form').style.display = 'block';
+  $('scan-form').scrollIntoView({behavior:'smooth'});
+}
+
+function abrirNuevo(cod) {
+  $('scan-form-titulo').textContent = '➕ Nuevo producto';
+  $('scan-id').value        = '';
+  $('scan-nombre').value    = '';
+  $('scan-codbarras').value = cod || '';
+  $('scan-precio').value    = '';
+  $('scan-costo').value     = '';
+  $('scan-margen').value    = '30';
+  $('scan-cat').value       = 'Sin categoría';
+  $('scan-activo').checked  = false;
+  $('scan-form').style.display = 'block';
+  $('scan-form').scrollIntoView({behavior:'smooth'});
+}
+
+function calcularPrecioVenta() {
+  const costo  = parseFloat($('scan-costo')?.value) || 0;
+  const margen = parseFloat($('scan-margen')?.value) || 30;
+  if (costo > 0) {
+    const precio = Math.round(costo * (1 + margen / 100));
+    if ($('scan-precio')) $('scan-precio').value = precio;
+  }
+  actualizarMargenReal();
+}
+
+function actualizarMargenReal() {
+  const costo  = parseFloat($('scan-costo')?.value) || 0;
+  const precio = parseFloat($('scan-precio')?.value) || 0;
+  const el = $('scan-margen-real');
+  if (!el) return;
+  if (costo > 0 && precio > 0) {
+    const margenReal = Math.round((precio - costo) / costo * 100);
+    const ganancia   = precio - costo;
+    el.textContent = `Margen real: ${margenReal}% · Ganancia: ${fmt(ganancia)} por unidad`;
+    el.style.color = margenReal >= 20 ? '#43A047' : '#E53935';
+  } else {
+    el.textContent = 'Ingresá costo y margen para calcular';
+    el.style.color = '#555';
+  }
+}
+
+async function guardarProducto() {
+  const id      = $('scan-id').value;
+  const nombre  = $('scan-nombre').value.trim();
+  const precio  = parseFloat($('scan-precio').value) || 0;
+  const costo   = parseFloat($('scan-costo').value)  || 0;
+  const margen  = parseFloat($('scan-margen').value) || 30;
+  const cat     = $('scan-cat').value;
+  const activo  = $('scan-activo').checked;
+  const codbar  = $('scan-codbarras').value.trim();
+
+  if (!nombre) { toast('⚠️ Ingresá el nombre'); return; }
+  if (!precio)  { toast('⚠️ Ingresá el precio de venta'); return; }
+
+  const payload = { nombre, precio_venta: precio, precio_costo: costo || null, margen: margen || null, cat, activo, cod_barras: codbar || null };
+
+  let error;
+  if (id) {
+    ({ error } = await db.from('productos').update(payload).eq('id', id));
+  } else {
+    ({ error } = await db.from('productos').insert(payload));
+  }
+
+  if (error) { toast('⚠️ Error: ' + error.message); return; }
+
+  toast(id ? '✅ Producto actualizado' : '✅ Producto creado');
+  $('scan-form').style.display = 'none';
+  $('scan-resultado').innerHTML = '';
+  $('scan-cod').value = '';
+
+  // Si estaba en la lista, recargarla
+  loadProductos();
 }
 
 </script>
