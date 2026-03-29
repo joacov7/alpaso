@@ -1009,13 +1009,6 @@ async function loadProductos() {
     el.innerHTML = '<div class="loading-panel" style="color:#E53935">Error: ' + e.message + '</div>';
   }
 }
-
-async function toggleProd(id, cb) {
-  const { error } = await db.from('productos').update({activo:cb.checked}).eq('id',id);
-  if (error) { toast('⚠️ Error'); cb.checked = !cb.checked; return; }
-  toast(cb.checked ? '✅ Producto activado' : '🔴 Producto desactivado');
-}
-
 // ══════════════════════════════════════════════════
 // FIDELIDAD — STATS
 // ══════════════════════════════════════════════════
@@ -1416,39 +1409,6 @@ function prodSubTab(btn, id) {
 // ══════════════════════════════════════════════════
 // PRODUCTOS — LISTA (reemplaza la anterior)
 // ══════════════════════════════════════════════════
-async function loadProductos() {
-  const el     = $('prod-list');
-  const cat    = $('prod-cat')?.value || '';
-  const q      = ($('prod-buscar')?.value || '').toLowerCase();
-  const activo = $('prod-filtro-activo')?.value || '';
-  if (!el) return;
-  el.innerHTML = '<div class="loading-panel">⏳</div>';
-  try {
-    let query = db.from('productos').select('id,nombre,cat,activo,precio_venta,cod_barras').order('nombre').limit(200);
-    if (cat)    query = query.eq('cat', cat);
-    if (activo) query = query.eq('activo', activo === 'true');
-    const { data, error } = await query;
-    if (error) throw error;
-    let prods = (data||[]).filter(p => !q || (p.nombre||'').toLowerCase().includes(q));
-    if ($('prod-count')) $('prod-count').textContent = prods.length + ' productos';
-    if (!prods.length) { el.innerHTML = '<div class="loading-panel" style="color:#555">Sin resultados</div>'; return; }
-    el.innerHTML = prods.map(p => `
-      <div class="prod-item" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1A1A1A">
-        <div style="flex:1;min-width:0">
-          <div style="font-size:12px;font-weight:700;color:${p.activo?'#fff':'#444'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nombre||'—'}</div>
-          <div style="font-size:10px;color:#555">${p.cat||'—'} · ${fmt(p.precio_venta)}</div>
-        </div>
-        <button onclick="abrirEditar(${p.id})" style="padding:5px 10px;border-radius:7px;font-family:'Nunito';font-size:10px;font-weight:700;cursor:pointer;background:#1A1A2E;color:#64B5F6;border:1px solid #2A2A3A;flex-shrink:0">✏️</button>
-        <label class="tog" style="flex-shrink:0">
-          <input type="checkbox" ${p.activo?'checked':''} onchange="toggleProd(${p.id},this)">
-          <div class="tog-sl"></div>
-        </label>
-      </div>`).join('');
-  } catch(e) {
-    el.innerHTML = '<div class="loading-panel" style="color:#E53935">Error: ' + e.message + '</div>';
-  }
-}
-
 async function toggleProd(id, cb) {
   const { error } = await db.from('productos').update({activo:cb.checked}).eq('id',id);
   if (error) { toast('⚠️ Error'); cb.checked = !cb.checked; return; }
