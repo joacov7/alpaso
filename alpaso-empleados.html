@@ -539,7 +539,8 @@ function volverLogin() { pinActual = ''; showScreen('login'); }
 
 async function entrar() {
   // Cargar datos del empleado (turno, hora entrada)
-  const { data: empData } = await db.from('empleados').select('turno,hora_entrada,hora_salida,sector').eq('id',empleadoActual.id).single().catch(()=>({data:null}));
+  let empData = null;
+  try { const _empR = await db.from('empleados').select('turno,hora_entrada,hora_salida,sector').eq('id',empleadoActual.id).single(); empData = _empR.data; } catch(e) {}
   if (empData) { empleadoActual.turno = empData.turno; empleadoActual.hora_entrada = empData.hora_entrada; empleadoActual.hora_salida = empData.hora_salida; empleadoActual.sector = empData.sector; }
 
   const hoy = new Date();
@@ -764,12 +765,12 @@ let fichajeInterval = null;
 async function initFichaje() {
   // Ver si tiene fichaje abierto hoy
   const hoy = new Date().toISOString().split('T')[0];
-  const { data } = await db.from('fichajes')
-    .select('*')
-    .eq('empleado_id', empleadoActual.id)
-    .eq('fecha', hoy)
-    .is('salida', null)
-    .single().catch(() => ({data:null}));
+  let data = null;
+  try {
+    const _fR = await db.from('fichajes').select('*')
+      .eq('empleado_id', empleadoActual.id).eq('fecha', hoy).is('salida', null).single();
+    data = _fR.data;
+  } catch(e) {}
 
   if (data) {
     fichajeActual = { id: data.id, entrada: new Date(data.entrada) };
@@ -1167,8 +1168,8 @@ async function cargarStockEmp() {
 
 async function cargarObjetivoDia() {
   const hoy = new Date().toISOString().split('T')[0];
-  const { data: obj } = await db.from('objetivos_venta')
-    .select('*').eq('fecha', hoy).eq('tipo','diario').single().catch(()=>({data:null}));
+  let obj = null;
+  try { const _objR = await db.from('objetivos_venta').select('*').eq('fecha', hoy).eq('tipo','diario').single(); obj = _objR.data; } catch(e) {}
 
   // Calcular ventas reales del día desde pedidos
   const { data: peds } = await db.from('pedidos')
