@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1A1A1A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Al Paso — Tareas</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;font-family:'Nunito',sans-serif}
+body{background:#111}
+.app{width:100%;max-width:480px;height:100dvh;margin:0 auto;background:#0A0A0A;display:flex;flex-direction:column;overflow:hidden}
+
+/* LOGIN */
+.login{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:32px;text-align:center}
+.login-logo{font-family:'Bebas Neue';font-size:48px;color:#C9A84C;letter-spacing:4px;margin-bottom:4px}
+.login-sub{font-size:12px;color:#555;margin-bottom:32px}
+.login h2{font-size:18px;font-weight:800;color:#fff;margin-bottom:6px}
+.login p{font-size:12px;color:#555;margin-bottom:24px}
+.empleado-list{display:flex;flex-direction:column;gap:8px;width:100%;margin-bottom:20px}
+.emp-btn{background:#161616;border:1.5px solid #222;border-radius:12px;padding:14px 18px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:12px;transition:all .15s}
+.emp-btn:active{border-color:#C9A84C;background:#1A1500}
+.emp-av{width:40px;height:40px;border-radius:50%;background:#222;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#C9A84C;flex-shrink:0}
+.emp-name{font-size:15px;font-weight:800;color:#fff}
+.emp-role{font-size:11px;color:#555}
+
+/* PIN */
+.pin-screen{display:none;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:32px;text-align:center}
+.pin-name{font-size:22px;font-weight:900;color:#fff;margin-bottom:4px}
+.pin-sub{font-size:12px;color:#555;margin-bottom:28px}
+.pin-dots{display:flex;gap:14px;margin-bottom:28px}
+.pin-dot{width:16px;height:16px;border-radius:50%;background:#222;border:2px solid #333;transition:all .2s}
+.pin-dot.on{background:#C9A84C;border-color:#C9A84C}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:240px}
+.pin-key{background:#161616;border:1.5px solid #222;border-radius:12px;padding:16px;font-size:22px;font-weight:800;color:#fff;cursor:pointer;text-align:center;transition:all .15s}
+.pin-key:active{background:#C9A84C;color:#0A0A0A;border-color:#C9A84C}
+.pin-key.del{font-size:16px;color:#555}
+.pin-error{color:#E53935;font-size:12px;font-weight:700;margin-top:12px;min-height:18px}
+
+/* MAIN */
+.main{display:none;flex-direction:column;flex:1;overflow:hidden}
+.main-hdr{background:#111;padding:max(env(safe-area-inset-top),12px) 16px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1A1A1A;flex-shrink:0}
+.main-hdr-left{display:flex;align-items:center;gap:10px}
+.hdr-av{width:34px;height:34px;border-radius:50%;background:#C9A84C;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#0A0A0A}
+.hdr-name{font-size:14px;font-weight:800;color:#fff}
+.hdr-fecha{font-size:10px;color:#555}
+.btn-salir{padding:6px 12px;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:8px;color:#555;font-family:'Nunito';font-size:11px;font-weight:700;cursor:pointer}
+
+/* TURNOS */
+.turnos{display:flex;gap:6px;padding:10px 14px;background:#111;border-bottom:1px solid #1A1A1A;flex-shrink:0}
+.turno-btn{flex:1;padding:7px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;border:1.5px solid #222;background:transparent;color:#555;transition:all .15s}
+.turno-btn.on{background:#C9A84C;color:#0A0A0A;border-color:#C9A84C}
+
+/* PROGRESO */
+.progreso{padding:10px 16px;background:#111;border-bottom:1px solid #1A1A1A;flex-shrink:0}
+.prog-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+.prog-txt{font-size:11px;font-weight:700;color:#555}
+.prog-pct{font-size:13px;font-weight:900;color:#C9A84C}
+.prog-bar{height:5px;background:#1A1A1A;border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,#C9A84C,#E8C96A);border-radius:3px;transition:width .4s}
+
+/* TAREAS */
+.tareas-scroll{flex:1;overflow-y:auto;padding:12px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tareas-scroll::-webkit-scrollbar{display:none}
+.cat-titulo{font-size:9px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1.5px;padding:8px 4px 6px}
+.tarea{background:#161616;border:1.5px solid #222;border-radius:12px;padding:14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px;cursor:pointer;transition:all .2s}
+.tarea.completada{background:#0A1A0A;border-color:#1A3A1A;opacity:.7}
+.tarea.en_progreso{border-color:#C9A84C44;background:#1A1500}
+.tarea-check{width:26px;height:26px;border-radius:8px;border:2px solid #333;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;transition:all .2s;font-size:14px}
+.tarea.completada .tarea-check{background:#1A3A1A;border-color:#43A047;color:#43A047}
+.tarea.en_progreso .tarea-check{background:#1A1500;border-color:#C9A84C;color:#C9A84C}
+.tarea-info{flex:1;min-width:0}
+.tarea-titulo{font-size:13px;font-weight:700;color:#fff;margin-bottom:3px;line-height:1.3}
+.tarea.completada .tarea-titulo{text-decoration:line-through;color:#555}
+.tarea-desc{font-size:10px;color:#555;line-height:1.4}
+.tarea-meta{font-size:10px;color:#C9A84C;margin-top:4px;font-weight:700}
+.tarea-badge{font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;margin-left:6px}
+.badge-mañana{background:rgba(251,140,0,.15);color:#FFB74D}
+.badge-tarde{background:rgba(33,150,243,.15);color:#64B5F6}
+.badge-noche{background:rgba(156,39,176,.15);color:#CE93D8}
+
+/* MODAL NOTAS */
+.modal{position:absolute;inset:0;background:rgba(0,0,0,.8);display:none;align-items:flex-end;z-index:100}
+.modal.on{display:flex}
+.modal-box{background:#161616;border-radius:20px 20px 0 0;padding:24px 20px 32px;width:100%}
+.modal-titulo{font-size:16px;font-weight:800;color:#fff;margin-bottom:4px}
+.modal-sub{font-size:11px;color:#555;margin-bottom:16px}
+.modal-notas{width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:10px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none;resize:none;min-height:80px;margin-bottom:16px}
+.modal-notas:focus{border-color:#C9A84C}
+.modal-btns{display:flex;gap:8px}
+.mbtn{flex:1;padding:12px;border-radius:10px;font-family:'Nunito';font-size:13px;font-weight:800;cursor:pointer;border:none;transition:all .15s}
+.mbtn-gold{background:#C9A84C;color:#0A0A0A}
+.mbtn-ghost{background:#222;color:#aaa}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#161616;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:700;opacity:0;transition:all .3s;pointer-events:none;border:1px solid #333;z-index:200;white-space:nowrap}
+.toast.on{opacity:1;transform:translateX(-50%)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- LOGIN: elegir empleado -->
+<div class="login" id="screen-login">
+  <div class="login-logo">AL PASO</div>
+  <div class="login-sub">Sistema de tareas</div>
+  <h2>¿Quién sos?</h2>
+  <p>Seleccioná tu nombre para continuar</p>
+  <div class="empleado-list" id="empleado-list">
+    <div style="color:#555;font-size:12px;text-align:center;padding:20px">Cargando empleados...</div>
+  </div>
+  <div style="font-size:10px;color:#333;margin-top:8px">mercadoalpaso.com.ar</div>
+</div>
+
+<!-- PIN -->
+<div class="pin-screen" id="screen-pin">
+  <div class="pin-name" id="pin-name">Nombre</div>
+  <div class="pin-sub">Ingresá tu PIN de 4 dígitos</div>
+  <div class="pin-dots">
+    <div class="pin-dot" id="d0"></div>
+    <div class="pin-dot" id="d1"></div>
+    <div class="pin-dot" id="d2"></div>
+    <div class="pin-dot" id="d3"></div>
+  </div>
+  <div class="pin-pad">
+    <div class="pin-key" onclick="pinKey('1')">1</div>
+    <div class="pin-key" onclick="pinKey('2')">2</div>
+    <div class="pin-key" onclick="pinKey('3')">3</div>
+    <div class="pin-key" onclick="pinKey('4')">4</div>
+    <div class="pin-key" onclick="pinKey('5')">5</div>
+    <div class="pin-key" onclick="pinKey('6')">6</div>
+    <div class="pin-key" onclick="pinKey('7')">7</div>
+    <div class="pin-key" onclick="pinKey('8')">8</div>
+    <div class="pin-key" onclick="pinKey('9')">9</div>
+    <div class="pin-key" onclick="volverLogin()" style="font-size:12px;color:#555">← Volver</div>
+    <div class="pin-key" onclick="pinKey('0')">0</div>
+    <div class="pin-key del" onclick="pinDel()">⌫</div>
+  </div>
+  <div class="pin-error" id="pin-error"></div>
+</div>
+
+<!-- MAIN: tareas -->
+<div class="main" id="screen-main">
+  <div class="main-hdr">
+    <div class="main-hdr-left">
+      <div class="hdr-av" id="hdr-av">?</div>
+      <div>
+        <div class="hdr-name" id="hdr-name">—</div>
+        <div class="hdr-fecha" id="hdr-fecha">—</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <button id="btn-fichaje" onclick="fichar()" style="padding:6px 12px;border-radius:8px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#43A047;color:#fff;border:none">⏱ Entrada</button>
+      <button class="btn-salir" onclick="salir()">Salir</button>
+    </div>
+  </div>
+
+  <!-- FICHAJE STATUS -->
+  <div id="fichaje-bar" style="display:none;background:#1A2E1A;border-bottom:1px solid #2A3A2A;padding:8px 14px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:8px">
+      <div style="width:8px;height:8px;border-radius:50%;background:#43A047;animation:pulse-dot 2s infinite"></div>
+      <span style="font-size:11px;font-weight:700;color:#81C784" id="fichaje-status-txt">Trabajando</span>
+    </div>
+    <span style="font-size:12px;font-weight:900;color:#43A047" id="fichaje-timer">00:00:00</span>
+  </div>
+  <style>
+    @keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.3}}
+  </style>
+
+  <!-- MODO: tareas vs faltantes -->
+  <div style="display:flex;gap:6px;padding:8px 14px;background:#111;border-bottom:1px solid #1A1A1A;flex-shrink:0">
+    <button class="modo-btn on" onclick="setModo(this,'tareas')" style="flex:1;padding:7px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#C9A84C;color:#0A0A0A;border:none">✅ Tareas</button>
+    <button class="modo-btn" onclick="setModo(this,'faltantes')" style="flex:1;padding:7px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:transparent;color:#555;border:1.5px solid #222">📦 Falt.</button>
+    <button class="modo-btn" onclick="setModo(this,'mermas')" style="flex:1;padding:7px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:transparent;color:#555;border:1.5px solid #222">🗑 Mermas</button>
+    <button class="modo-btn" onclick="setModo(this,'stock')" style="flex:1;padding:7px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:transparent;color:#555;border:1.5px solid #222">📊 Stock</button>
+  </div>
+
+  <div id="modo-tareas">
+    <div class="turnos">
+      <button class="turno-btn on" onclick="setTurno(this,'mañana')">🌅 Mañana</button>
+      <button class="turno-btn"    onclick="setTurno(this,'tarde')">🌆 Tarde</button>
+      <button class="turno-btn"    onclick="setTurno(this,'noche')">🌙 Noche</button>
+      <button class="turno-btn"    onclick="setTurno(this,'todas')">📋 Todas</button>
+    </div>
+  </div>
+
+  <div class="progreso">
+    <div class="prog-row">
+      <span class="prog-txt" id="prog-txt">0 de 0 tareas completadas</span>
+      <span class="prog-pct" id="prog-pct">0%</span>
+    </div>
+    <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+  </div>
+
+  <div class="tareas-scroll" id="tareas-list"></div>
+  </div><!-- /modo-tareas -->
+
+  <div id="modo-faltantes" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+    <!-- Buscar / escanear -->
+    <div style="padding:10px 14px;background:#111;border-bottom:1px solid #1A1A1A;flex-shrink:0">
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <input id="falt-buscar" placeholder="📦 Escaneá o buscá el producto..." type="text"
+          style="flex:1;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none"
+          oninput="buscarFaltante(this.value)" autocomplete="off">
+        <button onclick="abrirFaltanteManual()" style="padding:9px 12px;background:#C9A84C;border:none;border-radius:9px;color:#0A0A0A;font-size:18px;cursor:pointer">+</button>
+      </div>
+      <div id="falt-search-result" style="display:none"></div>
+    </div>
+
+    <!-- Lista faltantes del día -->
+    <div style="flex:1;overflow-y:auto;padding:12px;-webkit-overflow-scrolling:touch" id="falt-list">
+      <div style="text-align:center;padding:20px;color:#333;font-size:12px">Cargando faltantes...</div>
+    </div>
+  </div>
+
+  <!-- MERMAS PANEL -->
+  <div id="modo-mermas" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+    <div style="padding:10px 14px;background:#111;border-bottom:1px solid #1A1A1A;flex-shrink:0">
+      <div style="font-size:11px;color:#555;margin-bottom:8px">Reportá productos vencidos, rotos o con pérdidas</div>
+      <button onclick="abrirMermaModal()" style="width:100%;padding:10px;background:#E53935;border:none;border-radius:9px;font-family:'Nunito';font-size:13px;font-weight:800;color:#fff;cursor:pointer">+ Reportar merma / vencimiento</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:12px;-webkit-overflow-scrolling:touch" id="mermas-emp-list">
+      <div style="text-align:center;padding:20px;color:#333;font-size:12px">Cargando...</div>
+    </div>
+  </div>
+
+  <!-- Modal merma -->
+  <div class="modal" id="modal-merma">
+    <div class="modal-box" style="max-height:92vh;overflow-y:auto">
+      <div class="modal-titulo">🗑 Reportar merma / vencimiento</div>
+      <div class="modal-sub">Registrá el producto afectado y el motivo</div>
+
+      <div style="margin-bottom:12px">
+        <div style="font-size:10px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase">Buscar producto</div>
+        <input id="merma-buscar" placeholder="Escaneá o buscá..." oninput="buscarProdMerma(this.value)"
+          style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
+        <div id="merma-search-result" style="margin-top:6px"></div>
+      </div>
+
+      <div id="merma-nombre-wrap" style="margin-bottom:12px">
+        <div style="font-size:10px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase">Producto</div>
+        <input id="merma-nombre" placeholder="Nombre del producto"
+          style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
+      </div>
+      <input type="hidden" id="merma-prod-id">
+
+      <div style="margin-bottom:12px">
+        <div style="font-size:10px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase">Tipo de merma</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+          <button class="merma-tipo-btn on" data-val="vencido"    onclick="setMermaTipo(this)" style="padding:8px 4px;border-radius:8px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#E53935;color:#fff;border:none">📅 Vencido</button>
+          <button class="merma-tipo-btn"    data-val="roto"       onclick="setMermaTipo(this)" style="padding:8px 4px;border-radius:8px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#555;border:1.5px solid #222">💔 Roto</button>
+          <button class="merma-tipo-btn"    data-val="derramado"  onclick="setMermaTipo(this)" style="padding:8px 4px;border-radius:8px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#555;border:1.5px solid #222">💧 Derramado</button>
+          <button class="merma-tipo-btn"    data-val="robado"     onclick="setMermaTipo(this)" style="padding:8px 4px;border-radius:8px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#555;border:1.5px solid #222">🚨 Robado</button>
+          <button class="merma-tipo-btn"    data-val="devolucion" onclick="setMermaTipo(this)" style="padding:8px 4px;border-radius:8px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#555;border:1.5px solid #222">↩ Devoluc.</button>
+          <button class="merma-tipo-btn"    data-val="otro"       onclick="setMermaTipo(this)" style="padding:8px 4px;border-radius:8px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#555;border:1.5px solid #222">❓ Otro</button>
+        </div>
+      </div>
+      <input type="hidden" id="merma-tipo" value="vencido">
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div>
+          <div style="font-size:10px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase">Cantidad</div>
+          <input id="merma-cantidad" type="number" value="1" min="0.1" step="0.1"
+            style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px;font-family:'Nunito';font-size:18px;font-weight:900;color:#E53935;outline:none;text-align:center">
+        </div>
+        <div>
+          <div style="font-size:10px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase">Unidad</div>
+          <select id="merma-unidad" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
+            <option value="unidad">Unidad</option>
+            <option value="caja">Caja</option>
+            <option value="kg">Kg</option>
+            <option value="litro">Litro</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="merma-vto-wrap" style="margin-bottom:12px">
+        <div style="font-size:10px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase">Fecha de vencimiento del producto</div>
+        <input id="merma-fecha-vto" type="date"
+          style="width:100%;background:#1E1E1E;border:1.5px solid #E53935;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
+      </div>
+
+      <div style="margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+          <div style="font-size:10px;font-weight:800;color:#666;text-transform:uppercase">¿Reclamar al proveedor?</div>
+          <label class="tog"><input type="checkbox" id="merma-reclamo"><div class="tog-sl"></div></label>
+        </div>
+        <div style="font-size:10px;color:#555">Si el vencimiento fue un error del proveedor, lo marcamos para hacer el reclamo</div>
+      </div>
+
+      <textarea class="modal-notas" id="merma-notas" placeholder="Notas adicionales..." rows="2" style="margin-bottom:16px"></textarea>
+
+      <div class="modal-btns">
+        <button class="mbtn mbtn-ghost" onclick="cerrarMermaModal()">Cancelar</button>
+        <button class="mbtn" onclick="guardarMerma()" style="background:#E53935;color:#fff">🗑 Reportar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STOCK PANEL -->
+  <div id="modo-stock" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+    <!-- Barra de objetivo del día -->
+    <div id="obj-bar" style="padding:10px 14px;background:#111;border-bottom:1px solid #1A1A1A;flex-shrink:0">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+        <div style="font-size:11px;font-weight:700;color:#555">🎯 Objetivo del día</div>
+        <div style="font-size:12px;font-weight:900;color:#C9A84C" id="obj-txt">Cargando...</div>
+      </div>
+      <div style="background:#1A1A1A;border-radius:3px;height:6px;overflow:hidden">
+        <div id="obj-fill" style="height:100%;background:linear-gradient(90deg,#C9A84C,#43A047);border-radius:3px;width:0%;transition:width .5s"></div>
+      </div>
+      <div style="font-size:10px;color:#555;margin-top:4px" id="obj-sub">—</div>
+    </div>
+
+    <!-- Buscar producto para mover stock -->
+    <div style="padding:10px 14px;background:#111;border-bottom:1px solid #1A1A1A;flex-shrink:0">
+      <input id="stock-buscar" placeholder="🔍 Buscar producto para mover stock..."
+        oninput="buscarStockEmp(this.value)"
+        style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
+      <div id="stock-search-result" style="margin-top:6px"></div>
+    </div>
+
+    <!-- Lista alertas de stock -->
+    <div style="flex:1;overflow-y:auto;padding:12px;-webkit-overflow-scrolling:touch" id="stock-emp-list">
+      <div style="text-align:center;padding:20px;color:#333;font-size:12px">Cargando...</div>
+    </div>
+  </div>
+
+  <!-- Modal mover stock -->
+  <div class="modal" id="modal-stock">
+    <div class="modal-box">
+      <div class="modal-titulo" id="stock-modal-titulo">📦 Mover stock</div>
+      <div style="background:#1A1A1A;border-radius:12px;padding:14px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+          <div style="text-align:center;flex:1">
+            <div style="font-size:22px;font-weight:900;color:#C9A84C" id="stock-dep-qty">0</div>
+            <div style="font-size:10px;color:#555">📦 Depósito</div>
+          </div>
+          <div style="display:flex;align-items:center;font-size:20px;color:#333">→</div>
+          <div style="text-align:center;flex:1">
+            <div style="font-size:22px;font-weight:900;color:#43A047" id="stock-gon-qty">0</div>
+            <div style="font-size:10px;color:#555">🏪 Góndola</div>
+          </div>
+        </div>
+        <div style="font-size:10px;color:#555;text-align:center" id="stock-minimo-txt"></div>
+      </div>
+      <div style="margin-bottom:14px">
+        <div style="font-size:10px;font-weight:800;color:#666;margin-bottom:8px;text-transform:uppercase">¿Qué querés hacer?</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <button class="stock-accion-btn on" data-val="pasaje_gondola" onclick="setStockAccion(this)"
+            style="padding:10px;border-radius:9px;font-family:'Nunito';font-size:12px;font-weight:800;cursor:pointer;background:#C9A84C;color:#0A0A0A;border:none;text-align:left">
+            🔄 Pasar del depósito a la góndola</button>
+          <button class="stock-accion-btn" data-val="entrada_deposito" onclick="setStockAccion(this)"
+            style="padding:10px;border-radius:9px;font-family:'Nunito';font-size:12px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#555;border:1.5px solid #222;text-align:left">
+            📥 Ingresó mercadería al depósito</button>
+          <button class="stock-accion-btn" data-val="ajuste" onclick="setStockAccion(this)"
+            style="padding:10px;border-radius:9px;font-family:'Nunito';font-size:12px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#555;border:1.5px solid #222;text-align:left">
+            ✏️ Ajuste manual de inventario</button>
+        </div>
+      </div>
+      <input type="hidden" id="stock-accion" value="pasaje_gondola">
+      <input type="hidden" id="stock-prod-id">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div>
+          <div style="font-size:10px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase">Cantidad</div>
+          <input id="stock-cantidad" type="number" value="1" min="0.1" step="0.1"
+            style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px;font-family:'Nunito';font-size:20px;font-weight:900;color:#C9A84C;outline:none;text-align:center">
+        </div>
+        <div>
+          <div style="font-size:10px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase">Unidad</div>
+          <select id="stock-unidad" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
+            <option value="unidad">Unidad</option>
+            <option value="caja">Caja</option>
+            <option value="kg">Kg</option>
+          </select>
+        </div>
+      </div>
+      <textarea class="modal-notas" id="stock-notas" placeholder="Notas opcionales..." rows="2" style="margin-bottom:16px"></textarea>
+      <div class="modal-btns">
+        <button class="mbtn mbtn-ghost" onclick="cerrarStockModal()">Cancelar</button>
+        <button class="mbtn mbtn-gold" onclick="guardarMovStock()">📦 Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal agregar faltante -->
+  <div class="modal" id="modal-faltante">
+    <div class="modal-box" style="max-height:90vh;overflow-y:auto">
+      <div class="modal-titulo" id="falt-modal-titulo">📦 Reportar faltante</div>
+      <div class="modal-sub" id="falt-modal-sub">Indicá qué falta y cuánto</div>
+      <input type="hidden" id="falt-prod-id">
+      <div style="margin-bottom:12px">
+        <div style="font-size:10px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase">Producto</div>
+        <input id="falt-nombre" placeholder="Nombre del producto"
+          style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div>
+          <div style="font-size:10px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase">Cantidad</div>
+          <input id="falt-cantidad" type="number" value="1" min="1"
+            style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:16px;font-weight:800;color:#C9A84C;outline:none;text-align:center">
+        </div>
+        <div>
+          <div style="font-size:10px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase">Unidad</div>
+          <select id="falt-unidad" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
+            <option value="unidad">Unidad</option>
+            <option value="caja">Caja</option>
+            <option value="pack">Pack</option>
+            <option value="kg">Kg</option>
+            <option value="litro">Litro</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:10px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase">Urgencia</div>
+        <div style="display:flex;gap:6px">
+          <button class="urgencia-btn on" data-val="normal" onclick="setUrgencia(this)" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#C9A84C;color:#0A0A0A;border:none">Normal</button>
+          <button class="urgencia-btn" data-val="urgente" onclick="setUrgencia(this)" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#555;border:1.5px solid #222">⚠️ Urgente</button>
+          <button class="urgencia-btn" data-val="critico" onclick="setUrgencia(this)" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#555;border:1.5px solid #222">🔴 Crítico</button>
+        </div>
+      </div>
+      <textarea class="modal-notas" id="falt-notas" placeholder="Notas adicionales (opcional)..." rows="2" style="margin-bottom:16px"></textarea>
+      <div class="modal-btns">
+        <button class="mbtn mbtn-ghost" onclick="cerrarFaltante()">Cancelar</button>
+        <button class="mbtn mbtn-gold" onclick="guardarFaltante()">📦 Reportar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL COMPLETAR -->
+<div class="modal" id="modal-completar">
+  <div class="modal-box">
+    <div class="modal-titulo" id="modal-titulo">Completar tarea</div>
+    <div class="modal-sub">Podés agregar una nota antes de marcarla como completada</div>
+    <textarea class="modal-notas" id="modal-notas" placeholder="Ej: Quedaron 3 cajas de coca, reponer mañana..." rows="3"></textarea>
+    <div class="modal-btns">
+      <button class="mbtn mbtn-ghost" onclick="cerrarModal()">Cancelar</button>
+      <button class="mbtn mbtn-gold" onclick="completarTarea()">✅ Completada</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+
+
+
+const SB_URL = 'https://tlsyakbhceolczjzadpc.supabase.co';
+const SB_KEY = 'sb_publishable_pdCPXmVa47gh3rSURJsgaQ_axezH12Z';
+const db = supabase.createClient(SB_URL, SB_KEY);
+const $ = id => document.getElementById(id);
+
+let empleadoActual = null;
+let pinActual = '';
+let turnoActual = 'mañana';
+let tareas = [];
+let tareaSeleccionada = null;
+
+const DIAS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const CAT_EMOJI = {
+  apertura:'🔑', cierre:'🔒', limpieza:'🧹', stock:'📦',
+  empanadas:'🫓', pedidos:'🛒', atencion:'😊'
+};
+const CAT_LABEL = {
+  apertura:'Apertura', cierre:'Cierre', limpieza:'Limpieza y mantenimiento',
+  stock:'Stock y reposición', empanadas:'Empanadas', pedidos:'Pedidos y armado',
+  atencion:'Atención al cliente'
+};
+
+function toast(msg, dur=2400) {
+  const el = $('toast');
+  el.textContent = msg;
+  el.classList.add('on');
+  setTimeout(() => el.classList.remove('on'), dur);
+}
+
+// ── LOGIN ────────────────────────────────────────
+async function init() {
+  const { data } = await db.from('empleados').select('*').eq('activo', true).order('nombre');
+  const el = $('empleado-list');
+  if (!data?.length) {
+    el.innerHTML = '<div style="color:#555;font-size:12px;text-align:center;padding:20px">No hay empleados registrados.<br>Pedile al dueño que te agregue en el panel.</div>';
+    return;
+  }
+  el.innerHTML = data.map(e => `
+    <div class="emp-btn" onclick="seleccionarEmpleado(${e.id},'${e.nombre.replace(/'/g,"\\'")}','${e.pin}')">
+      <div class="emp-av">${e.nombre.charAt(0).toUpperCase()}</div>
+      <div>
+        <div class="emp-name">${e.nombre}</div>
+      </div>
+      <span style="margin-left:auto;font-size:18px;color:#333">→</span>
+    </div>`).join('');
+}
+
+function seleccionarEmpleado(id, nombre, pin) {
+  empleadoActual = { id, nombre, pin };
+  $('pin-name').textContent = nombre;
+  pinActual = '';
+  actualizarDots();
+  $('pin-error').textContent = '';
+  showScreen('pin');
+}
+
+function pinKey(k) {
+  if (pinActual.length >= 4) return;
+  pinActual += k;
+  actualizarDots();
+  if (pinActual.length === 4) validarPin();
+}
+
+function pinDel() {
+  pinActual = pinActual.slice(0, -1);
+  actualizarDots();
+  $('pin-error').textContent = '';
+}
+
+function actualizarDots() {
+  for (let i = 0; i < 4; i++) {
+    $('d'+i).className = 'pin-dot' + (i < pinActual.length ? ' on' : '');
+  }
+}
+
+async function validarPin() {
+  if (pinActual === empleadoActual.pin) {
+    await entrar();
+  } else {
+    $('pin-error').textContent = '⚠️ PIN incorrecto';
+    pinActual = '';
+    actualizarDots();
+  }
+}
+
+function volverLogin() { pinActual = ''; showScreen('login'); }
+
+async function entrar() {
+  // Cargar datos del empleado (turno, hora entrada)
+  const { data: empData } = await db.from('empleados').select('turno,hora_entrada,hora_salida,sector').eq('id',empleadoActual.id).single().catch(()=>({data:null}));
+  if (empData) { empleadoActual.turno = empData.turno; empleadoActual.hora_entrada = empData.hora_entrada; empleadoActual.hora_salida = empData.hora_salida; empleadoActual.sector = empData.sector; }
+
+  const hoy = new Date();
+  $('hdr-av').textContent   = empleadoActual.nombre.charAt(0).toUpperCase();
+  $('hdr-name').textContent = empleadoActual.nombre + (empleadoActual.sector ? ' · ' + empleadoActual.sector : '');
+  $('hdr-fecha').textContent = DIAS[hoy.getDay()] + ' ' + hoy.getDate() + ' de ' + MESES[hoy.getMonth()];
+  showScreen('main');
+  await Promise.all([generarTareasDelDia(), initFichaje()]);
+  await cargarTareas();
+}
+
+// ── TAREAS ───────────────────────────────────────
+async function generarTareasDelDia() {
+  const hoy = new Date().toISOString().split('T')[0];
+  const dia  = new Date().getDay().toString();
+
+  // Ver si ya hay tareas para hoy
+  const { data: existentes } = await db.from('tareas').select('id').eq('fecha', hoy).limit(1);
+  if (existentes?.length) return; // ya generadas
+
+  // Obtener plantillas del día
+  const { data: plantillas } = await db.from('tareas_plantilla').select('*').eq('activa', true).order('orden');
+  if (!plantillas?.length) return;
+
+  const tareasHoy = plantillas.filter(p => {
+    const dias = (p.dias_semana || '1,2,3,4,5,6,0').split(',');
+    return dias.includes(dia);
+  });
+
+  if (!tareasHoy.length) return;
+
+  await db.from('tareas').insert(tareasHoy.map(p => ({
+    plantilla_id:  p.id,
+    titulo:        p.titulo,
+    descripcion:   p.descripcion,
+    categoria:     p.categoria,
+    turno:         p.turno,
+    fecha:         hoy,
+    estado:        'pendiente',
+  })));
+}
+
+async function cargarTareas() {
+  const hoy = new Date().toISOString().split('T')[0];
+  const { data } = await db.from('tareas').select('*').eq('fecha', hoy).order('categoria').order('id');
+  tareas = data || [];
+  renderTareas();
+}
+
+function setTurno(btn, turno) {
+  document.querySelectorAll('.turno-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  turnoActual = turno;
+  renderTareas();
+}
+
+function renderTareas() {
+  const lista = turnoActual === 'todas' ? tareas : tareas.filter(t => t.turno === turnoActual || !t.turno);
+  const el = $('tareas-list');
+
+  // Progreso total
+  const completadas = lista.filter(t => t.estado === 'completada').length;
+  const pct = lista.length ? Math.round(completadas / lista.length * 100) : 0;
+  $('prog-txt').textContent = completadas + ' de ' + lista.length + ' tareas completadas';
+  $('prog-pct').textContent = pct + '%';
+  $('prog-fill').style.width = pct + '%';
+
+  if (!lista.length) {
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:#333;font-size:13px">Sin tareas para este turno</div>';
+    return;
+  }
+
+  // Separar: mis tareas / sin asignar / de otros
+  const miId = empleadoActual.id;
+  const misTareas     = lista.filter(t => t.asignado_id === miId);
+  const sinAsignar    = lista.filter(t => !t.asignado_id);
+  const tareasOtros   = lista.filter(t => t.asignado_id && t.asignado_id !== miId);
+
+  let html = '';
+
+  // ── MIS TAREAS ──
+  if (misTareas.length) {
+    html += '<div class="cat-titulo" style="color:#C9A84C">👤 Mis tareas asignadas</div>';
+    html += misTareas.map(t => tarjetaTarea(t, true)).join('');
+  }
+
+  // ── SIN ASIGNAR ──
+  if (sinAsignar.length) {
+    html += '<div class="cat-titulo" style="margin-top:8px">📋 Disponibles — sin asignar</div>';
+    html += sinAsignar.map(t => tarjetaTarea(t, false)).join('');
+  }
+
+  // ── TAREAS DE OTROS (colapsadas) ──
+  if (tareasOtros.length) {
+    const completadasOtros = tareasOtros.filter(t => t.estado === 'completada').length;
+    html += '<div class="cat-titulo" style="margin-top:8px;cursor:pointer" onclick="toggleOtros()">' +
+      '👥 Tareas de compañeros (' + completadasOtros + '/' + tareasOtros.length + ') <span id="otros-arrow">▶</span></div>';
+    html += '<div id="otros-container" style="display:none">' + 
+      tareasOtros.map(t => tarjetaTarea(t, false, true)).join('') + '</div>';
+  }
+
+  html += '<div style="height:20px"></div>';
+  el.innerHTML = html;
+}
+
+function tarjetaTarea(t, esMia, esOtro=false) {
+  const check = t.estado==='completada' ? '✓' : t.estado==='en_progreso' ? '⏳' : '';
+  const borderColor = esMia ? 'border-color:#C9A84C44' : '';
+  const bg = esMia && t.estado !== 'completada' ? 'background:#1A1500' : '';
+  return '<div class="tarea ' + t.estado + '" onclick="abrirTarea(' + t.id + ')" id="tarea-' + t.id + '" style="' + borderColor + ';' + bg + '">' +
+    '<div class="tarea-check">' + check + '</div>' +
+    '<div class="tarea-info">' +
+      '<div class="tarea-titulo">' + t.titulo + '</div>' +
+      (t.descripcion ? '<div class="tarea-desc">' + t.descripcion + '</div>' : '') +
+      (esMia && t.estado === 'pendiente' ? '<div class="tarea-meta" style="color:#C9A84C">📌 Asignada a vos</div>' : '') +
+      (t.asignado_nombre && !esMia ? '<div class="tarea-meta">👤 ' + t.asignado_nombre + '</div>' : '') +
+      (t.completada_at ? '<div class="tarea-meta">✅ ' + (t.empleado_nombre||'—') + ' · ' + new Date(t.completada_at).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}) + '</div>' : '') +
+      (t.notas ? '<div class="tarea-desc" style="color:#C9A84C;margin-top:3px">📝 ' + t.notas + '</div>' : '') +
+    '</div>' +
+  '</div>';
+}
+
+function toggleOtros() {
+  const cont  = document.getElementById('otros-container');
+  const arrow = document.getElementById('otros-arrow');
+  if (!cont) return;
+  const visible = cont.style.display !== 'none';
+  cont.style.display = visible ? 'none' : 'block';
+  if (arrow) arrow.textContent = visible ? '▶' : '▼';
+}
+
+function abrirTarea(id) {
+  const t = tareas.find(x => x.id === id);
+  if (!t) return;
+
+  if (t.estado === 'completada') {
+    if (confirm('¿Desmarcar "' + t.titulo + '" como pendiente?')) desmarcarTarea(id);
+    return;
+  }
+
+  // Si no está asignada → ofrecer tomársela
+  if (!t.asignado_id) {
+    const tomar = confirm('📋 ' + t.titulo + '\n\n¿Te la asignás vos?\n\nOK = asignarme · Cancelar = completar directamente');
+    if (tomar) { asignarseYCompletar(id); return; }
+  }
+
+  tareaSeleccionada = t;
+  $('modal-titulo').textContent = t.titulo;
+  $('modal-notas').value = '';
+  $('modal-completar').classList.add('on');
+}
+
+async function asignarseYCompletar(id) {
+  // Asignar al empleado actual y abrir modal
+  await db.from('tareas').update({
+    asignado_id: empleadoActual.id,
+    asignado_nombre: empleadoActual.nombre,
+    estado: 'en_progreso',
+  }).eq('id', id);
+  await cargarTareas();
+  // Reabrir para completar
+  const t = tareas.find(x => x.id === id);
+  if (t) {
+    tareaSeleccionada = t;
+    $('modal-titulo').textContent = t.titulo;
+    $('modal-notas').value = '';
+    $('modal-completar').classList.add('on');
+  }
+}
+
+async function completarTarea() {
+  if (!tareaSeleccionada) return;
+  const notas = $('modal-notas').value.trim();
+  const { error } = await db.from('tareas').update({
+    estado:         'completada',
+    empleado_id:    empleadoActual.id,
+    empleado_nombre: empleadoActual.nombre,
+    completada_at:  new Date().toISOString(),
+    notas:          notas || null,
+  }).eq('id', tareaSeleccionada.id);
+
+  if (error) { toast('⚠️ Error: ' + error.message); return; }
+  cerrarModal();
+  toast('✅ ' + tareaSeleccionada.titulo);
+  await cargarTareas();
+}
+
+async function desmarcarTarea(id) {
+  await db.from('tareas').update({ estado: 'pendiente', empleado_id: null, empleado_nombre: null, completada_at: null, notas: null }).eq('id', id);
+  await cargarTareas();
+}
+
+function cerrarModal() {
+  $('modal-completar').classList.remove('on');
+  tareaSeleccionada = null;
+}
+
+function salir() {
+  empleadoActual = null;
+  pinActual = '';
+  showScreen('login');
+}
+
+function showScreen(s) {
+  ['login','pin','main'].forEach(id => {
+    const el = $('screen-'+id);
+    el.style.display = 'none';
+    el.style.flexDirection = 'column';
+  });
+  const target = $('screen-'+s);
+  target.style.display = 'flex';
+}
+
+
+
+// ══════════════════════════════════════════════════
+// FICHAJE
+// ══════════════════════════════════════════════════
+let fichajeActual = null;  // { id, entrada }
+let fichajeInterval = null;
+
+async function initFichaje() {
+  // Ver si tiene fichaje abierto hoy
+  const hoy = new Date().toISOString().split('T')[0];
+  const { data } = await db.from('fichajes')
+    .select('*')
+    .eq('empleado_id', empleadoActual.id)
+    .eq('fecha', hoy)
+    .is('salida', null)
+    .single().catch(() => ({data:null}));
+
+  if (data) {
+    fichajeActual = { id: data.id, entrada: new Date(data.entrada) };
+    mostrarFichajeActivo();
+  } else {
+    fichajeActual = null;
+    actualizarBtnFichaje(false);
+  }
+}
+
+function mostrarFichajeActivo() {
+  actualizarBtnFichaje(true);
+  const bar = document.getElementById('fichaje-bar');
+  if (bar) bar.style.display = 'flex';
+  // Timer
+  clearInterval(fichajeInterval);
+  fichajeInterval = setInterval(() => {
+    const diff = Date.now() - fichajeActual.entrada.getTime();
+    const h = Math.floor(diff/3600000);
+    const m = Math.floor((diff%3600000)/60000);
+    const s = Math.floor((diff%60000)/1000);
+    const timerEl = document.getElementById('fichaje-timer');
+    if (timerEl) timerEl.textContent = 
+      String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  }, 1000);
+}
+
+function actualizarBtnFichaje(activo) {
+  const btn = document.getElementById('btn-fichaje');
+  if (!btn) return;
+  if (activo) {
+    btn.textContent    = '⏹ Salida';
+    btn.style.background = '#E53935';
+  } else {
+    btn.textContent    = '⏱ Entrada';
+    btn.style.background = '#43A047';
+  }
+}
+
+async function fichar() {
+  const hoy = new Date().toISOString().split('T')[0];
+  if (!fichajeActual) {
+    // ENTRADA
+    const horaEsperada = empleadoActual.hora_entrada || '08:00';
+    const [hE, mE] = horaEsperada.split(':').map(Number);
+    const ahora    = new Date();
+    const tardanza = Math.max(0, (ahora.getHours()*60 + ahora.getMinutes()) - (hE*60 + mE));
+
+    const { data, error } = await db.from('fichajes').insert({
+      empleado_id:     empleadoActual.id,
+      empleado_nombre: empleadoActual.nombre,
+      fecha:           hoy,
+      entrada:         ahora.toISOString(),
+      turno_esperado:  empleadoActual.turno || 'mañana',
+      tardanza_min:    tardanza,
+    }).select().single();
+
+    if (error) { toast('⚠️ Error: ' + error.message); return; }
+
+    fichajeActual = { id: data.id, entrada: ahora };
+    mostrarFichajeActivo();
+
+    const tardanzaTxt = tardanza > 0 
+      ? ' · ⚠️ ' + tardanza + ' min de tardanza'
+      : ' · ✅ A tiempo';
+    toast('✅ Entrada registrada ' + ahora.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}) + tardanzaTxt, 3500);
+
+  } else {
+    // SALIDA
+    if (!confirm('¿Registrar salida ahora?')) return;
+    const ahora = new Date();
+    const diff  = (ahora - fichajeActual.entrada) / 3600000;
+    const horas = Math.round(diff * 100) / 100;
+
+    const { error } = await db.from('fichajes').update({
+      salida:          ahora.toISOString(),
+      horas_trabajadas: horas,
+    }).eq('id', fichajeActual.id);
+
+    if (error) { toast('⚠️ Error: ' + error.message); return; }
+
+    clearInterval(fichajeInterval);
+    fichajeActual = null;
+    const bar = document.getElementById('fichaje-bar');
+    if (bar) bar.style.display = 'none';
+    actualizarBtnFichaje(false);
+    toast('👋 Salida registrada · ' + horas.toFixed(1) + 'hs trabajadas', 3500);
+  }
+}
+
+// ══════════════════════════════════════════════════
+// MODO TAREAS vs FALTANTES
+// ══════════════════════════════════════════════════
+let modoActual = 'tareas';
+let urgenciaActual = 'normal';
+let faltSearchTimeout = null;
+
+function setModo(btn, modo) {
+  modoActual = modo;
+  document.querySelectorAll('.modo-btn').forEach(b => {
+    b.style.background = 'transparent';
+    b.style.color = '#555';
+    b.style.border = '1.5px solid #222';
+  });
+  btn.style.background = '#C9A84C';
+  btn.style.color = '#0A0A0A';
+  btn.style.border = 'none';
+  ['tareas','faltantes','mermas','stock'].forEach(m => {
+    const el = document.getElementById('modo-'+m);
+    if (el) el.style.display = m === modo ? (m==='tareas'?'block':'flex') : 'none';
+  });
+  if (modo === 'faltantes') cargarFaltantes();
+  if (modo === 'mermas')    cargarMermasEmp();
+  if (modo === 'stock')     cargarStockEmp();
+}
+
+// ── FALTANTES ────────────────────────────────────
+async function cargarFaltantes() {
+  const el = document.getElementById('falt-list');
+  if (!el) return;
+  const hoy = new Date().toISOString().split('T')[0];
+  const { data } = await db.from('faltantes').select('*')
+    .gte('created_at', hoy + 'T00:00:00')
+    .order('created_at', { ascending: false });
+
+  if (!data?.length) {
+    el.innerHTML = `<div style="text-align:center;padding:32px 16px">
+      <div style="font-size:48px;margin-bottom:12px">📦</div>
+      <div style="font-size:13px;color:#555;margin-bottom:16px">No hay faltantes reportados hoy</div>
+      <button onclick="abrirFaltanteManual()" style="padding:10px 20px;background:#C9A84C;border:none;border-radius:10px;font-family:'Nunito';font-size:13px;font-weight:800;color:#0A0A0A;cursor:pointer">+ Reportar faltante</button>
+    </div>`;
+    return;
+  }
+
+  const colores = { normal:'#555', urgente:'#FFB74D', critico:'#EF9A9A' };
+  const labels  = { pendiente:'Pendiente', en_pedido:'En pedido', recibido:'✅ Recibido' };
+
+  el.innerHTML = data.map(f => `
+    <div style="background:#161616;border:1.5px solid ${f.notas?.includes('critico')?'#E5393522':f.notas?.includes('urgente')?'#C9A84C33':'#222'};border-radius:12px;padding:13px;margin-bottom:8px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:800;color:#fff;margin-bottom:2px">${f.producto_nombre}</div>
+          <div style="font-size:11px;color:#555">${f.cantidad} ${f.unidad} · ${f.empleado_nombre||'—'} · ${new Date(f.created_at).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})}</div>
+          ${f.notas ? `<div style="font-size:10px;color:#C9A84C;margin-top:3px">📝 ${f.notas}</div>` : ''}
+        </div>
+        <div style="font-size:9px;font-weight:800;padding:3px 8px;border-radius:20px;flex-shrink:0;background:#1A1A1A;color:${f.estado==='recibido'?'#43A047':f.estado==='en_pedido'?'#64B5F6':'#555'}">${labels[f.estado]||f.estado}</div>
+      </div>
+    </div>`).join('') + '<div style="height:20px"></div>';
+}
+
+async function buscarFaltante(q) {
+  clearTimeout(faltSearchTimeout);
+  const res = document.getElementById('falt-search-result');
+  if (!res) return;
+  if (!q || q.length < 3) { res.style.display = 'none'; return; }
+
+  faltSearchTimeout = setTimeout(async () => {
+    // Buscar por código de barras o nombre
+    const { data } = await db.from('productos').select('id,nombre,cat,cod_barras,precio_costo')
+      .or(`nombre.ilike.%${q}%,cod_barras.eq.${q}`).eq('activo', true).limit(5);
+
+    if (!data?.length) {
+      res.style.display = 'block';
+      res.innerHTML = `<div style="background:#1A1A1A;border-radius:9px;padding:10px 12px;margin-top:6px">
+        <div style="font-size:11px;color:#555;margin-bottom:8px">Sin resultados para "${q}"</div>
+        <button onclick="abrirFaltanteManual('${q.replace(/'/g,"\'")}','')" style="width:100%;padding:9px;background:#C9A84C;border:none;border-radius:8px;font-family:'Nunito';font-size:12px;font-weight:800;color:#0A0A0A;cursor:pointer">+ Reportar "${q}" como faltante</button>
+      </div>`;
+      return;
+    }
+
+    res.style.display = 'block';
+    res.innerHTML = '<div style="background:#1A1A1A;border-radius:9px;overflow:hidden;margin-top:6px">' +
+      data.map(p => `
+        <div onclick="abrirFaltanteManual('${p.nombre.replace(/'/g,"\'")}','${p.cod_barras||''}',${p.id})"
+          style="padding:10px 12px;border-bottom:1px solid #222;cursor:pointer;display:flex;align-items:center;gap:10px">
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:700;color:#fff">${p.nombre}</div>
+            <div style="font-size:10px;color:#555">${p.cat||'—'}</div>
+          </div>
+          <span style="color:#C9A84C;font-size:16px">→</span>
+        </div>`).join('') + '</div>';
+  }, 350);
+}
+
+function abrirFaltanteManual(nombre='', cod='', prodId=null) {
+  document.getElementById('falt-prod-id').value = prodId || '';
+  document.getElementById('falt-nombre').value  = nombre;
+  document.getElementById('falt-cantidad').value = '1';
+  document.getElementById('falt-unidad').value   = 'unidad';
+  document.getElementById('falt-notas').value    = '';
+  document.getElementById('falt-modal-titulo').textContent = nombre ? '📦 ' + nombre : '📦 Reportar faltante';
+  urgenciaActual = 'normal';
+  document.querySelectorAll('.urgencia-btn').forEach(b => {
+    b.style.background = b.dataset.val === 'normal' ? '#C9A84C' : '#1E1E1E';
+    b.style.color      = b.dataset.val === 'normal' ? '#0A0A0A' : '#555';
+    b.style.border     = b.dataset.val === 'normal' ? 'none' : '1.5px solid #222';
+  });
+  // Ocultar resultados de búsqueda
+  const res = document.getElementById('falt-search-result');
+  if (res) res.style.display = 'none';
+  document.getElementById('modal-faltante').classList.add('on');
+}
+
+function setUrgencia(btn) {
+  urgenciaActual = btn.dataset.val;
+  document.querySelectorAll('.urgencia-btn').forEach(b => {
+    const activo = b.dataset.val === urgenciaActual;
+    b.style.background = activo ? '#C9A84C' : '#1E1E1E';
+    b.style.color      = activo ? '#0A0A0A' : '#555';
+    b.style.border     = activo ? 'none' : '1.5px solid #222';
+  });
+}
+
+async function guardarFaltante() {
+  const nombre   = document.getElementById('falt-nombre').value.trim();
+  const cantidad = parseFloat(document.getElementById('falt-cantidad').value) || 1;
+  const unidad   = document.getElementById('falt-unidad').value;
+  const notas    = document.getElementById('falt-notas').value.trim();
+  const prodId   = document.getElementById('falt-prod-id').value || null;
+
+  if (!nombre) { toast('⚠️ Escribí el nombre del producto'); return; }
+
+  const { error } = await db.from('faltantes').insert({
+    producto_id:     prodId ? parseInt(prodId) : null,
+    producto_nombre: nombre,
+    cantidad,
+    unidad,
+    empleado_id:     empleadoActual.id,
+    empleado_nombre: empleadoActual.nombre,
+    estado:          'pendiente',
+    notas:           [urgenciaActual !== 'normal' ? urgenciaActual.toUpperCase() : '', notas].filter(Boolean).join(' — ') || null,
+  });
+
+  if (error) { toast('⚠️ Error: ' + error.message); return; }
+
+  cerrarFaltante();
+  toast('📦 ' + nombre + ' reportado como faltante');
+  document.getElementById('falt-buscar').value = '';
+  cargarFaltantes();
+}
+
+function cerrarFaltante() {
+  document.getElementById('modal-faltante').classList.remove('on');
+}
+
+
+// ══════════════════════════════════════════════════
+// MERMAS — APP EMPLEADOS
+// ══════════════════════════════════════════════════
+let mermaTipoActual = 'vencido';
+let mermaSearchTimeout = null;
+
+function setMermaTipo(btn) {
+  mermaTipoActual = btn.dataset.val;
+  document.querySelectorAll('.merma-tipo-btn').forEach(b => {
+    b.style.background = '#1E1E1E';
+    b.style.color = '#555';
+    b.style.border = '1.5px solid #222';
+  });
+  btn.style.background = '#E53935';
+  btn.style.color = '#fff';
+  btn.style.border = 'none';
+  document.getElementById('merma-tipo').value = mermaTipoActual;
+  // Mostrar fecha vto solo si es vencido
+  const vtoWrap = document.getElementById('merma-vto-wrap');
+  if (vtoWrap) vtoWrap.style.display = mermaTipoActual === 'vencido' ? 'block' : 'none';
+}
+
+function abrirMermaModal() {
+  document.getElementById('merma-buscar').value   = '';
+  document.getElementById('merma-nombre').value   = '';
+  document.getElementById('merma-prod-id').value  = '';
+  document.getElementById('merma-cantidad').value = '1';
+  document.getElementById('merma-notas').value    = '';
+  document.getElementById('merma-search-result').innerHTML = '';
+  document.getElementById('merma-fecha-vto').value = '';
+  document.getElementById('merma-reclamo').checked = false;
+  mermaTipoActual = 'vencido';
+  document.querySelectorAll('.merma-tipo-btn').forEach(b => {
+    const activo = b.dataset.val === 'vencido';
+    b.style.background = activo ? '#E53935' : '#1E1E1E';
+    b.style.color      = activo ? '#fff'    : '#555';
+    b.style.border     = activo ? 'none'    : '1.5px solid #222';
+  });
+  document.getElementById('merma-vto-wrap').style.display = 'block';
+  document.getElementById('modal-merma').classList.add('on');
+}
+
+function cerrarMermaModal() {
+  document.getElementById('modal-merma').classList.remove('on');
+}
+
+async function buscarProdMerma(q) {
+  clearTimeout(mermaSearchTimeout);
+  const res = document.getElementById('merma-search-result');
+  if (!res || !q || q.length < 3) { if(res) res.innerHTML=''; return; }
+  mermaSearchTimeout = setTimeout(async () => {
+    const { data } = await db.from('productos').select('id,nombre,cat,precio_costo,cod_barras')
+      .or('nombre.ilike.%' + q + '%,cod_barras.eq.' + q).limit(5);
+    if (!data?.length) { res.innerHTML='<div style="font-size:11px;color:#555;padding:4px">Sin resultados</div>'; return; }
+    res.innerHTML = '<div style="background:#1A1A1A;border-radius:9px;overflow:hidden" id="merma-result-box"></div>';
+    const box = document.getElementById('merma-result-box');
+    data.forEach(p => {
+      const div = document.createElement('div');
+      div.style.cssText = 'padding:10px 12px;border-bottom:1px solid #222;cursor:pointer;font-size:12px;color:#fff';
+      div.innerHTML = p.nombre + ' <span style="color:#555">— ' + (p.cat||'') + '</span>';
+      div.onclick = () => selProdMerma(p.id, p.nombre, p.precio_costo||0);
+      box.appendChild(div);
+    });
+  }, 350);
+}
+
+function selProdMerma(id, nombreOrEl, costo) {
+  const nombre = typeof nombreOrEl === 'string' ? nombreOrEl : nombreOrEl.dataset?.n || '';
+  document.getElementById('merma-prod-id').value = id;
+  document.getElementById('merma-nombre').value  = nombre;
+  document.getElementById('merma-search-result').innerHTML = '';
+  document.getElementById('merma-buscar').value  = '';
+  document.getElementById('merma-prod-id').dataset.costo = costo;
+}
+
+async function guardarMerma() {
+  const nombre   = document.getElementById('merma-nombre').value.trim();
+  const tipo     = document.getElementById('merma-tipo').value;
+  const cantidad = parseFloat(document.getElementById('merma-cantidad').value) || 1;
+  const unidad   = document.getElementById('merma-unidad').value;
+  const notas    = document.getElementById('merma-notas').value.trim();
+  const fechaVto = document.getElementById('merma-fecha-vto').value || null;
+  const reclamo  = document.getElementById('merma-reclamo').checked;
+  const prodId   = document.getElementById('merma-prod-id').value || null;
+  const costo    = parseFloat(document.getElementById('merma-prod-id').dataset.costo) || 0;
+  const perdida  = cantidad * costo;
+
+  if (!nombre) { toast('⚠️ Buscá o escribí el producto'); return; }
+
+  const { error } = await db.from('mermas').insert({
+    producto_id:      prodId ? parseInt(prodId) : null,
+    producto_nombre:  nombre,
+    tipo, cantidad, unidad,
+    precio_costo:     costo || null,
+    perdida_total:    perdida || null,
+    empleado_id:      empleadoActual.id,
+    empleado_nombre:  empleadoActual.nombre,
+    fecha:            new Date().toISOString().split('T')[0],
+    fecha_vto:        fechaVto,
+    reclamo_proveedor: reclamo,
+    reclamo_estado:   reclamo ? 'pendiente' : null,
+    notas:            notas || null,
+  });
+
+  if (error) { toast('⚠️ Error: ' + error.message); return; }
+  cerrarMermaModal();
+  toast('🗑 Merma registrada' + (reclamo ? ' · Reclamo pendiente' : ''), 3000);
+  cargarMermasEmp();
+}
+
+async function cargarMermasEmp() {
+  const el = document.getElementById('mermas-emp-list');
+  if (!el) return;
+  const hoy = new Date().toISOString().split('T')[0];
+  const { data } = await db.from('mermas').select('*')
+    .gte('created_at', hoy + 'T00:00:00').order('created_at', { ascending: false });
+
+  const TIPOS = { vencido:'📅 Vencido', roto:'💔 Roto', derramado:'💧 Derramado',
+                  robado:'🚨 Robado', devolucion:'↩ Devolución', otro:'❓ Otro' };
+
+  if (!data?.length) {
+    el.innerHTML = '<div style="text-align:center;padding:32px;color:#333;font-size:12px">Sin mermas reportadas hoy 👍</div>';
+    return;
+  }
+  el.innerHTML = data.map(m => '<div style="background:#161616;border:1.5px solid #2A1A1A;border-radius:12px;padding:13px;margin-bottom:8px">' +
+    '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:2px">' + m.producto_nombre + '</div>' +
+        '<div style="font-size:11px;color:#E53935">' + (TIPOS[m.tipo]||m.tipo) + ' · ' + m.cantidad + ' ' + m.unidad + '</div>' +
+        (m.notas ? '<div style="font-size:10px;color:#555;margin-top:3px">📝 ' + m.notas + '</div>' : '') +
+        (m.reclamo_proveedor ? '<div style="font-size:10px;color:#FFB74D;margin-top:3px">⚠️ Reclamo al proveedor pendiente</div>' : '') +
+      '</div>' +
+      '<div style="font-size:10px;color:#555;flex-shrink:0">' + new Date(m.created_at).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}) + '</div>' +
+    '</div>' +
+  '</div>').join('') + '<div style="height:20px"></div>';
+}
+
+
+// ══════════════════════════════════════════════════
+// STOCK Y OBJETIVOS — APP EMPLEADOS
+// ══════════════════════════════════════════════════
+let stockProdActual = null;
+let stockAccionActual = 'pasaje_gondola';
+let stockSearchTimeout = null;
+
+async function cargarStockEmp() {
+  await Promise.all([cargarObjetivoDia(), cargarAlertasStock()]);
+}
+
+async function cargarObjetivoDia() {
+  const hoy = new Date().toISOString().split('T')[0];
+  const { data: obj } = await db.from('objetivos_venta')
+    .select('*').eq('fecha', hoy).eq('tipo','diario').single().catch(()=>({data:null}));
+
+  // Calcular ventas reales del día desde pedidos
+  const { data: peds } = await db.from('pedidos')
+    .select('total').gte('created_at', hoy+'T00:00:00').not('estado','eq','cancelado');
+  const real = (peds||[]).reduce((s,p) => s+(p.total||0), 0);
+
+  const meta = obj?.monto_meta || 0;
+  const pct  = meta > 0 ? Math.min(100, Math.round(real/meta*100)) : 0;
+  const fmtC = n => '$' + Math.round(n).toLocaleString('es-AR');
+
+  const objTxt  = document.getElementById('obj-txt');
+  const objFill = document.getElementById('obj-fill');
+  const objSub  = document.getElementById('obj-sub');
+
+  if (objTxt)  objTxt.textContent  = fmtC(real) + ' / ' + fmtC(meta);
+  if (objFill) {
+    objFill.style.width = pct + '%';
+    objFill.style.background = pct >= 100 ? '#43A047' : pct >= 70 ? '#C9A84C' : '#E53935';
+  }
+  if (objSub) {
+    if (pct >= 100) objSub.textContent = '🎉 ¡Objetivo cumplido!';
+    else if (meta > 0) objSub.textContent = 'Faltan ' + fmtC(meta - real) + ' para el objetivo · ' + pct + '%';
+    else objSub.textContent = 'Sin objetivo configurado para hoy';
+  }
+}
+
+async function cargarAlertasStock() {
+  const el = document.getElementById('stock-emp-list');
+  if (!el) return;
+
+  const { data: alertas } = await db.from('productos')
+    .select('id,nombre,cat,stock_gondola,stock_deposito,stock_minimo_gondola')
+    .eq('activo', true).gt('stock_minimo_gondola', 0).order('stock_gondola');
+
+  const alertasBajas = (alertas||[]).filter(p => p.stock_gondola <= p.stock_minimo_gondola);
+
+  if (!alertasBajas.length) {
+    el.innerHTML = '<div style="text-align:center;padding:32px;color:#333;font-size:12px"><div style="font-size:48px;margin-bottom:12px">✅</div>Todas las góndolas tienen stock suficiente</div>';
+    return;
+  }
+
+  el.innerHTML = '';
+  const header = document.createElement('div');
+  header.style.cssText = 'font-size:10px;font-weight:800;color:#E53935;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px';
+  header.textContent = '⚠️ ' + alertasBajas.length + ' producto' + (alertasBajas.length!==1?'s':'') + ' bajos en góndola';
+  el.appendChild(header);
+
+  alertasBajas.forEach(p => {
+    const tieneDeposito = p.stock_deposito > 0;
+    const card = document.createElement('div');
+    card.style.cssText = 'background:#161616;border:1.5px solid ' + (tieneDeposito?'#C9A84C44':'#E5393533') + ';border-radius:12px;padding:13px;margin-bottom:8px';
+    card.innerHTML = 
+      '<div style="margin-bottom:8px"><div style="font-size:13px;font-weight:700;color:#fff">' + p.nombre + '</div>' +
+      '<div style="font-size:11px;color:#555">' + (p.cat||'—') + '</div></div>' +
+      '<div style="display:flex;gap:8px;margin-bottom:10px">' +
+        '<div style="flex:1;background:#1A1A1A;border-radius:8px;padding:8px;text-align:center"><div style="font-size:18px;font-weight:900;color:#E53935">' + (p.stock_gondola||0) + '</div><div style="font-size:9px;color:#555">🏪 Góndola</div></div>' +
+        '<div style="flex:1;background:#1A1A1A;border-radius:8px;padding:8px;text-align:center"><div style="font-size:18px;font-weight:900;color:' + (tieneDeposito?'#C9A84C':'#333') + '">' + (p.stock_deposito||0) + '</div><div style="font-size:9px;color:#555">📦 Depósito</div></div>' +
+      '</div>';
+    
+    if (tieneDeposito) {
+      const btn = document.createElement('button');
+      btn.textContent = '📦→🏪 Pasar a góndola';
+      btn.style.cssText = 'width:100%;padding:9px;background:#C9A84C;border:none;border-radius:9px;font-size:12px;font-weight:800;color:#0A0A0A;cursor:pointer';
+      btn.onclick = () => abrirStockModal(p.id);
+      card.appendChild(btn);
+    } else {
+      const msg = document.createElement('div');
+      msg.style.cssText = 'padding:8px;background:#1A1A1A;border-radius:9px;font-size:11px;color:#555;text-align:center';
+      msg.textContent = 'Sin stock en depósito — reportar faltante';
+      card.appendChild(msg);
+    }
+    el.appendChild(card);
+  });
+
+  const spacer = document.createElement('div');
+  spacer.style.height = '20px';
+  el.appendChild(spacer);
+}
+
+async function buscarStockEmp(q) {
+  clearTimeout(stockSearchTimeout);
+  const res = document.getElementById('stock-search-result');
+  if (!res) return;
+  if (!q || q.length < 3) { res.innerHTML = ''; return; }
+  stockSearchTimeout = setTimeout(async () => {
+    const { data } = await db.from('productos')
+      .select('id,nombre,cat,stock_gondola,stock_deposito')
+      .or('nombre.ilike.%' + q + '%,cod_barras.eq.' + q)
+      .eq('activo', true).limit(5);
+    if (!data?.length) { res.innerHTML = '<div style="font-size:11px;color:#555;padding:4px">Sin resultados</div>'; return; }
+    const box = document.createElement('div');
+    box.style.cssText = 'background:#1A1A1A;border-radius:9px;overflow:hidden';
+    data.forEach(p => {
+      const div = document.createElement('div');
+      div.style.cssText = 'padding:10px 12px;border-bottom:1px solid #222;cursor:pointer;display:flex;align-items:center;justify-content:space-between';
+      div.innerHTML = '<div><div style="font-size:12px;font-weight:700;color:#fff">' + p.nombre + '</div>' +
+        '<div style="font-size:10px;color:#555">' + (p.cat||'—') + '</div></div>' +
+        '<div style="font-size:11px;color:#555">📦 ' + (p.stock_deposito||0) + ' · 🏪 ' + (p.stock_gondola||0) + '</div>';
+      div.onclick = () => { abrirStockModal(p.id); res.innerHTML = ''; document.getElementById('stock-buscar').value = ''; };
+      box.appendChild(div);
+    });
+    res.innerHTML = '';
+    res.appendChild(box);
+  }, 350);
+}
+
+async function abrirStockModal(prodId) {
+  const { data: p } = await db.from('productos')
+    .select('id,nombre,stock_gondola,stock_deposito,stock_minimo_gondola').eq('id',prodId).single();
+  if (!p) return;
+  stockProdActual = p;
+  document.getElementById('stock-prod-id').value    = p.id;
+  document.getElementById('stock-modal-titulo').textContent = p.nombre;
+  document.getElementById('stock-dep-qty').textContent = p.stock_deposito || 0;
+  document.getElementById('stock-gon-qty').textContent = p.stock_gondola  || 0;
+  document.getElementById('stock-minimo-txt').textContent = p.stock_minimo_gondola > 0 ?
+    'Mínimo góndola: ' + p.stock_minimo_gondola : '';
+  document.getElementById('stock-cantidad').value = '1';
+  document.getElementById('stock-notas').value    = '';
+  stockAccionActual = 'pasaje_gondola';
+  document.querySelectorAll('.stock-accion-btn').forEach(b => {
+    const activo = b.dataset.val === 'pasaje_gondola';
+    b.style.background = activo ? '#C9A84C' : '#1E1E1E';
+    b.style.color      = activo ? '#0A0A0A' : '#555';
+    b.style.border     = activo ? 'none'    : '1.5px solid #222';
+  });
+  document.getElementById('modal-stock').classList.add('on');
+}
+
+function setStockAccion(btn) {
+  stockAccionActual = btn.dataset.val;
+  document.getElementById('stock-accion').value = stockAccionActual;
+  document.querySelectorAll('.stock-accion-btn').forEach(b => {
+    const activo = b.dataset.val === stockAccionActual;
+    b.style.background = activo ? '#C9A84C' : '#1E1E1E';
+    b.style.color      = activo ? '#0A0A0A' : '#555';
+    b.style.border     = activo ? 'none'    : '1.5px solid #222';
+  });
+}
+
+function cerrarStockModal() {
+  document.getElementById('modal-stock').classList.remove('on');
+  stockProdActual = null;
+}
+
+async function guardarMovStock() {
+  const prodId   = document.getElementById('stock-prod-id').value;
+  const accion   = document.getElementById('stock-accion').value;
+  const cantidad = parseFloat(document.getElementById('stock-cantidad').value) || 0;
+  const notas    = document.getElementById('stock-notas').value.trim();
+
+  if (!prodId || !cantidad) { toast('⚠️ Ingresá la cantidad'); return; }
+
+  const { data: prod } = await db.from('productos')
+    .select('stock_deposito,stock_gondola,nombre').eq('id',prodId).single();
+  if (!prod) return;
+
+  let depAntes = prod.stock_deposito || 0;
+  let gonAntes = prod.stock_gondola  || 0;
+  let depDespues = depAntes;
+  let gonDespues = gonAntes;
+
+  if (accion === 'pasaje_gondola') {
+    if (cantidad > depAntes) { toast('⚠️ No hay suficiente stock en depósito'); return; }
+    depDespues = depAntes - cantidad;
+    gonDespues = gonAntes + cantidad;
+  } else if (accion === 'entrada_deposito') {
+    depDespues = depAntes + cantidad;
+  } else if (accion === 'ajuste') {
+    // Ajuste directo — el usuario pone el valor nuevo
+    gonDespues = cantidad;
+  }
+
+  // Actualizar stock
+  const { error } = await db.from('productos').update({
+    stock_deposito: depDespues,
+    stock_gondola:  gonDespues,
+  }).eq('id', prodId);
+
+  if (error) { toast('⚠️ Error: ' + error.message); return; }
+
+  // Registrar movimiento
+  await db.from('movimientos_stock').insert({
+    producto_id:    parseInt(prodId),
+    producto_nombre: prod.nombre,
+    tipo:           accion,
+    cantidad,
+    stock_deposito_antes:   depAntes,
+    stock_gondola_antes:    gonAntes,
+    stock_deposito_despues: depDespues,
+    stock_gondola_despues:  gonDespues,
+    empleado_id:    empleadoActual.id,
+    empleado_nombre: empleadoActual.nombre,
+    notas:          notas || null,
+  });
+
+  const labels = { pasaje_gondola:'✅ Pasado a góndola', entrada_deposito:'✅ Stock cargado al depósito', ajuste:'✅ Stock ajustado' };
+  toast(labels[accion] || '✅ Movimiento registrado');
+  cerrarStockModal();
+  cargarAlertasStock();
+}
+
+// Auto-refresh cada 30 seg
+// Event delegation para botones de stock
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('.stock-pasar-btn');
+  if (btn) abrirStockModal(parseInt(btn.dataset.pid));
+});
+
+setInterval(async () => {
+  if ($('screen-main').style.display !== 'none') {
+    await cargarTareas();
+    if (modoActual === 'stock') cargarObjetivoDia();
+  }
+}, 30000);
+
+init();
+
+
+
+</script>
+</body>
+</html>
