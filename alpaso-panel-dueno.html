@@ -2263,6 +2263,24 @@ async function togglePlantilla(id, cb) {
   toast(cb.checked ? '✅ Plantilla activada' : '⭕ Plantilla desactivada');
 }
 
+async function editarPlantilla(id) {
+  const { data: p } = await db.from('tareas_plantilla').select('*').eq('id',id).single();
+  if (!p) return;
+  $('plantilla-form-titulo').textContent = '✏️ Editar plantilla';
+  $('pt-id').value     = p.id;
+  $('pt-titulo').value = p.titulo || '';
+  $('pt-desc').value   = p.descripcion || '';
+  $('pt-cat').value    = p.categoria || 'apertura';
+  $('pt-turno').value  = p.turno || 'mañana';
+  // Marcar días
+  const dias = (p.dias_semana||'').split(',');
+  document.querySelectorAll('#pt-dias input').forEach(cb => { cb.checked = dias.includes(cb.value); });
+  // Cargar empleados y seleccionar el asignado
+  await cargarEmpSelectPlantilla(p.empleado_asignado_id);
+  $('plantilla-form').style.display = 'block';
+  $('plantilla-form').scrollIntoView({behavior:'smooth'});
+}
+
 async function abrirNuevaPlantilla() {
   $('plantilla-form-titulo').textContent = '➕ Nueva tarea plantilla';
   $('pt-id').value = ''; $('pt-titulo').value = ''; $('pt-desc').value = '';
