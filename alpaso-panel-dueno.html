@@ -379,7 +379,7 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
         <option>Almacén</option><option>Limpieza</option><option>Kiosco</option><option>Panadería</option>
       </select>
     </div>
-    <div style="display:flex;gap:6px;margin-bottom:12px">
+    <div style="display:flex;gap:6px;margin-bottom:8px">
       <select id="prod-filtro-activo" onchange="loadProductos()"
         style="background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:8px 10px;font-family:'Nunito';font-size:12px;color:#fff;outline:none">
         <option value="">Todos</option>
@@ -387,6 +387,10 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
         <option value="false">⭕ Inactivos</option>
       </select>
       <div style="flex:1;background:#1A1A1A;border-radius:9px;padding:8px 12px;font-size:11px;color:#555;display:flex;align-items:center" id="prod-count">—</div>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <button onclick="activarCategoria(true)" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#1A2E1A;color:#81C784;border:1px solid #2A3A2A">✅ Activar categoría</button>
+      <button onclick="activarCategoria(false)" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#2E1A1A;color:#EF9A9A;border:1px solid #3A2A2A">⭕ Desactivar categoría</button>
     </div>
     <div class="card" id="prod-list" style="padding:0 16px"><div class="loading-panel">⏳ Cargando...</div></div>
   </div>
@@ -1535,6 +1539,35 @@ async function guardarProducto() {
   $('scan-cod').value = '';
 
   // Si estaba en la lista, recargarla
+  loadProductos();
+}
+
+
+// ══════════════════════════════════════════════════
+// ACTIVAR / DESACTIVAR CATEGORÍA ENTERA
+// ══════════════════════════════════════════════════
+async function activarCategoria(activo) {
+  const cat = $('prod-cat')?.value || '';
+  const q   = ($('prod-buscar')?.value || '').toLowerCase();
+
+  if (!cat && !q) {
+    const confirmar = confirm(activo 
+      ? '⚠️ Vas a activar TODOS los productos en la app. ¿Confirmar?'
+      : '⚠️ Vas a desactivar TODOS los productos de la app. ¿Confirmar?');
+    if (!confirmar) return;
+  }
+
+  const accion = activo ? 'activar' : 'desactivar';
+  toast('⏳ ' + (activo ? 'Activando' : 'Desactivando') + '...');
+
+  let query = db.from('productos').update({ activo });
+  if (cat) query = query.eq('cat', cat);
+
+  const { error, count } = await query;
+  if (error) { toast('⚠️ Error: ' + error.message); return; }
+
+  const label = cat ? `categoría "${cat}"` : 'todos los productos';
+  toast((activo ? '✅ Activados' : '⭕ Desactivados') + ' — ' + label);
   loadProductos();
 }
 
