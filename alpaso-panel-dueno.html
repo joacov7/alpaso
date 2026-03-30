@@ -163,6 +163,7 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
   <button class="tab"     onclick="tab(this,'carteles')">🖨 Carteles</button>
   <button class="tab"     onclick="tab(this,'precios')">💰 Precios</button>
   <button class="tab"     onclick="tab(this,'ia')">🤖 IA</button>
+  <button class="tab"     onclick="tab(this,'finanzas')">📈 Finanzas</button>
 </div>
 
 <!-- ═══ PEDIDOS ════════════════════════════════════ -->
@@ -1442,11 +1443,185 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
 @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 </style>
 
+<!-- ═══ FINANZAS ════════════════════════════════════ -->
+<div id="tab-finanzas" class="sec" style="display:none">
+
+  <!-- Sub-tabs -->
+  <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+    <button class="fin-stab on" onclick="finSubTab(this,'dashboard')" style="flex:1;min-width:80px;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#C9A84C;color:#0A0A0A;border:none">📊 Dashboard</button>
+    <button class="fin-stab" onclick="finSubTab(this,'pagos')" style="flex:1;min-width:80px;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">💳 Medios de pago</button>
+    <button class="fin-stab" onclick="finSubTab(this,'productos-rent')" style="flex:1;min-width:80px;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">🏆 Rentabilidad</button>
+    <button class="fin-stab" onclick="finSubTab(this,'costos')" style="flex:1;min-width:80px;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">💸 Costos fijos</button>
+    <button class="fin-stab" onclick="finSubTab(this,'empleados-rent')" style="flex:1;min-width:80px;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">👷 Personal</button>
+  </div>
+
+  <!-- DASHBOARD FINANCIERO -->
+  <div id="fin-dashboard">
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <select id="fin-periodo" onchange="loadFinDashboard()"
+        style="flex:1;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
+        <option value="hoy">Hoy</option>
+        <option value="semana">Esta semana</option>
+        <option value="mes">Este mes</option>
+      </select>
+      <button onclick="loadFinDashboard()" style="padding:9px 14px;border-radius:9px;background:#1E1E1E;border:1px solid #2A2A2A;color:#aaa;font-family:'Nunito';font-size:12px;cursor:pointer">🔄</button>
+    </div>
+
+    <!-- Situación general -->
+    <div id="fin-situacion" style="border-radius:12px;padding:16px;margin-bottom:14px;text-align:center">
+      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;color:#555">Situación</div>
+      <div style="font-size:28px;font-weight:900" id="fin-sit-label">—</div>
+      <div style="font-size:13px;margin-top:4px" id="fin-sit-sub">—</div>
+    </div>
+
+    <!-- KPIs principales -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      <div class="kpi" style="padding:12px">
+        <div style="font-size:10px;color:#555;margin-bottom:4px">Ventas brutas</div>
+        <div style="font-size:22px;font-weight:900;color:#fff" id="fin-venta-bruta">—</div>
+      </div>
+      <div class="kpi" style="padding:12px">
+        <div style="font-size:10px;color:#555;margin-bottom:4px">Ganancia neta</div>
+        <div style="font-size:22px;font-weight:900;color:#43A047" id="fin-ganancia">—</div>
+      </div>
+      <div class="kpi" style="padding:12px">
+        <div style="font-size:10px;color:#555;margin-bottom:4px">Comisiones pagadas</div>
+        <div style="font-size:18px;font-weight:800;color:#E53935" id="fin-comisiones">—</div>
+      </div>
+      <div class="kpi" style="padding:12px">
+        <div style="font-size:10px;color:#555;margin-bottom:4px">Costos del día</div>
+        <div style="font-size:18px;font-weight:800;color:#E53935" id="fin-costos-dia">—</div>
+      </div>
+    </div>
+
+    <!-- Punto de equilibrio -->
+    <div class="card" style="background:linear-gradient(135deg,#0A0A1A,#1A1500);border-color:#C9A84C33;margin-bottom:14px">
+      <div class="card-title">🎯 Punto de equilibrio</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div style="text-align:center">
+          <div style="font-size:10px;color:#555;margin-bottom:4px">Necesitás vender por día</div>
+          <div style="font-size:20px;font-weight:900;color:#C9A84C" id="fin-pe-dia">—</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:10px;color:#555;margin-bottom:4px">Estás vendiendo</div>
+          <div style="font-size:20px;font-weight:900;color:#fff" id="fin-actual-dia">—</div>
+        </div>
+      </div>
+      <div style="background:#1A1A1A;border-radius:6px;height:10px;overflow:hidden;margin-bottom:8px">
+        <div id="fin-pe-barra" style="height:100%;background:linear-gradient(90deg,#E53935,#C9A84C,#43A047);width:0%;border-radius:6px;transition:width .6s"></div>
+      </div>
+      <div style="font-size:11px;color:#555;text-align:center" id="fin-pe-txt">—</div>
+    </div>
+
+    <!-- Mix de ventas por medio de pago -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">💳 Mix de medios de pago</div>
+      <div id="fin-mix-pagos"></div>
+    </div>
+
+    <!-- Alerta IA financiera -->
+    <button onclick="analizarFinanzasIA()" class="btn btn-gold btn-full" style="margin-bottom:8px">
+      🤖 Analizar con IA — sugerencias de ganancia
+    </button>
+    <div id="fin-ia-resultado" style="display:none"></div>
+  </div>
+
+  <!-- MEDIOS DE PAGO -->
+  <div id="fin-pagos" style="display:none">
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">💳 Impacto real de las comisiones</div>
+      <div id="fin-comisiones-detalle"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">⚙️ Configurar comisiones</div>
+      <div id="fin-comisiones-config"></div>
+    </div>
+  </div>
+
+  <!-- RENTABILIDAD POR PRODUCTO -->
+  <div id="fin-productos-rent" style="display:none">
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <select id="fin-rent-orden" onchange="loadRentabilidadProductos()"
+        style="flex:1;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 10px;font-family:'Nunito';font-size:12px;color:#fff;outline:none">
+        <option value="margen_desc">Mayor margen %</option>
+        <option value="ganancia_desc">Mayor ganancia $</option>
+        <option value="margen_asc">Menor margen % (subir precio)</option>
+        <option value="sin_costo">Sin costo cargado</option>
+      </select>
+      <select id="fin-rent-cat" onchange="loadRentabilidadProductos()"
+        style="background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 10px;font-family:'Nunito';font-size:12px;color:#fff;outline:none">
+        <option value="">Todas</option>
+        <option>Bebidas</option><option>Lácteos</option><option>Almacén</option>
+        <option>Kiosco</option><option>Limpieza</option><option>Fiambres</option>
+      </select>
+    </div>
+    <div id="fin-rent-list"><div class="loading-panel">⏳</div></div>
+  </div>
+
+  <!-- COSTOS FIJOS -->
+  <div id="fin-costos" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div>
+        <div style="font-size:14px;font-weight:800;color:#fff">Costos fijos mensuales</div>
+        <div style="font-size:11px;color:#555">Todo lo que pagás aunque no vendas nada</div>
+      </div>
+      <button onclick="abrirNuevoCosto()" class="btn btn-gold" style="padding:7px 14px;font-size:12px">+ Agregar</button>
+    </div>
+
+    <!-- Totales -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+      <div class="kpi" style="padding:10px"><div class="kpi-val" style="font-size:18px;color:#E53935" id="costo-total-mes">$0</div><div class="kpi-lbl">Total/mes</div></div>
+      <div class="kpi" style="padding:10px"><div class="kpi-val" style="font-size:18px;color:#E53935" id="costo-total-dia">$0</div><div class="kpi-lbl">Total/día</div></div>
+      <div class="kpi" style="padding:10px"><div class="kpi-val" style="font-size:18px;color:#C9A84C" id="costo-sueldos">$0</div><div class="kpi-lbl">Sueldos</div></div>
+    </div>
+
+    <div class="card" id="costos-list" style="padding:0 14px;margin-bottom:12px"><div class="loading-panel">⏳</div></div>
+
+    <!-- Form nuevo costo -->
+    <div id="costo-form" style="display:none">
+      <div class="card">
+        <div class="card-title" id="costo-form-titulo">➕ Nuevo costo fijo</div>
+        <input type="hidden" id="costo-id">
+        <div class="fg"><label>Nombre</label><input id="costo-nombre" placeholder="Ej: Alquiler local, Sueldo Paola, Luz..."></div>
+        <div class="fg-row">
+          <div class="fg">
+            <label>Categoría</label>
+            <select id="costo-cat" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
+              <option value="alquiler">🏠 Alquiler</option>
+              <option value="servicios">⚡ Servicios</option>
+              <option value="sueldo">👷 Sueldo</option>
+              <option value="impuesto">📋 Impuesto</option>
+              <option value="otro">📦 Otro</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Monto mensual ($)</label>
+            <input id="costo-monto" type="number" placeholder="0" style="font-size:18px;font-weight:800;color:#C9A84C;text-align:center">
+          </div>
+        </div>
+        <div class="fg"><label>Notas (opcional)</label><input id="costo-notas" placeholder="Ej: Vence el 10 de cada mes"></div>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button onclick="guardarCosto()" class="btn btn-gold" style="flex:1;justify-content:center;padding:12px">💾 Guardar</button>
+          <button onclick="$('costo-form').style.display='none'" class="btn btn-ghost" style="padding:12px 16px">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RENTABILIDAD POR EMPLEADO -->
+  <div id="fin-empleados-rent" style="display:none">
+    <div style="font-size:12px;color:#555;margin-bottom:12px">Comparación costo vs aporte de cada empleado al negocio</div>
+    <div id="fin-emp-rent-list"><div class="loading-panel">⏳</div></div>
+  </div>
+
+</div>
+
 </div><!-- /wrap -->
 
 <div class="toast" id="toast"></div>
 
 <script>
+
 
 
 
@@ -1476,7 +1651,7 @@ function toast(msg, dur=2600) {
 function tab(btn, id) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
   btn.classList.add('on');
-  ['alertas','pedidos','carga','dashboard','prediccion','clientes','visual','operaciones','productos','fidelidad','tareas','empleados','compras','caja','fichaje','mermas','stock','objetivos','carteles','precios','ia'].forEach(t => {
+  ['alertas','pedidos','carga','dashboard','prediccion','clientes','visual','operaciones','productos','fidelidad','tareas','empleados','compras','caja','fichaje','mermas','stock','objetivos','carteles','precios','ia','finanzas'].forEach(t => {
     const el = $('tab-'+t); if(el) el.style.display = t === id ? 'block' : 'none';
   });
   if (id === 'alertas')     loadAlertas();
@@ -1500,6 +1675,7 @@ function tab(btn, id) {
   if (id === 'carteles')   loadCarteles();
   if (id === 'precios')    loadPrecios();
   if (id === 'ia')         initIA();
+  if (id === 'finanzas')   loadFinanzas();
 }
 
 // ══════════════════════════════════════════════════
@@ -4375,6 +4551,424 @@ function renderIAHistorial() {
       '<span style="font-size:10px;color:#555">' + h.fecha.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}) + '</span>' +
     '</div>'
   ).join('');
+}
+
+
+
+// ══════════════════════════════════════════════════
+// FINANZAS — MOTOR DE DECISIONES
+// ══════════════════════════════════════════════════
+const fmtM = n => '$' + Math.round(n||0).toLocaleString('es-AR');
+const fmtP = n => (n||0).toFixed(1) + '%';
+
+function finSubTab(btn, id) {
+  document.querySelectorAll('.fin-stab').forEach(b => {
+    b.style.background = '#1E1E1E'; b.style.color = '#aaa'; b.style.border = '1px solid #2A2A2A';
+  });
+  btn.style.background = '#C9A84C'; btn.style.color = '#0A0A0A'; btn.style.border = 'none';
+  ['dashboard','pagos','productos-rent','costos','empleados-rent'].forEach(t => {
+    const el = $('fin-' + t); if (el) el.style.display = t === id ? 'block' : 'none';
+  });
+  if (id === 'dashboard')      loadFinDashboard();
+  if (id === 'pagos')          loadMediosPago();
+  if (id === 'productos-rent') loadRentabilidadProductos();
+  if (id === 'costos')         loadCostosFijos();
+  if (id === 'empleados-rent') loadRentabilidadEmpleados();
+}
+
+function loadFinanzas() { loadFinDashboard(); }
+
+// ── DASHBOARD ─────────────────────────────────────
+async function loadFinDashboard() {
+  const periodo = $('fin-periodo')?.value || 'hoy';
+  const hoy     = new Date().toISOString().split('T')[0];
+  const hace7   = new Date(Date.now()-7*24*60*60*1000).toISOString().split('T')[0];
+  const inicioMes = new Date().getFullYear() + '-' + String(new Date().getMonth()+1).padStart(2,'0') + '-01';
+  const desde   = periodo === 'hoy' ? hoy : periodo === 'semana' ? hace7 : inicioMes;
+  const dias    = periodo === 'hoy' ? 1 : periodo === 'semana' ? 7 : new Date().getDate();
+
+  // Ventas por medio desde movimientos_caja
+  const { data: movs } = await db.from('movimientos_caja')
+    .select('tipo,monto').gte('fecha', desde)
+    .in('tipo',['venta_efectivo','venta_debito','venta_mp','venta_credito']);
+
+  let ef=0, deb=0, mp=0, cred=0;
+  (movs||[]).forEach(m => {
+    if (m.tipo==='venta_efectivo') ef   += m.monto;
+    if (m.tipo==='venta_debito')   deb  += m.monto;
+    if (m.tipo==='venta_mp')       mp   += m.monto;
+    if (m.tipo==='venta_credito')  cred += m.monto;
+  });
+  const bruto = ef + deb + mp + cred;
+
+  // Comisiones
+  const { data: configs } = await db.from('medios_pago_config').select('*');
+  const pctMp   = configs?.find(c=>c.codigo==='mp')?.comision_pct   || 2.99;
+  const pctCred = configs?.find(c=>c.codigo==='credito3')?.comision_pct || 5.5;
+  const comMp   = mp   * pctMp   / 100;
+  const comCred = cred * pctCred / 100;
+  const totalCom = comMp + comCred;
+  const neto    = bruto - totalCom;
+
+  // Costos fijos prorrateados
+  const { data: costos } = await db.from('costos_fijos').select('monto').eq('activo',true);
+  const costoMes = (costos||[]).reduce((s,c)=>s+c.monto,0);
+  const costoDia = costoMes / 30 * dias;
+  const ganancia = neto - costoDia;
+
+  // Punto de equilibrio
+  let peData = null;
+  try { const r = await db.rpc('calcular_punto_equilibrio'); peData = r.data; } catch(e) {}
+
+  // Actualizar UI
+  if($('fin-venta-bruta')) $('fin-venta-bruta').textContent = fmtM(bruto);
+  if($('fin-ganancia'))    { $('fin-ganancia').textContent  = fmtM(ganancia); $('fin-ganancia').style.color = ganancia >= 0 ? '#43A047' : '#E53935'; }
+  if($('fin-comisiones'))  $('fin-comisiones').textContent  = fmtM(totalCom);
+  if($('fin-costos-dia'))  $('fin-costos-dia').textContent  = fmtM(costoDia);
+
+  // Situación
+  const sitEl  = $('fin-situacion');
+  const sitLbl = $('fin-sit-label');
+  const sitSub = $('fin-sit-sub');
+  if (sitEl && sitLbl) {
+    if (bruto === 0) {
+      sitEl.style.background = '#1A1A1A';
+      sitLbl.textContent = '📊 Sin datos'; sitLbl.style.color = '#555';
+      if(sitSub) sitSub.textContent = 'Registrá ventas en Caja para ver el análisis';
+    } else if (ganancia > 0) {
+      sitEl.style.background = 'rgba(67,160,71,.08)';
+      sitLbl.innerHTML = '✅ Ganando ' + fmtM(ganancia); sitLbl.style.color = '#43A047';
+      if(sitSub) { sitSub.textContent = 'Margen neto después de costos y comisiones'; sitSub.style.color = '#81C784'; }
+    } else {
+      sitEl.style.background = 'rgba(229,57,53,.08)';
+      sitLbl.innerHTML = '🔴 Perdiendo ' + fmtM(Math.abs(ganancia)); sitLbl.style.color = '#E53935';
+      if(sitSub) { sitSub.textContent = 'Los costos superan las ventas'; sitSub.style.color = '#EF9A9A'; }
+    }
+  }
+
+  // Punto de equilibrio
+  if (peData) {
+    if($('fin-pe-dia'))     $('fin-pe-dia').textContent     = fmtM(peData.venta_necesaria_dia);
+    if($('fin-actual-dia')) $('fin-actual-dia').textContent = fmtM(peData.venta_actual_dia);
+    const pct = peData.venta_necesaria_dia > 0
+      ? Math.min(100, Math.round(peData.venta_actual_dia / peData.venta_necesaria_dia * 100)) : 0;
+    if($('fin-pe-barra')) $('fin-pe-barra').style.width = pct + '%';
+    if($('fin-pe-txt'))   $('fin-pe-txt').textContent = pct >= 100
+      ? '✅ Cubrís costos — todo lo demás es ganancia'
+      : 'Cubrís el ' + pct + '% de tus costos fijos';
+  }
+
+  // Mix de pagos
+  const mixEl = $('fin-mix-pagos');
+  if (mixEl && bruto > 0) {
+    const items = [
+      { label:'💵 Efectivo', monto:ef,   com:0,        color:'#43A047' },
+      { label:'💳 Débito',   monto:deb,  com:0,        color:'#64B5F6' },
+      { label:'💙 MP/QR',    monto:mp,   com:comMp,    color:'#C9A84C' },
+      { label:'💳 Crédito',  monto:cred, com:comCred,  color:'#FFB74D' },
+    ].filter(i => i.monto > 0);
+
+    mixEl.innerHTML = items.map(it => {
+      const pct    = Math.round(it.monto / bruto * 100);
+      const neto   = it.monto - it.com;
+      const comPct = it.monto > 0 ? (it.com / it.monto * 100).toFixed(2) : 0;
+      return '<div style="margin-bottom:12px">' +
+        '<div style="display:flex;justify-content:space-between;margin-bottom:4px">' +
+          '<span style="font-size:12px;font-weight:700;color:#fff">' + it.label + '</span>' +
+          '<span style="font-size:12px;font-weight:800;color:' + it.color + '">' + fmtM(it.monto) + ' (' + pct + '%)</span>' +
+        '</div>' +
+        '<div style="background:#1A1A1A;border-radius:4px;height:6px;overflow:hidden;margin-bottom:4px">' +
+          '<div style="height:100%;background:' + it.color + ';width:' + pct + '%;border-radius:4px"></div>' +
+        '</div>' +
+        (it.com > 0 ? '<div style="font-size:10px;color:#E53935">📉 Comisión: ' + fmtM(it.com) + ' (' + comPct + '%) · Neto: ' + fmtM(neto) + '</div>' :
+                      '<div style="font-size:10px;color:#43A047">✅ Sin comisión</div>') +
+      '</div>';
+    }).join('');
+  } else if (mixEl) {
+    mixEl.innerHTML = '<div style="color:#555;font-size:12px;text-align:center;padding:12px">Sin ventas registradas en caja para este período</div>';
+  }
+}
+
+// ── MEDIOS DE PAGO ────────────────────────────────
+async function loadMediosPago() {
+  const { data: configs } = await db.from('medios_pago_config').select('*').order('id');
+  const detEl  = $('fin-comisiones-detalle');
+  const confEl = $('fin-comisiones-config');
+  if (!configs?.length) return;
+
+  // Ejemplo con $100.000 de venta
+  const ejemplo = 100000;
+  if (detEl) {
+    detEl.innerHTML = '<div style="font-size:11px;color:#555;margin-bottom:10px">Ejemplo: si vendés ' + fmtM(ejemplo) + ' con cada medio</div>' +
+      configs.filter(c=>c.activo).map(c => {
+        const com   = ejemplo * c.comision_pct / 100;
+        const neto  = ejemplo - com;
+        return '<div style="background:#161616;border:1px solid #222;border-radius:10px;padding:12px;margin-bottom:8px">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
+            '<div style="font-size:13px;font-weight:700;color:#fff">' + c.nombre + '</div>' +
+            '<div style="font-size:11px;font-weight:800;color:' + (c.comision_pct>0?'#E53935':'#43A047') + '">' +
+              (c.comision_pct>0 ? '-' + c.comision_pct + '%' : 'Sin comisión') + '</div>' +
+          '</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;font-size:11px">' +
+            '<div style="background:#1A1A1A;border-radius:7px;padding:7px;text-align:center"><div style="font-weight:800;color:#fff">' + fmtM(ejemplo) + '</div><div style="color:#555;font-size:9px">Vendés</div></div>' +
+            '<div style="background:#1A1A1A;border-radius:7px;padding:7px;text-align:center"><div style="font-weight:800;color:#E53935">-' + fmtM(com) + '</div><div style="color:#555;font-size:9px">Comisión</div></div>' +
+            '<div style="background:#1A1A1A;border-radius:7px;padding:7px;text-align:center"><div style="font-weight:800;color:#43A047">' + fmtM(neto) + '</div><div style="color:#555;font-size:9px">Recibís</div></div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+  }
+
+  if (confEl) {
+    confEl.innerHTML = configs.map(c =>
+      '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1A1A1A">' +
+        '<div style="flex:1;font-size:13px;font-weight:700;color:#fff">' + c.nombre + '</div>' +
+        '<div style="display:flex;align-items:center;gap:6px">' +
+          '<input type="number" value="' + c.comision_pct + '" step="0.1" min="0" max="20" ' +
+            'onchange="actualizarComision(' + c.id + ',this.value)" ' +
+            'style="width:60px;background:#1A1A1A;border:1px solid #333;border-radius:7px;padding:5px 8px;font-family:Nunito;font-size:13px;font-weight:800;color:#C9A84C;outline:none;text-align:center"> %' +
+        '</div>' +
+      '</div>'
+    ).join('') + '<div style="font-size:10px;color:#555;margin-top:8px">Cambiá el % si tu banco o procesador te cobra distinto</div>';
+  }
+}
+
+async function actualizarComision(id, valor) {
+  await db.from('medios_pago_config').update({ comision_pct: parseFloat(valor)||0 }).eq('id',id);
+  toast('✅ Comisión actualizada');
+}
+
+// ── RENTABILIDAD PRODUCTOS ────────────────────────
+async function loadRentabilidadProductos() {
+  const el    = $('fin-rent-list');
+  const orden = $('fin-rent-orden')?.value || 'margen_desc';
+  const cat   = $('fin-rent-cat')?.value   || '';
+  if (!el) return;
+  el.innerHTML = '<div class="loading-panel">⏳</div>';
+
+  let query = db.from('productos')
+    .select('id,nombre,cat,precio_venta,precio_costo,margen_objetivo,stock_gondola')
+    .eq('activo',true).limit(200);
+  if (cat) query = query.eq('cat', cat);
+  if (orden === 'sin_costo') query = query.is('precio_costo', null);
+
+  const { data } = await query;
+  if (!data?.length) { el.innerHTML = '<div class="loading-panel" style="color:#555">Sin resultados</div>'; return; }
+
+  const pctMp = 2.99; // usar configurado en producción
+
+  let prods = data.map(p => {
+    const costo   = p.precio_costo || 0;
+    const venta   = p.precio_venta || 0;
+    const margen  = costo > 0 ? Math.round((venta-costo)/costo*100) : null;
+    const ganBruta = venta - costo;
+    const ganNeta  = ganBruta - (venta * pctMp / 100); // asumiendo mix
+    const margenObj = p.margen_objetivo || 30;
+    const estado   = margen === null ? 'sin_costo' : margen < margenObj * 0.7 ? 'bajo' : margen < margenObj ? 'ok' : 'bueno';
+    return { ...p, margen, ganBruta, ganNeta, estado, margenObj };
+  });
+
+  if (orden === 'margen_desc')   prods = prods.filter(p=>p.margen!==null).sort((a,b)=>b.margen-a.margen);
+  if (orden === 'margen_asc')    prods = prods.filter(p=>p.margen!==null).sort((a,b)=>a.margen-b.margen);
+  if (orden === 'ganancia_desc') prods = prods.filter(p=>p.margen!==null).sort((a,b)=>b.ganBruta-a.ganBruta);
+  if (orden === 'sin_costo')     prods = prods.filter(p=>p.margen===null);
+
+  const ESTADO_COL = { sin_costo:'#555', bajo:'#E53935', ok:'#C9A84C', bueno:'#43A047' };
+  const ESTADO_LBL = { sin_costo:'Sin costo', bajo:'Margen bajo', ok:'OK', bueno:'Bueno' };
+
+  el.innerHTML = prods.slice(0,100).map((p,i) =>
+    '<div style="padding:11px 0;border-bottom:1px solid #1A1A1A;display:flex;align-items:center;gap:10px">' +
+      '<div style="font-size:13px;font-weight:800;color:#555;width:24px;flex-shrink:0">' + (i+1) + '</div>' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-size:12px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p.nombre + '</div>' +
+        '<div style="font-size:10px;color:#555">' + (p.cat||'—') + ' · Venta: ' + fmtM(p.precio_venta) + (p.precio_costo ? ' · Costo: ' + fmtM(p.precio_costo) : '') + '</div>' +
+      '</div>' +
+      '<div style="text-align:right;flex-shrink:0">' +
+        (p.margen !== null ?
+          '<div style="font-size:16px;font-weight:900;color:' + ESTADO_COL[p.estado] + '">' + p.margen + '%</div>' +
+          '<div style="font-size:9px;color:' + ESTADO_COL[p.estado] + '">' + ESTADO_LBL[p.estado] + '</div>' :
+          '<div style="font-size:11px;color:#555">Sin costo</div>') +
+      '</div>' +
+    '</div>'
+  ).join('') + '<div style="height:8px"></div>';
+}
+
+// ── COSTOS FIJOS ──────────────────────────────────
+async function loadCostosFijos() {
+  const el = $('costos-list');
+  if (!el) return;
+  const { data } = await db.from('costos_fijos').select('*').eq('activo',true).order('categoria').order('monto', {ascending:false});
+
+  const total = (data||[]).reduce((s,c)=>s+c.monto,0);
+  const sueldos = (data||[]).filter(c=>c.categoria==='sueldo').reduce((s,c)=>s+c.monto,0);
+  if($('costo-total-mes')) $('costo-total-mes').textContent = fmtM(total);
+  if($('costo-total-dia')) $('costo-total-dia').textContent = fmtM(total/30);
+  if($('costo-sueldos'))   $('costo-sueldos').textContent   = fmtM(sueldos);
+
+  const CAT_IC = { alquiler:'🏠', servicios:'⚡', sueldo:'👷', impuesto:'📋', otro:'📦' };
+  if (!data?.length) {
+    el.innerHTML = '<div style="padding:16px;text-align:center;color:#555;font-size:12px">Sin costos cargados.<br>Agregá tus costos fijos para calcular el punto de equilibrio.</div>';
+    return;
+  }
+  el.innerHTML = data.map(c =>
+    '<div style="padding:11px 0;border-bottom:1px solid #1A1A1A;display:flex;align-items:center;gap:10px">' +
+      '<div style="font-size:18px;flex-shrink:0">' + (CAT_IC[c.categoria]||'📦') + '</div>' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-size:13px;font-weight:700;color:#fff">' + c.nombre + '</div>' +
+        (c.notas ? '<div style="font-size:10px;color:#555">' + c.notas + '</div>' : '') +
+      '</div>' +
+      '<div style="text-align:right;flex-shrink:0">' +
+        '<div style="font-size:15px;font-weight:800;color:#E53935">' + fmtM(c.monto) + '</div>' +
+        '<div style="font-size:9px;color:#555">' + fmtM(c.monto/30) + '/día</div>' +
+      '</div>' +
+      '<button onclick="editarCosto(' + c.id + ')" style="padding:5px 8px;border-radius:7px;background:#1A1A2E;color:#64B5F6;border:1px solid #2A2A3A;font-size:11px;cursor:pointer;flex-shrink:0">✏️</button>' +
+    '</div>'
+  ).join('') + '<div style="height:8px"></div>';
+}
+
+function abrirNuevoCosto() {
+  $('costo-form-titulo').textContent = '➕ Nuevo costo fijo';
+  $('costo-id').value = ''; $('costo-nombre').value = ''; $('costo-monto').value = '';
+  $('costo-cat').value = 'otro'; $('costo-notas').value = '';
+  $('costo-form').style.display = 'block';
+  $('costo-form').scrollIntoView({behavior:'smooth'});
+}
+
+async function editarCosto(id) {
+  const { data: c } = await db.from('costos_fijos').select('*').eq('id',id).single();
+  if (!c) return;
+  $('costo-form-titulo').textContent = '✏️ Editar costo';
+  $('costo-id').value     = c.id;
+  $('costo-nombre').value = c.nombre;
+  $('costo-monto').value  = c.monto;
+  $('costo-cat').value    = c.categoria;
+  $('costo-notas').value  = c.notas || '';
+  $('costo-form').style.display = 'block';
+  $('costo-form').scrollIntoView({behavior:'smooth'});
+}
+
+async function guardarCosto() {
+  const nombre = $('costo-nombre')?.value.trim();
+  const monto  = parseFloat($('costo-monto')?.value) || 0;
+  const cat    = $('costo-cat')?.value || 'otro';
+  const notas  = $('costo-notas')?.value.trim() || null;
+  const id     = $('costo-id')?.value;
+  if (!nombre) { toast('⚠️ Ingresá el nombre'); return; }
+  if (!monto)  { toast('⚠️ Ingresá el monto'); return; }
+  let error;
+  if (id) { ({error} = await db.from('costos_fijos').update({nombre,monto,categoria:cat,notas}).eq('id',id)); }
+  else    { ({error} = await db.from('costos_fijos').insert({nombre,monto,categoria:cat,notas})); }
+  if (error) { toast('⚠️ ' + error.message); return; }
+  toast('✅ Costo guardado');
+  $('costo-form').style.display = 'none';
+  loadCostosFijos();
+}
+
+// ── RENTABILIDAD EMPLEADOS ────────────────────────
+async function loadRentabilidadEmpleados() {
+  const el = $('fin-emp-rent-list');
+  if (!el) return;
+  el.innerHTML = '<div class="loading-panel">⏳</div>';
+
+  const hace30 = new Date(Date.now()-30*24*60*60*1000).toISOString().split('T')[0];
+  const [empsR, costosR, fichajesR] = await Promise.all([
+    db.from('empleados').select('id,nombre,sector,turno').eq('activo',true),
+    db.from('costos_fijos').select('nombre,monto,empleado_id').eq('activo',true).eq('categoria','sueldo'),
+    db.from('fichajes').select('empleado_id,horas_trabajadas,tardanza_min').gte('fecha',hace30),
+  ]);
+
+  const emps     = empsR.data    || [];
+  const costos   = costosR.data  || [];
+  const fichajes = fichajesR.data|| [];
+
+  if (!emps.length) { el.innerHTML = '<div class="loading-panel" style="color:#555">Sin empleados</div>'; return; }
+
+  el.innerHTML = emps.map(e => {
+    const costo   = costos.find(c=>c.empleado_id===e.id)?.monto || 0;
+    const fichs   = fichajes.filter(f=>f.empleado_id===e.id);
+    const horas   = fichs.reduce((s,f)=>s+(f.horas_trabajadas||0),0);
+    const tardanz = fichs.filter(f=>f.tardanza_min>0).length;
+    const costoDia = costo / 30;
+    const costoHora = horas > 0 ? costo / 30 / (horas/fichs.length||8) : null;
+
+    return '<div style="background:#161616;border:1px solid #222;border-radius:12px;padding:14px;margin-bottom:10px">' +
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">' +
+        '<div style="width:40px;height:40px;border-radius:50%;background:#C9A84C22;border:1.5px solid #C9A84C44;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#C9A84C">' + e.nombre.charAt(0) + '</div>' +
+        '<div style="flex:1">' +
+          '<div style="font-size:14px;font-weight:800;color:#fff">' + e.nombre + '</div>' +
+          '<div style="font-size:11px;color:#555">' + (e.sector||'—') + ' · Turno ' + (e.turno||'—') + '</div>' +
+        '</div>' +
+        '<div style="text-align:right">' +
+          '<div style="font-size:16px;font-weight:900;color:' + (costo>0?'#E53935':'#555') + '">' + (costo>0?fmtM(costo):'Sin costo') + '</div>' +
+          '<div style="font-size:9px;color:#555">por mes</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">' +
+        '<div style="background:#1A1A1A;border-radius:8px;padding:8px;text-align:center">' +
+          '<div style="font-size:14px;font-weight:800;color:#C9A84C">' + horas.toFixed(0) + 'hs</div>' +
+          '<div style="font-size:9px;color:#555">Trabajadas/mes</div>' +
+        '</div>' +
+        '<div style="background:#1A1A1A;border-radius:8px;padding:8px;text-align:center">' +
+          '<div style="font-size:14px;font-weight:800;color:' + (tardanz>2?'#E53935':'#43A047') + '">' + tardanz + '</div>' +
+          '<div style="font-size:9px;color:#555">Tardanzas/mes</div>' +
+        '</div>' +
+        '<div style="background:#1A1A1A;border-radius:8px;padding:8px;text-align:center">' +
+          '<div style="font-size:14px;font-weight:800;color:#fff">' + (costoHora ? fmtM(costoHora) : '—') + '</div>' +
+          '<div style="font-size:9px;color:#555">Costo/hora</div>' +
+        '</div>' +
+      '</div>' +
+      (costo === 0 ? '<div style="margin-top:8px;font-size:10px;color:#555;background:#1A1A1A;border-radius:7px;padding:7px;text-align:center">⚠️ Cargá el sueldo en Costos fijos para ver el análisis completo</div>' : '') +
+    '</div>';
+  }).join('');
+}
+
+// ── IA FINANCIERA ─────────────────────────────────
+async function analizarFinanzasIA() {
+  const el = $('fin-ia-resultado');
+  if (!el) return;
+  el.style.display = 'block';
+  el.innerHTML = '<div style="text-align:center;padding:20px;color:#C9A84C;font-size:12px">⏳ Analizando con IA...</div>';
+
+  // Recopilar datos financieros
+  const [costosR, configsR] = await Promise.all([
+    db.from('costos_fijos').select('nombre,monto,categoria').eq('activo',true),
+    db.from('medios_pago_config').select('*'),
+  ]);
+  const costos  = costosR.data  || [];
+  const configs = configsR.data || [];
+  const totalCostos = costos.reduce((s,c)=>s+c.monto,0);
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:800,
+      messages:[{ role:'user', content:
+        'Sos asesor financiero de Al Paso, supermercado de barrio en Argentina. ' +
+        'Analizá datos y devolvé SOLO JSON válido con formato: {"sugerencias":["string"],"alertas":["string"],"conclusion":"string"}. ' +
+        'COSTOS FIJOS total: $' + Math.round(totalCostos).toLocaleString('es-AR') + '/mes. ' +
+        'Detalle: ' + costos.map(function(c){return c.nombre+': $'+Math.round(c.monto).toLocaleString('es-AR');}).join(', ') + '. ' +
+        'MEDIOS DE PAGO: ' + configs.map(function(c){return c.nombre+' '+c.comision_pct+'%';}).join(', ') + '. ' +
+        'CONTEXTO: inflación alta Argentina, supermercado barrio, 6 empleados. ' +
+        'Sugerí cómo aumentar ganancia neta. Específico y accionable. Solo JSON sin markdown.'
+      }]
+    })
+  });
+
+  if (!response.ok) { el.innerHTML = '<div style="color:#E53935;font-size:12px;padding:12px">⚠️ Error al consultar IA</div>'; return; }
+  const data = await response.json();
+  const raw  = (data.content||[]).map(c=>c.text||'').join('');
+  try {
+    const r = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    el.innerHTML =
+      (r.sugerencias?.length ? '<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:800;color:#C9A84C;margin-bottom:6px">💡 SUGERENCIAS</div>' +
+        r.sugerencias.map(s=>'<div style="background:#1A1500;border-radius:8px;padding:9px;margin-bottom:5px;font-size:12px;color:#E8C96A">→ '+s+'</div>').join('') + '</div>' : '') +
+      (r.alertas?.length ? '<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:800;color:#E53935;margin-bottom:6px">🚨 ALERTAS</div>' +
+        r.alertas.map(a=>'<div style="background:#2E1A1A;border-radius:8px;padding:9px;margin-bottom:5px;font-size:12px;color:#EF9A9A">⚠️ '+a+'</div>').join('') + '</div>' : '') +
+      (r.conclusion ? '<div style="background:#161616;border-radius:8px;padding:10px;font-size:12px;color:#aaa;line-height:1.6">📊 '+r.conclusion+'</div>' : '');
+  } catch(e) {
+    el.innerHTML = '<div style="color:#555;font-size:12px;padding:12px">' + raw.substring(0,200) + '</div>';
+  }
 }
 
 
