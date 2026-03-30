@@ -142,6 +142,7 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
 
 <!-- TABS -->
 <div class="tabs" style="flex-wrap:wrap;gap:4px">
+  <button class="tab"     onclick="tab(this,'alertas')">🚨 Alertas</button>
   <button class="tab on"  onclick="tab(this,'pedidos')">📋 Pedidos</button>
   <button class="tab"     onclick="tab(this,'carga')">⚡ Carga</button>
   <button class="tab"     onclick="tab(this,'dashboard')">📊 Stats</button>
@@ -1198,11 +1199,55 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
   </div>
 </div>
 
+<!-- ═══ ALERTAS ════════════════════════════════════ -->
+<div id="tab-alertas" class="sec" style="display:none">
+
+  <!-- Botón análisis manual -->
+  <div style="display:flex;gap:8px;margin-bottom:14px">
+    <button onclick="correrAnalisis()" id="btn-analisis"
+      style="flex:1;padding:11px;background:linear-gradient(135deg,#C9A84C,#E8C96A);border:none;border-radius:10px;font-family:'Nunito';font-size:13px;font-weight:900;color:#0A0A0A;cursor:pointer">
+      ⚡ Correr análisis ahora
+    </button>
+    <button onclick="loadAlertas()" style="padding:11px 14px;background:#1E1E1E;border:1px solid #2A2A2A;border-radius:10px;color:#aaa;font-family:'Nunito';font-size:12px;cursor:pointer">🔄</button>
+  </div>
+
+  <!-- KPIs alertas -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:14px">
+    <div class="kpi" style="padding:8px"><div class="kpi-val" id="al-critica" style="font-size:20px;color:#E53935">0</div><div class="kpi-lbl">Críticas</div></div>
+    <div class="kpi" style="padding:8px"><div class="kpi-val" id="al-alta"    style="font-size:20px;color:#FFB74D">0</div><div class="kpi-lbl">Altas</div></div>
+    <div class="kpi" style="padding:8px"><div class="kpi-val" id="al-media"   style="font-size:20px;color:#C9A84C">0</div><div class="kpi-lbl">Medias</div></div>
+    <div class="kpi" style="padding:8px"><div class="kpi-val" id="al-total"   style="font-size:20px">0</div><div class="kpi-lbl">Total</div></div>
+  </div>
+
+  <!-- Filtros -->
+  <div style="display:flex;gap:6px;margin-bottom:12px">
+    <select id="al-tipo-fil" onchange="loadAlertas()"
+      style="flex:1;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:8px 10px;font-family:'Nunito';font-size:12px;color:#fff;outline:none">
+      <option value="">Todos los tipos</option>
+      <option value="stock">📦 Stock</option>
+      <option value="vencimiento">📅 Vencimientos</option>
+      <option value="precio">💰 Precios</option>
+      <option value="merma">🗑 Mermas</option>
+    </select>
+    <select id="al-prior-fil" onchange="loadAlertas()"
+      style="background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:8px 10px;font-family:'Nunito';font-size:12px;color:#fff;outline:none">
+      <option value="">Todas</option>
+      <option value="critica">🔴 Críticas</option>
+      <option value="alta">🟠 Altas</option>
+      <option value="media">🟡 Medias</option>
+    </select>
+  </div>
+
+  <!-- Lista alertas -->
+  <div id="alertas-list"><div class="loading-panel">⏳ Cargando...</div></div>
+</div>
+
 </div><!-- /wrap -->
 
 <div class="toast" id="toast"></div>
 
 <script>
+
 
 
 
@@ -1228,9 +1273,10 @@ function toast(msg, dur=2600) {
 function tab(btn, id) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
   btn.classList.add('on');
-  ['pedidos','carga','dashboard','prediccion','clientes','visual','operaciones','productos','fidelidad','tareas','empleados','compras','caja','fichaje','mermas','stock','objetivos'].forEach(t => {
+  ['alertas','pedidos','carga','dashboard','prediccion','clientes','visual','operaciones','productos','fidelidad','tareas','empleados','compras','caja','fichaje','mermas','stock','objetivos'].forEach(t => {
     const el = $('tab-'+t); if(el) el.style.display = t === id ? 'block' : 'none';
   });
+  if (id === 'alertas')     loadAlertas();
   if (id === 'pedidos')     loadPedidos();
   if (id === 'carga')       initCargaRapida();
   if (id === 'dashboard')   loadDashboard();
@@ -3515,6 +3561,91 @@ function calcularBilletesCierre() {
   if ($('cierre-billetes-total')) $('cierre-billetes-total').textContent = '$' + total.toLocaleString('es-AR');
   // Volcar en el input de contado
   if ($('caja-contado')) { $('caja-contado').value = total; calcularDiferencia(); }
+}
+
+
+
+// ══════════════════════════════════════════════════
+// ALERTAS DEL SISTEMA
+// ══════════════════════════════════════════════════
+async function loadAlertas() {
+  const el   = $('alertas-list');
+  const tipo = $('al-tipo-fil')?.value  || '';
+  const prio = $('al-prior-fil')?.value || '';
+  if (!el) return;
+  el.innerHTML = '<div class="loading-panel">⏳</div>';
+
+  let query = db.from('alertas_sistema')
+    .select('*').eq('estado','activa').order('prioridad').order('created_at',{ascending:false}).limit(50);
+  if (tipo) query = query.eq('tipo', tipo);
+  if (prio) query = query.eq('prioridad', prio);
+
+  const { data, error } = await query;
+  if (error) { el.innerHTML = '<div class="loading-panel" style="color:#E53935">Error: ' + error.message + '</div>'; return; }
+
+  // KPIs
+  const todas = data || [];
+  if($('al-critica')) $('al-critica').textContent = todas.filter(a=>a.prioridad==='critica').length;
+  if($('al-alta'))    $('al-alta').textContent    = todas.filter(a=>a.prioridad==='alta').length;
+  if($('al-media'))   $('al-media').textContent   = todas.filter(a=>a.prioridad==='media').length;
+  if($('al-total'))   $('al-total').textContent   = todas.length;
+
+  if (!todas.length) {
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:#555"><div style="font-size:48px;margin-bottom:12px">✅</div><div style="font-size:14px;font-weight:700">Sin alertas activas</div><div style="font-size:12px;margin-top:4px">El sistema está OK</div></div>';
+    return;
+  }
+
+  const TIPO_IC  = { stock:'📦', vencimiento:'📅', precio:'💰', merma:'🗑', faltante:'⚠️' };
+  const PRIO_COL = { critica:'#E53935', alta:'#FFB74D', media:'#C9A84C', baja:'#555' };
+  const PRIO_BG  = { critica:'rgba(229,57,53,.08)', alta:'rgba(255,183,77,.06)', media:'rgba(201,168,76,.06)', baja:'transparent' };
+
+  el.innerHTML = todas.map(a => {
+    const datos = a.datos_json || {};
+    const hora  = new Date(a.created_at).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+    return '<div style="background:#161616;border:1px solid #222;border-left:3px solid ' + (PRIO_COL[a.prioridad]||'#333') + ';border-radius:10px;padding:13px;margin-bottom:8px;background:' + (PRIO_BG[a.prioridad]||'transparent') + '">' +
+      '<div style="display:flex;align-items:flex-start;gap:10px">' +
+        '<div style="font-size:20px;flex-shrink:0">' + (TIPO_IC[a.tipo]||'📋') + '</div>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:3px">' + a.descripcion + '</div>' +
+          (a.accion_sugerida ? '<div style="font-size:11px;color:#C9A84C;margin-bottom:6px">👉 ' + a.accion_sugerida + '</div>' : '') +
+          (datos.dias_cobertura > 0 ? '<div style="font-size:10px;color:#555">Cobertura: ' + datos.dias_cobertura + ' días · Stock: ' + datos.stock_total + '</div>' : '') +
+          (datos.dias_para_vencer >= 0 ? '<div style="font-size:10px;color:#555">Vence en ' + datos.dias_para_vencer + ' días · Precio sugerido: $' + (datos.precio_con_descuento||0).toLocaleString('es-AR') + ' (-' + datos.descuento_sugerido + '%)</div>' : '') +
+          '<div style="font-size:10px;color:#333;margin-top:4px">' + hora + '</div>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">' +
+          '<button data-id="' + a.id + '" class="al-resolver-btn" style="padding:4px 8px;border-radius:6px;background:#1A2E1A;color:#81C784;border:1px solid #2A3A2A;font-size:10px;font-weight:700;cursor:pointer">✓</button>' +
+          '<button data-id="' + a.id + '" class="al-ignorar-btn" style="padding:4px 8px;border-radius:6px;background:#1E1E1E;color:#555;border:1px solid #2A2A2A;font-size:10px;cursor:pointer">✕</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+async function correrAnalisis() {
+  const btn = $('btn-analisis');
+  if (btn) { btn.textContent = '⏳ Analizando...'; btn.disabled = true; }
+
+  try {
+    const { data, error } = await db.rpc('correr_analisis_diario');
+    if (error) throw error;
+    toast('✅ Análisis completado · ' + (data?.total_alertas||0) + ' alertas generadas', 3000);
+    loadAlertas();
+  } catch(e) {
+    toast('⚠️ Error: ' + e.message);
+  } finally {
+    if (btn) { btn.textContent = '⚡ Correr análisis ahora'; btn.disabled = false; }
+  }
+}
+
+async function resolverAlerta(id) {
+  await db.from('alertas_sistema').update({ estado:'resuelta', resuelta_at: new Date().toISOString() }).eq('id', id);
+  toast('✅ Alerta resuelta');
+  loadAlertas();
+}
+
+async function ignorarAlerta(id) {
+  await db.from('alertas_sistema').update({ estado:'ignorada' }).eq('id', id);
+  loadAlertas();
 }
 
 
