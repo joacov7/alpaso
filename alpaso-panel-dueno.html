@@ -109,6 +109,11 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
 
 /* LOADING */
 .loading-panel{display:flex;align-items:center;justify-content:center;padding:48px;color:#333;font-size:13px;gap:8px}
+.billete-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #1A1A1A}
+.billete-denom{font-size:13px;font-weight:800;color:#C9A84C;width:70px;flex-shrink:0}
+.billete-input{width:56px;background:#1A1A1A;border:1.5px solid #2A2A2A;border-radius:8px;padding:6px 8px;font-family:'Nunito';font-size:16px;font-weight:900;color:#fff;outline:none;text-align:center}
+.billete-input:focus{border-color:#C9A84C}
+.billete-subtotal{font-size:12px;font-weight:700;color:#555;flex:1;text-align:right}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(201,168,76,.4)}70%{box-shadow:0 0 0 10px rgba(201,168,76,0)}100%{box-shadow:0 0 0 0 rgba(201,168,76,0)}}
 </style>
 </head>
@@ -959,6 +964,17 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
     <div class="card-title">🔒 Cierre de caja</div>
     <div class="fg">
       <label>Efectivo contado físicamente ($)</label>
+      <button onclick="toggleBilletesCierre()" id="btn-billetes-cierre"
+        style="width:100%;padding:10px;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;font-family:'Nunito';font-size:12px;font-weight:800;color:#C9A84C;cursor:pointer;margin-bottom:8px">
+        🪙 Contar por billetes
+      </button>
+      <div id="cierre-billetes-wrap" style="display:none;background:#1A1A1A;border-radius:10px;padding:12px;margin-bottom:10px">
+        <div id="cierre-billetes-filas"></div>
+        <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid #222;margin-top:4px">
+          <span style="font-size:12px;font-weight:800;color:#fff">Total</span>
+          <span style="font-size:18px;font-weight:900;color:#C9A84C" id="cierre-billetes-total">$0</span>
+        </div>
+      </div>
       <input id="caja-contado" type="number" placeholder="0" oninput="calcularDiferencia()"
         style="font-size:20px;font-weight:900;color:#C9A84C;text-align:center">
     </div>
@@ -992,13 +1008,28 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
 
 <!-- MODAL MOVIMIENTO -->
 <div style="position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:flex-end;z-index:200" id="modal-movimiento" onclick="if(event.target===this)cerrarMovimiento()">
-  <div style="background:#161616;border-radius:20px 20px 0 0;padding:24px 20px 32px;width:100%;max-width:680px;margin:0 auto">
+  <div style="background:#161616;border-radius:20px 20px 0 0;padding:24px 20px 32px;width:100%;max-width:680px;margin:0 auto;max-height:90vh;overflow-y:auto">
     <div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:4px" id="mov-titulo">Registrar movimiento</div>
     <div style="font-size:11px;color:#555;margin-bottom:16px" id="mov-subtitulo">—</div>
     <input type="hidden" id="mov-tipo">
-    <div class="fg"><label>Monto ($)</label>
-      <input id="mov-monto" type="number" placeholder="0" style="font-size:24px;font-weight:900;color:#C9A84C;text-align:center">
+
+    <!-- CONTADOR DE BILLETES (solo para efectivo) -->
+    <div id="mov-billetes-wrap" style="display:none;margin-bottom:16px">
+      <div style="font-size:10px;font-weight:800;color:#C9A84C;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Conteo de billetes</div>
+      <div id="billetes-filas"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;margin-top:4px;border-top:2px solid #C9A84C44">
+        <div style="font-size:13px;font-weight:800;color:#fff">Total contado</div>
+        <div style="font-size:24px;font-weight:900;color:#C9A84C" id="billetes-total">$0</div>
+      </div>
     </div>
+
+    <!-- MONTO MANUAL (para otros tipos) -->
+    <div id="mov-monto-wrap">
+      <div class="fg"><label>Monto ($)</label>
+        <input id="mov-monto" type="number" placeholder="0" oninput="sincronizarMonto()" style="font-size:24px;font-weight:900;color:#C9A84C;text-align:center">
+      </div>
+    </div>
+
     <div class="fg"><label>Concepto / Descripción</label>
       <input id="mov-concepto" placeholder="Ej: Compra de bolsas, pan para empanadas...">
     </div>
@@ -1172,6 +1203,7 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
 <div class="toast" id="toast"></div>
 
 <script>
+
 
 
 // ══════════════════════════════════════════════════
@@ -2242,20 +2274,22 @@ async function loadPlantillas() {
   const el = $('plantillas-list');
   if (!el) return;
   const { data } = await db.from('tareas_plantilla').select('*').order('orden');
-  if (!data?.length) { el.innerHTML = '<div class="loading-panel" style="color:#555">Sin plantillas</div>'; return; }
+  if (!data?.length) { el.innerHTML = '<div class="loading-panel" style="color:#555">Sin plantillas. Creá una con el botón + Nueva.</div>'; return; }
   const CAT_EMO = {apertura:'🔑',cierre:'🔒',limpieza:'🧹',stock:'📦',empanadas:'🫓',pedidos:'🛒',atencion:'😊'};
-  el.innerHTML = data.map(p => `
-    <div style="padding:10px 0;border-bottom:1px solid #1A1A1A;display:flex;align-items:center;gap:8px">
-      <span style="font-size:16px">${CAT_EMO[p.categoria]||'📋'}</span>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:12px;font-weight:700;color:${p.activa?'#fff':'#444'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.titulo}</div>
-        <div style="font-size:10px;color:#555">${p.turno||'—'} · ${p.recurrencia||'diaria'}</div>
-      </div>
-      <label class="tog" style="flex-shrink:0">
-        <input type="checkbox" ${p.activa?'checked':''} onchange="togglePlantilla(${p.id},this)">
-        <div class="tog-sl"></div>
-      </label>
-    </div>`).join('') + '<div style="height:8px"></div>';
+  el.innerHTML = data.map(p =>
+    '<div style="padding:10px 0;border-bottom:1px solid #1A1A1A;display:flex;align-items:center;gap:8px">' +
+      '<span style="font-size:16px">' + (CAT_EMO[p.categoria]||'📋') + '</span>' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-size:12px;font-weight:700;color:' + (p.activa?'#fff':'#444') + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p.titulo + '</div>' +
+        '<div style="font-size:10px;color:#555">' + (p.turno||'—') + ' · ' + (p.recurrencia||'diaria') + (p.empleado_asignado_nombre ? ' · 👤 ' + p.empleado_asignado_nombre : '') + '</div>' +
+      '</div>' +
+      '<button onclick="editarPlantilla(' + p.id + ')" style="padding:4px 8px;border-radius:7px;background:#1A1A2E;color:#64B5F6;border:1px solid #2A2A3A;font-family:Nunito;font-size:11px;cursor:pointer;flex-shrink:0">✏️</button>' +
+      '<label class="tog" style="flex-shrink:0">' +
+        '<input type="checkbox" ' + (p.activa?'checked':'') + ' onchange="togglePlantilla(' + p.id + ',this)">' +
+        '<div class="tog-sl"></div>' +
+      '</label>' +
+    '</div>'
+  ).join('') + '<div style="height:8px"></div>';
 }
 
 async function togglePlantilla(id, cb) {
@@ -2884,15 +2918,62 @@ function calcularDiferencia() {
   }
 }
 
+const BILLETES = [20000,10000,2000,1000,500,200,100,50,20,10];
+
 function abrirMovimiento(tipo) {
   const cfg = MOV_CONFIG[tipo] || { label: tipo, sub: '' };
-  $('mov-titulo').textContent    = cfg.label;
-  $('mov-subtitulo').textContent = cfg.sub;
-  $('mov-tipo').value    = tipo;
-  $('mov-monto').value   = '';
-  $('mov-concepto').value = '';
+  $('mov-titulo').textContent     = cfg.label;
+  $('mov-subtitulo').textContent  = cfg.sub;
+  $('mov-tipo').value             = tipo;
+  $('mov-monto').value            = '';
+  $('mov-concepto').value         = '';
+
+  // Mostrar contador de billetes solo para efectivo
+  const esEfectivo = ['venta_efectivo','apertura','egreso','retiro_dueno'].includes(tipo);
+  $('mov-billetes-wrap').style.display = esEfectivo ? 'block' : 'none';
+  $('mov-monto-wrap').style.display    = esEfectivo ? 'none' : 'block';
+
+  if (esEfectivo) {
+    // Armar filas de billetes
+    const container = $('billetes-filas');
+    container.innerHTML = '';
+    BILLETES.forEach(b => {
+      const row = document.createElement('div');
+      row.className = 'billete-row';
+      row.innerHTML =
+        '<div class="billete-denom">$' + b.toLocaleString('es-AR') + '</div>' +
+        '<input type="number" class="billete-input" id="b_' + b + '" value="0" min="0" ' +
+          'oninput="calcularBilletes()">' +
+        '<div class="billete-subtotal" id="bs_' + b + '">$0</div>';
+      container.appendChild(row);
+    });
+    $('billetes-total').textContent = '$0';
+  }
+
   $('modal-movimiento').style.display = 'flex';
-  setTimeout(() => $('mov-monto').focus(), 100);
+  setTimeout(() => {
+    if (esEfectivo) document.getElementById('b_' + BILLETES[0])?.focus();
+    else $('mov-monto').focus();
+  }, 150);
+}
+
+function calcularBilletes() {
+  let total = 0;
+  BILLETES.forEach(b => {
+    const qty = parseInt(document.getElementById('b_'+b)?.value) || 0;
+    const sub = qty * b;
+    total += sub;
+    const subEl = document.getElementById('bs_'+b);
+    if (subEl) subEl.textContent = sub > 0 ? '$' + sub.toLocaleString('es-AR') : '$0';
+    if (subEl) subEl.style.color = sub > 0 ? '#fff' : '#333';
+  });
+  if ($('billetes-total')) $('billetes-total').textContent = '$' + total.toLocaleString('es-AR');
+  // Sincronizar con el campo monto oculto
+  if ($('mov-monto')) $('mov-monto').value = total;
+}
+
+function sincronizarMonto() {
+  // Para tipos no-efectivo, nada que sincronizar
 }
 
 function cerrarMovimiento() {
@@ -3392,6 +3473,50 @@ async function guardarObjetivo() {
   $('obj-form').style.display = 'none';
   loadObjetivos();
 }
+
+
+// ══════════════════════════════════════════════════
+// CONTADOR DE BILLETES — CIERRE
+// ══════════════════════════════════════════════════
+const BILLETES_CIERRE = [20000,10000,2000,1000,500,200,100,50,20,10];
+
+function toggleBilletesCierre() {
+  const wrap = $('cierre-billetes-wrap');
+  if (!wrap) return;
+  const visible = wrap.style.display !== 'none';
+  if (!visible) {
+    // Armar filas
+    const cont = $('cierre-billetes-filas');
+    cont.innerHTML = '';
+    BILLETES_CIERRE.forEach(b => {
+      const row = document.createElement('div');
+      row.className = 'billete-row';
+      row.innerHTML =
+        '<div class="billete-denom">$' + b.toLocaleString('es-AR') + '</div>' +
+        '<input type="number" class="billete-input" id="cb_' + b + '" value="0" min="0" oninput="calcularBilletesCierre()">' +
+        '<div class="billete-subtotal" id="cbs_' + b + '">$0</div>';
+      cont.appendChild(row);
+    });
+    $('cierre-billetes-total').textContent = '$0';
+  }
+  wrap.style.display = visible ? 'none' : 'block';
+  $('btn-billetes-cierre').textContent = visible ? '🪙 Contar por billetes' : '✕ Cerrar contador';
+}
+
+function calcularBilletesCierre() {
+  let total = 0;
+  BILLETES_CIERRE.forEach(b => {
+    const qty = parseInt(document.getElementById('cb_'+b)?.value) || 0;
+    const sub = qty * b;
+    total += sub;
+    const subEl = document.getElementById('cbs_'+b);
+    if (subEl) { subEl.textContent = sub > 0 ? '$'+sub.toLocaleString('es-AR') : '$0'; subEl.style.color = sub > 0 ? '#fff' : '#333'; }
+  });
+  if ($('cierre-billetes-total')) $('cierre-billetes-total').textContent = '$' + total.toLocaleString('es-AR');
+  // Volcar en el input de contado
+  if ($('caja-contado')) { $('caja-contado').value = total; calcularDiferencia(); }
+}
+
 
 </script>
 </body>
