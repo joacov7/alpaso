@@ -2322,72 +2322,36 @@ function actualizarMargenReal() {
 }
 
 async function guardarProducto() {
-  const id = $('scan-id').value;
-  const cantidad = parseInt($('scan-cantidad')?.value || 0);
+  const id      = $('scan-id').value;
+  const nombre  = $('scan-nombre').value.trim();
+  const precio  = parseFloat($('scan-precio').value) || 0;
+  const costo   = parseFloat($('scan-costo').value)  || 0;
+  const margen  = parseFloat($('scan-margen').value) || 30;
+  const cat     = $('scan-cat').value;
+  const activo  = $('scan-activo').checked;
+  const codbar  = $('scan-codbarras').value.trim();
 
-  // 🔹 1. TRAER STOCK ACTUAL
-  let { data: prod } = await supabase
-    .from('productos')
-    .select('stock')
-    .eq('id', id)
-    .single();
+  if (!nombre) { toast('⚠️ Ingresá el nombre'); return; }
+  if (!precio)  { toast('⚠️ Ingresá el precio de venta'); return; }
 
-  let stockActual = prod?.stock || 0;
+  const payload = { nombre, precio_venta: precio, precio_costo: costo || null, margen: margen || null, cat, activo, cod_barras: codbar || null };
 
-  // 🔹 2. SUMAR STOCK
-  let nuevoStock = stockActual + cantidad;
-
-  // 🔹 3. GUARDAR TODO (incluye código de barras)
-  const { error } = await supabase
-    .from('productos')
-    .update({
-      nombre: $('scan-nombre').value,
-      precio: $('scan-precio').value,
-      costo: $('scan-costo').value,
-      categoria: $('scan-cat').value,
-      activo: $('scan-activo').checked,
-      codigo_barras: $('scan-codbarras').value,
-      stock: nuevoStock
-    })
-    .eq('id', id);
-
-  if (!error) {
-    toast('✅ Stock actualizado correctamente');
-    $('scan-form').style.display = 'none';
+  let error;
+  if (id) {
+    ({ error } = await db.from('productos').update(payload).eq('id', id));
   } else {
-    toast('❌ Error al guardar');
-    console.error(error);
-  
-  //const id      = $('scan-id').value;
-  //const nombre  = $('scan-nombre').value.trim();
-  //const precio  = parseFloat($('scan-precio').value) || 0;
-  //const costo   = parseFloat($('scan-costo').value)  || 0;
-  //const margen  = parseFloat($('scan-margen').value) || 30;
-  //const cat     = $('scan-cat').value;
-  //const activo  = $('scan-activo').checked;
-  //const codbar  = $('scan-codbarras').value.trim();
+    ({ error } = await db.from('productos').insert(payload));
+  }
 
-  //if (!nombre) { toast('⚠️ Ingresá el nombre'); return; }
-  //if (!precio)  { toast('⚠️ Ingresá el precio de venta'); return; }
+  if (error) { toast('⚠️ Error: ' + error.message); return; }
 
-  //const payload = { nombre, precio_venta: precio, precio_costo: costo || null, margen: margen || null, cat, activo, cod_barras: codbar || null };
+  toast(id ? '✅ Producto actualizado' : '✅ Producto creado');
+  $('scan-form').style.display = 'none';
+  $('scan-resultado').innerHTML = '';
+  $('scan-cod').value = '';
 
-  //let error;
-  //if (id) {
-  //  ({ error } = await db.from('productos').update(payload).eq('id', id));
-  //} else {
-  //  ({ error } = await db.from('productos').insert(payload));
-  //}
-
-  //if (error) { toast('⚠️ Error: ' + error.message); return; }
-
-  //toast(id ? '✅ Producto actualizado' : '✅ Producto creado');
-  //$('scan-form').style.display = 'none';
-  //$('scan-resultado').innerHTML = '';
-  //$('scan-cod').value = '';
-
-  //// Si estaba en la lista, recargarla
-  //loadProductos();
+  // Si estaba en la lista, recargarla
+  loadProductos();
 }
 
 
