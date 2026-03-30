@@ -162,6 +162,7 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
   <button class="tab"     onclick="tab(this,'objetivos')">🎯 Objetivos</button>
   <button class="tab"     onclick="tab(this,'carteles')">🖨 Carteles</button>
   <button class="tab"     onclick="tab(this,'precios')">💰 Precios</button>
+  <button class="tab"     onclick="tab(this,'ia')">🤖 IA</button>
 </div>
 
 <!-- ═══ PEDIDOS ════════════════════════════════════ -->
@@ -1351,11 +1352,102 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
   <div id="precios-list"><div class="loading-panel">⏳ Ejecutá el análisis para ver sugerencias</div></div>
 </div>
 
+<!-- ═══ IA ══════════════════════════════════════════ -->
+<div id="tab-ia" class="sec" style="display:none">
+
+  <div style="background:linear-gradient(135deg,#0A0A1A,#1A1500);border:1px solid #C9A84C33;border-radius:12px;padding:16px;margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <div style="font-size:24px">🤖</div>
+      <div>
+        <div style="font-size:14px;font-weight:800;color:#fff">Análisis inteligente con IA</div>
+        <div style="font-size:11px;color:#555">Claude analiza tu negocio y sugiere acciones concretas</div>
+      </div>
+    </div>
+    <div style="font-size:10px;color:#C9A84C;background:rgba(201,168,76,.08);border-radius:8px;padding:8px 10px">
+      ⚡ La IA solo sugiere — vos decidís qué hacer
+    </div>
+  </div>
+
+  <!-- Modo de análisis -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+    <button onclick="correrIA('completo')" id="ia-btn-completo"
+      style="padding:12px 8px;background:#1A1500;border:1.5px solid #C9A84C44;border-radius:10px;font-family:'Nunito';font-size:11px;font-weight:800;color:#C9A84C;cursor:pointer;text-align:center">
+      🔍 Análisis completo
+    </button>
+    <button onclick="correrIA('stock')" id="ia-btn-stock"
+      style="padding:12px 8px;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:10px;font-family:'Nunito';font-size:11px;font-weight:800;color:#aaa;cursor:pointer;text-align:center">
+      📦 Solo stock
+    </button>
+    <button onclick="correrIA('precios')" id="ia-btn-precios"
+      style="padding:12px 8px;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:10px;font-family:'Nunito';font-size:11px;font-weight:800;color:#aaa;cursor:pointer;text-align:center">
+      💰 Solo precios
+    </button>
+    <button onclick="correrIA('compras')" id="ia-btn-compras"
+      style="padding:12px 8px;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:10px;font-family:'Nunito';font-size:11px;font-weight:800;color:#aaa;cursor:pointer;text-align:center">
+      🛍️ Sugerir compras
+    </button>
+  </div>
+
+  <!-- Contexto adicional -->
+  <div class="fg" style="margin-bottom:12px">
+    <label>Contexto adicional (opcional)</label>
+    <input id="ia-contexto" placeholder="Ej: Esta semana hay feria, esperamos más ventas de bebidas...">
+  </div>
+
+  <!-- Loading -->
+  <div id="ia-loading" style="display:none;text-align:center;padding:32px">
+    <div style="font-size:32px;margin-bottom:12px;animation:spin 2s linear infinite;display:inline-block">⚙️</div>
+    <div style="font-size:13px;color:#C9A84C;font-weight:700">Analizando tu negocio...</div>
+    <div style="font-size:11px;color:#555;margin-top:4px" id="ia-loading-txt">Recopilando datos</div>
+  </div>
+
+  <!-- Resultado IA -->
+  <div id="ia-resultado" style="display:none">
+
+    <!-- Alertas -->
+    <div id="ia-alertas-wrap" style="display:none;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:800;color:#E53935;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">🚨 Alertas</div>
+      <div id="ia-alertas-list"></div>
+    </div>
+
+    <!-- Recomendaciones -->
+    <div id="ia-recom-wrap" style="display:none;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:800;color:#C9A84C;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">💡 Recomendaciones</div>
+      <div id="ia-recom-list"></div>
+    </div>
+
+    <!-- Acciones -->
+    <div id="ia-acciones-wrap" style="display:none;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:800;color:#43A047;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">⚡ Acciones sugeridas</div>
+      <div id="ia-acciones-list"></div>
+    </div>
+
+    <!-- Resumen -->
+    <div id="ia-resumen-wrap" style="display:none">
+      <div style="font-size:11px;font-weight:800;color:#64B5F6;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">📊 Resumen del análisis</div>
+      <div id="ia-resumen-txt" style="font-size:12px;color:#aaa;line-height:1.7;background:#161616;border-radius:10px;padding:14px"></div>
+    </div>
+
+    <div style="margin-top:12px;font-size:10px;color:#333;text-align:center" id="ia-timestamp"></div>
+  </div>
+
+  <!-- Historial de análisis -->
+  <div id="ia-historial-wrap" style="margin-top:16px;display:none">
+    <div style="font-size:11px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Análisis anteriores</div>
+    <div id="ia-historial-list"></div>
+  </div>
+
+</div>
+<style>
+@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+</style>
+
 </div><!-- /wrap -->
 
 <div class="toast" id="toast"></div>
 
 <script>
+
 
 
 
@@ -1384,7 +1476,7 @@ function toast(msg, dur=2600) {
 function tab(btn, id) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
   btn.classList.add('on');
-  ['alertas','pedidos','carga','dashboard','prediccion','clientes','visual','operaciones','productos','fidelidad','tareas','empleados','compras','caja','fichaje','mermas','stock','objetivos','carteles','precios'].forEach(t => {
+  ['alertas','pedidos','carga','dashboard','prediccion','clientes','visual','operaciones','productos','fidelidad','tareas','empleados','compras','caja','fichaje','mermas','stock','objetivos','carteles','precios','ia'].forEach(t => {
     const el = $('tab-'+t); if(el) el.style.display = t === id ? 'block' : 'none';
   });
   if (id === 'alertas')     loadAlertas();
@@ -1407,6 +1499,7 @@ function tab(btn, id) {
   if (id === 'objetivos')  loadObjetivos();
   if (id === 'carteles')   loadCarteles();
   if (id === 'precios')    loadPrecios();
+  if (id === 'ia')         initIA();
 }
 
 // ══════════════════════════════════════════════════
@@ -4031,6 +4124,230 @@ async function aplicarPrecio(prodId, precioNuevo, alertaId) {
   loadPrecios();
 }
 
+
+
+
+// ══════════════════════════════════════════════════
+// IA — ANÁLISIS INTELIGENTE CON CLAUDE
+// ══════════════════════════════════════════════════
+let iaHistorial = [];
+
+function initIA() {
+  // Mostrar historial si hay
+  if (iaHistorial.length) renderIAHistorial();
+}
+
+async function correrIA(modo) {
+  // UI: loading
+  $('ia-resultado').style.display  = 'none';
+  $('ia-loading').style.display    = 'block';
+  $('ia-loading-txt').textContent  = 'Recopilando datos...';
+
+  try {
+    // ── 1. RECOPILAR DATOS ──────────────────────────
+    const hoy    = new Date().toISOString().split('T')[0];
+    const hace7  = new Date(Date.now()-7*24*60*60*1000).toISOString().split('T')[0];
+    const hace30 = new Date(Date.now()-30*24*60*60*1000).toISOString().split('T')[0];
+
+    $('ia-loading-txt').textContent = 'Cargando ventas...';
+
+    // Ventas últimos 7 días
+    const { data: ventas7 } = await db.from('pedidos')
+      .select('total,created_at').gte('created_at', hace7+'T00:00:00').not('estado','eq','cancelado');
+    const totalVentas7 = (ventas7||[]).reduce((s,p)=>s+(p.total||0),0);
+    const ventasDia    = totalVentas7 / 7;
+
+    // Items más vendidos
+    const { data: topItems } = await db.from('pedido_items')
+      .select('nombre,cantidad,precio').gte('created_at', hace7+'T00:00:00').limit(200);
+    const itemFreq = {};
+    (topItems||[]).forEach(i => { itemFreq[i.nombre] = (itemFreq[i.nombre]||0) + (i.cantidad||1); });
+    const topVendidos = Object.entries(itemFreq).sort((a,b)=>b[1]-a[1]).slice(0,10)
+      .map(([n,q]) => ({ nombre:n, cantidad:q }));
+
+    $('ia-loading-txt').textContent = 'Cargando stock...';
+
+    // Stock crítico
+    let stockData = [];
+    if (modo === 'completo' || modo === 'stock' || modo === 'compras') {
+      const { data: stockCrit } = await db.from('productos')
+        .select('nombre,cat,stock_gondola,stock_deposito,stock_minimo_gondola,precio_venta,precio_costo,margen_objetivo')
+        .eq('activo',true).lt('stock_gondola', 5).order('stock_gondola').limit(20);
+      stockData = stockCrit || [];
+    }
+
+    // Vencimientos próximos
+    $('ia-loading-txt').textContent = 'Cargando vencimientos...';
+    const { data: vtos } = await db.from('lotes_con_estado')
+      .select('producto_nombre,dias_para_vencer,cantidad,descuento_sugerido')
+      .lte('dias_para_vencer',7).gte('dias_para_vencer',0).order('dias_para_vencer').limit(10);
+
+    // Mermas recientes
+    const { data: mermas } = await db.from('mermas')
+      .select('producto_nombre,tipo,cantidad,perdida_total').gte('fecha', hace7).limit(10);
+    const totalMermas = (mermas||[]).reduce((s,m)=>s+(m.perdida_total||0),0);
+
+    // Faltantes pendientes
+    const { data: faltantes } = await db.from('faltantes')
+      .select('producto_nombre,cantidad,notas').eq('estado','pendiente').limit(10);
+
+    // Objetivo del día
+    const { data: obj } = await db.from('objetivos_venta')
+      .select('monto_meta,monto_real').eq('fecha',hoy).single().catch(()=>({data:null}));
+    const pctObjetivo = obj?.monto_meta > 0
+      ? Math.round((obj.monto_real||0)/obj.monto_meta*100) : null;
+
+    // Alertas activas
+    const { data: alertasActivas } = await db.from('alertas_sistema')
+      .select('tipo,prioridad,descripcion,accion_sugerida').eq('estado','activa')
+      .order('prioridad').limit(15);
+
+    // Precios sin margen cargado
+    let preciosData = [];
+    if (modo === 'completo' || modo === 'precios') {
+      const { data: precAlerta } = await db.from('alertas_sistema')
+        .select('producto_nombre,accion_sugerida,datos_json').eq('tipo','precio').eq('estado','activa').limit(10);
+      preciosData = precAlerta || [];
+    }
+
+    // ── 2. CONSTRUIR PROMPT ──────────────────────────
+    $('ia-loading-txt').textContent = 'Consultando a Claude...';
+
+    const contextoExtra = $('ia-contexto')?.value?.trim() || '';
+    const fechaHoy = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+
+    const nl = '\n';
+    const promptParts = [
+      'Sos el analista de negocios del supermercado Al Paso, un mercado de barrio en Argentina.',
+      'Analizá los datos del negocio y devolvé ÚNICAMENTE un JSON válido con este formato exacto, sin texto adicional:',
+      '{"alertas":["string"],"recomendaciones":["string"],"acciones":[{"tipo":"string","descripcion":"string","urgencia":"alta|media|baja","producto":"string|null"}],"resumen":"string"}',
+      'REGLAS: cada item ACCIONABLE y específico. Máximo 5 de cada tipo. Resumen en español argentino, max 3 oraciones. Priorizar urgente. Considerar inflación alta en Argentina.',
+      'DATOS — ' + fechaHoy + ':',
+      'VENTAS 7 DÍAS: Total $' + Math.round(totalVentas7).toLocaleString('es-AR') + ' | Promedio diario $' + Math.round(ventasDia).toLocaleString('es-AR') + (pctObjetivo !== null ? ' | Objetivo hoy ' + pctObjetivo + '%' : ''),
+      'TOP VENDIDOS: ' + topVendidos.slice(0,5).map(function(t){return t.nombre+'('+t.cantidad+'u)';}).join(', '),
+      stockData.length ? 'STOCK CRÍTICO: ' + stockData.map(function(p){return p.nombre+':'+p.stock_gondola+'u góndola/'+( p.stock_deposito||0)+'u depósito';}).join(' | ') : '',
+      (vtos&&vtos.length) ? 'VENCIMIENTOS: ' + vtos.map(function(v){return v.producto_nombre+' en '+v.dias_para_vencer+'d ('+v.cantidad+'u) -'+v.descuento_sugerido+'%';}).join(' | ') : '',
+      (mermas&&mermas.length) ? 'MERMAS SEMANA: ' + mermas.map(function(m){return m.producto_nombre+'('+m.tipo+')';}).join(', ') + ' | Pérdida $' + Math.round(totalMermas).toLocaleString('es-AR') : '',
+      (faltantes&&faltantes.length) ? 'FALTANTES: ' + faltantes.map(function(f){return f.producto_nombre;}).join(', ') : '',
+      preciosData.length ? 'ALERTAS PRECIO: ' + preciosData.map(function(p){return p.producto_nombre+': '+p.accion_sugerida;}).join(' | ') : '',
+      (alertasActivas&&alertasActivas.length) ? 'ALERTAS SISTEMA: ' + alertasActivas.map(function(a){return '['+a.prioridad+'] '+a.descripcion;}).join(' | ') : '',
+      contextoExtra ? 'CONTEXTO DUEÑO: ' + contextoExtra : '',
+      'Respondé SOLO el JSON sin markdown.'
+    ];
+    const prompt = promptParts.filter(function(p){return p;}).join(nl);
+
+    // ── 3. LLAMAR A CLAUDE API ───────────────────────
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!response.ok) throw new Error('Error API: ' + response.status);
+    const apiData = await response.json();
+    const rawText = (apiData.content||[]).map(c=>c.text||'').join('');
+
+    // ── 4. PARSEAR RESPUESTA ─────────────────────────
+    let resultado;
+    try {
+      const clean = rawText.replace(/```json|```/g,'').trim();
+      resultado = JSON.parse(clean);
+    } catch(e) {
+      throw new Error('La IA devolvió una respuesta inesperada. Intentá de nuevo.');
+    }
+
+    // ── 5. MOSTRAR RESULTADOS ────────────────────────
+    $('ia-loading').style.display = 'none';
+    renderIAResultado(resultado, modo);
+
+    // Guardar en historial
+    iaHistorial.unshift({ fecha: new Date(), modo, resultado });
+    if (iaHistorial.length > 5) iaHistorial.pop();
+
+  } catch(e) {
+    $('ia-loading').style.display = 'none';
+    toast('⚠️ ' + e.message, 5000);
+    console.error('IA error:', e);
+  }
+}
+
+function renderIAResultado(r, modo) {
+  $('ia-resultado').style.display = 'block';
+
+  const MODOS = { completo:'Análisis completo', stock:'Stock', precios:'Precios', compras:'Compras' };
+
+  // Alertas
+  const alertas = r.alertas || [];
+  const alertasWrap = $('ia-alertas-wrap');
+  const alertasList = $('ia-alertas-list');
+  if (alertas.length && alertasWrap && alertasList) {
+    alertasWrap.style.display = 'block';
+    alertasList.innerHTML = alertas.map(a =>
+      '<div style="background:#2E1A1A;border:1px solid #E5393544;border-radius:9px;padding:11px;margin-bottom:6px;font-size:12px;color:#EF9A9A;line-height:1.5">🚨 ' + a + '</div>'
+    ).join('');
+  } else if (alertasWrap) alertasWrap.style.display = 'none';
+
+  // Recomendaciones
+  const recom = r.recomendaciones || [];
+  const recomWrap = $('ia-recom-wrap');
+  const recomList = $('ia-recom-list');
+  if (recom.length && recomWrap && recomList) {
+    recomWrap.style.display = 'block';
+    recomList.innerHTML = recom.map(rc =>
+      '<div style="background:#1A1500;border:1px solid #C9A84C33;border-radius:9px;padding:11px;margin-bottom:6px;font-size:12px;color:#E8C96A;line-height:1.5">💡 ' + rc + '</div>'
+    ).join('');
+  } else if (recomWrap) recomWrap.style.display = 'none';
+
+  // Acciones
+  const acciones = r.acciones || [];
+  const accionesWrap = $('ia-acciones-wrap');
+  const accionesList = $('ia-acciones-list');
+  if (acciones.length && accionesWrap && accionesList) {
+    accionesWrap.style.display = 'block';
+    const URGCOL = { alta:'#E53935', media:'#C9A84C', baja:'#43A047' };
+    accionesList.innerHTML = acciones.map(a =>
+      '<div style="background:#161616;border:1px solid #1A2E1A;border-left:3px solid ' + (URGCOL[a.urgencia]||'#43A047') + ';border-radius:9px;padding:11px;margin-bottom:6px">' +
+        '<div style="font-size:12px;font-weight:700;color:#fff;margin-bottom:3px">⚡ ' + a.descripcion + '</div>' +
+        '<div style="display:flex;gap:8px;font-size:10px;color:#555">' +
+          '<span>' + (a.tipo||'') + '</span>' +
+          (a.producto ? '<span>· ' + a.producto + '</span>' : '') +
+          '<span style="color:' + (URGCOL[a.urgencia]||'#555') + ';font-weight:700;margin-left:auto">' + (a.urgencia||'').toUpperCase() + '</span>' +
+        '</div>' +
+      '</div>'
+    ).join('');
+  } else if (accionesWrap) accionesWrap.style.display = 'none';
+
+  // Resumen
+  const resumenWrap = $('ia-resumen-wrap');
+  const resumenTxt  = $('ia-resumen-txt');
+  if (r.resumen && resumenWrap && resumenTxt) {
+    resumenWrap.style.display = 'block';
+    resumenTxt.textContent = r.resumen;
+  } else if (resumenWrap) resumenWrap.style.display = 'none';
+
+  // Timestamp
+  const ts = $('ia-timestamp');
+  if (ts) ts.textContent = 'Análisis: ' + MODOS[modo] + ' · ' + new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+}
+
+function renderIAHistorial() {
+  const wrap = $('ia-historial-wrap');
+  const list = $('ia-historial-list');
+  if (!wrap || !list || !iaHistorial.length) return;
+  wrap.style.display = 'block';
+  const MODOS = { completo:'🔍 Completo', stock:'📦 Stock', precios:'💰 Precios', compras:'🛍️ Compras' };
+  list.innerHTML = iaHistorial.map((h,i) =>
+    '<div onclick="renderIAResultado(iaHistorial[' + i + '].resultado,iaHistorial[' + i + '].modo)" ' +
+      'style="background:#161616;border:1px solid #222;border-radius:8px;padding:10px 12px;margin-bottom:6px;cursor:pointer;display:flex;align-items:center;justify-content:space-between">' +
+      '<span style="font-size:12px;color:#aaa">' + (MODOS[h.modo]||h.modo) + '</span>' +
+      '<span style="font-size:10px;color:#555">' + h.fecha.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}) + '</span>' +
+    '</div>'
+  ).join('');
+}
 
 
 </script>
