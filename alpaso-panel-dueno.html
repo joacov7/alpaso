@@ -1629,6 +1629,7 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
 
 
 
+
 // ══════════════════════════════════════════════════
 // SUPABASE
 // ══════════════════════════════════════════════════
@@ -4969,6 +4970,167 @@ async function analizarFinanzasIA() {
   } catch(e) {
     el.innerHTML = '<div style="color:#555;font-size:12px;padding:12px">' + raw.substring(0,200) + '</div>';
   }
+}
+
+
+
+// ══════════════════════════════════════════════════
+// LOTES / VENCIMIENTOS
+// ══════════════════════════════════════════════════
+let loteBuscarTimeout = null;
+
+function mermaSubTab(btn, id) {
+  document.querySelectorAll('.merma-stab').forEach(b => {
+    b.style.background = '#1E1E1E'; b.style.color = '#aaa'; b.style.border = '1px solid #2A2A2A';
+  });
+  btn.style.background = '#C9A84C'; btn.style.color = '#0A0A0A'; btn.style.border = 'none';
+  const pm = $('mermas-panel-mermas');
+  const pl = $('mermas-panel-lotes');
+  if (pm) pm.style.display = id === 'mermas' ? 'block' : 'none';
+  if (pl) pl.style.display = id === 'lotes'  ? 'block' : 'none';
+  if (id === 'mermas') loadMermas();
+  if (id === 'lotes')  loadLotes();
+}
+
+async function loadLotes() {
+  const el     = $('lotes-list');
+  const filtro = $('lote-filtro')?.value || '';
+  if (!el) return;
+  el.innerHTML = '<div class="loading-panel">⏳</div>';
+
+  let query = db.from('lotes_con_estado').select('*').order('dias_para_vencer');
+  if (filtro === 'urgente') query = query.lte('dias_para_vencer', 3).gte('dias_para_vencer', 0);
+  if (filtro === 'proximo') query = query.lte('dias_para_vencer', 7).gte('dias_para_vencer', 0);
+  if (filtro === 'ok')      query = query.gt('dias_para_vencer', 7);
+
+  const { data, error } = await query;
+  if (error) { el.innerHTML = '<div class="loading-panel" style="color:#E53935">Error: ' + error.message + '</div>'; return; }
+  if (!data?.length) { el.innerHTML = '<div class="loading-panel" style="color:#555">Sin lotes activos</div>'; return; }
+
+  const PRIO_COL = { critica:'#E53935', alta:'#FFB74D', media:'#C9A84C', normal:'#555' };
+
+  el.innerHTML = data.map(l => {
+    const color = PRIO_COL[l.prioridad] || '#555';
+    const fecha = new Date(l.fecha_vto + 'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'});
+    return '<div style="background:#161616;border:1px solid #222;border-left:3px solid ' + color + ';border-radius:10px;padding:13px;margin-bottom:8px">' +
+      '<div style="display:flex;align-items:flex-start;gap:10px">' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:2px">' + l.producto_nombre + '</div>' +
+          '<div style="font-size:11px;color:#555">' + l.cantidad + ' ' + (l.estado||'') + ' · Vto: ' + fecha + '</div>' +
+          (l.dias_para_vencer >= 0 ?
+            '<div style="font-size:11px;font-weight:700;color:' + color + ';margin-top:3px">' +
+              (l.dias_para_vencer === 0 ? '🔴 Vence HOY' :
+               l.dias_para_vencer === 1 ? '🔴 Vence MAÑANA' :
+               '📅 Vence en ' + l.dias_para_vencer + ' días') +
+              (l.descuento_sugerido > 0 ? ' — sugerir -' + l.descuento_sugerido + '%' : '') +
+            '</div>' : '<div style="font-size:11px;color:#E53935">⚠️ VENCIDO hace ' + Math.abs(l.dias_para_vencer) + ' días</div>') +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">' +
+          (l.descuento_sugerido > 0 ?
+          '<button data-pid="' + l.producto_id + '" data-precio="' + (l.precio_venta||0) + '" data-desc="' + l.descuento_sugerido + '" data-nombre="' + (l.producto_nombre||'').replace(/"/g,'&quot;') + '" class="vto-cartel-btn" style="padding:5px 8px;border-radius:7px;background:#E5393522;color:#EF9A9A;border:1px solid #E5393544;font-size:10px;font-weight:700;cursor:pointer">🖨 Cartel</button>' +
+              'style="padding:5px 8px;border-radius:7px;background:#E5393522;color:#EF9A9A;border:1px solid #E5393544;font-family:Nunito;font-size:10px;font-weight:700;cursor:pointer">🖨 Cartel</button>' : '') +
+          '<button onclick="cerrarLote(' + l.id + ')" style="padding:5px 8px;border-radius:7px;background:#1A1A1A;color:#555;border:1px solid #222;font-family:Nunito;font-size:10px;cursor:pointer">✓ Cerrar</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('') + '<div style="height:8px"></div>';
+}
+
+async function abrirNuevoLote() {
+  $('lote-form-titulo').textContent = '➕ Nuevo lote';
+  $('lote-id').value = ''; $('lote-prod-id').value = ''; $('lote-prod-nombre').value = '';
+  $('lote-buscar').value = ''; $('lote-cantidad').value = ''; $('lote-precio-compra').value = '';
+  $('lote-notas').value = ''; $('lote-fecha-vto').value = ''; $('lote-dias-hint').textContent = '';
+  $('lote-unidad').value = 'unidad'; $('lote-buscar-result').innerHTML = '';
+
+  // Cargar proveedores
+  const { data: provs } = await db.from('proveedores').select('id,nombre').eq('activo',true).order('nombre');
+  const sel = $('lote-proveedor');
+  if (sel) sel.innerHTML = '<option value="">Sin proveedor</option>' +
+    (provs||[]).map(p => '<option value="' + p.id + '">' + p.nombre + '</option>').join('');
+
+  $('lote-form').style.display = 'block';
+  $('lote-form').scrollIntoView({behavior:'smooth'});
+}
+
+async function buscarProdLote(q) {
+  clearTimeout(loteBuscarTimeout);
+  const res = $('lote-buscar-result');
+  if (!res || !q || q.length < 3) { if(res) res.innerHTML = ''; return; }
+  loteBuscarTimeout = setTimeout(async () => {
+    const { data } = await db.from('productos').select('id,nombre,cat,precio_venta')
+      .or('nombre.ilike.%' + q + '%,cod_barras.ilike.%' + q + '%').eq('activo',true).limit(6);
+    if (!data?.length) { res.innerHTML = '<div style="font-size:11px;color:#555">Sin resultados</div>'; return; }
+    const box = document.createElement('div');
+    box.style.cssText = 'background:#1A1A1A;border-radius:9px;overflow:hidden';
+    data.forEach(p => {
+      const div = document.createElement('div');
+      div.style.cssText = 'padding:9px 12px;border-bottom:1px solid #222;cursor:pointer;display:flex;justify-content:space-between';
+      div.innerHTML = '<span style="font-size:12px;font-weight:700;color:#fff">' + p.nombre + '</span><span style="font-size:11px;color:#555">' + (p.cat||'') + '</span>';
+      div.onclick = () => {
+        $('lote-prod-id').value     = p.id;
+        $('lote-prod-nombre').value = p.nombre;
+        $('lote-buscar').value      = '';
+        res.innerHTML = '';
+      };
+      box.appendChild(div);
+    });
+    res.innerHTML = ''; res.appendChild(box);
+  }, 350);
+}
+
+// Actualizar hint de días al cambiar fecha
+document.addEventListener('change', function(e) {
+  if (e.target.id === 'lote-fecha-vto') {
+    const dias = Math.ceil((new Date(e.target.value) - new Date()) / 86400000);
+    const hint = $('lote-dias-hint');
+    if (hint) {
+      hint.textContent = dias > 0 ? 'Vence en ' + dias + ' días' : dias === 0 ? '⚠️ Vence hoy' : '🔴 Ya venció';
+      hint.style.color = dias > 7 ? '#43A047' : dias > 3 ? '#C9A84C' : '#E53935';
+    }
+  }
+});
+
+async function guardarLote() {
+  const prodId    = $('lote-prod-id')?.value;
+  const prodNom   = $('lote-prod-nombre')?.value.trim();
+  const cantidad  = parseFloat($('lote-cantidad')?.value) || 0;
+  const fechaVto  = $('lote-fecha-vto')?.value;
+  const unidad    = $('lote-unidad')?.value || 'unidad';
+  const precCompra= parseFloat($('lote-precio-compra')?.value) || null;
+  const provId    = $('lote-proveedor')?.value || null;
+  const notas     = $('lote-notas')?.value.trim() || null;
+  const id        = $('lote-id')?.value;
+
+  if (!prodNom) { toast('⚠️ Seleccioná un producto'); return; }
+  if (!cantidad) { toast('⚠️ Ingresá la cantidad'); return; }
+  if (!fechaVto) { toast('⚠️ Ingresá la fecha de vencimiento'); return; }
+
+  const payload = {
+    producto_id:    prodId ? parseInt(prodId) : null,
+    producto_nombre: prodNom,
+    cantidad, fecha_vto: fechaVto,
+    estado: 'activo',
+    proveedor_id:  provId ? parseInt(provId) : null,
+    precio_compra: precCompra,
+    notas,
+  };
+
+  let error;
+  if (id) { ({error} = await db.from('lotes').update(payload).eq('id',id)); }
+  else    { ({error} = await db.from('lotes').insert(payload)); }
+
+  if (error) { toast('⚠️ Error: ' + error.message); return; }
+  toast('✅ Lote guardado');
+  $('lote-form').style.display = 'none';
+  loadLotes();
+}
+
+async function cerrarLote(id) {
+  if (!confirm('¿Marcar este lote como vendido/cerrado?')) return;
+  await db.from('lotes').update({estado:'vendido'}).eq('id',id);
+  toast('✅ Lote cerrado');
+  loadLotes();
 }
 
 
