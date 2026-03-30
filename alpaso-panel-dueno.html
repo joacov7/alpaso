@@ -3586,20 +3586,25 @@ async function loadStockPanel() {
   if (!el) return;
   el.innerHTML = '<div class="loading-panel">⏳</div>';
 
-  let query = db.from('productos').select('id,nombre,cat,precio_venta,precio_costo,stock_gondola,stock_deposito,stock_minimo_gondola,activo')
-    .eq('activo',true).order('nombre').limit(100);
+  // Construir query con filtros server-side para no limitarse a 100
+  let query = db.from('productos').select('id,nombre,cat,precio_venta,precio_costo,stock_gondola,stock_deposito,stock_minimo_gondola,activo', { count: 'exact' })
+    .eq('activo',true).order('nombre');
   if (cat) query = query.eq('cat', cat);
+  if (q)   query = query.ilike('nombre', '%' + q + '%');
+  // Filtros de stock server-side
+  if (fil === 'alerta')      { query = query.gt('stock_minimo_gondola', 0); }
+  if (fil === 'sin_gondola') { query = query.lte('stock_gondola', 0); }
+  if (fil === 'deposito_ok') { query = query.gt('stock_deposito', 0); }
+  query = query.limit(200);
 
-  const { data, error } = await query;
-  if (error) { el.innerHTML = '<div class="loading-panel" style="color:#E53935">Error</div>'; return; }
+  const { data, error, count } = await query;
+  if (error) { el.innerHTML = '<div class="loading-panel" style="color:#E53935">Error: ' + error.message + '</div>'; return; }
 
   let prods = data || [];
-  if (q)   prods = prods.filter(p => p.nombre.toLowerCase().includes(q));
-  if (fil === 'alerta')     prods = prods.filter(p => p.stock_minimo_gondola > 0 && p.stock_gondola <= p.stock_minimo_gondola);
-  if (fil === 'sin_gondola') prods = prods.filter(p => p.stock_gondola <= 0);
-  if (fil === 'deposito_ok') prods = prods.filter(p => p.stock_deposito > 0);
+  // Filtro alerta también en cliente (necesita ambas condiciones)
+  if (fil === 'alerta') prods = prods.filter(p => p.stock_gondola <= p.stock_minimo_gondola);
 
-  if (!prods.length) { el.innerHTML = '<div class="loading-panel" style="color:#555">Sin resultados</div>'; return; }
+  if (!prods.length) { el.innerHTML = '<div class="loading-panel" style="color:#555">Sin resultados — probá cambiar los filtros</div>'; return; }
 
   el.innerHTML = prods.map(p => {
     const alerta = p.stock_minimo_gondola > 0 && p.stock_gondola <= p.stock_minimo_gondola;
