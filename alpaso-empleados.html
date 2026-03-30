@@ -1069,7 +1069,7 @@ async function buscarProdMerma(q) {
   if (!res || !q || q.length < 3) { if(res) res.innerHTML=''; return; }
   mermaSearchTimeout = setTimeout(async () => {
     const { data } = await db.from('productos').select('id,nombre,cat,precio_costo,cod_barras')
-      .or('nombre.ilike.%' + q + '%,cod_barras.eq.' + q).limit(5);
+      .or('nombre.ilike.%' + q + '%,cod_barras.ilike.%' + q + '%').limit(5);
     if (!data?.length) { res.innerHTML='<div style="font-size:11px;color:#555;padding:4px">Sin resultados</div>'; return; }
     res.innerHTML = '<div style="background:#1A1A1A;border-radius:9px;overflow:hidden" id="merma-result-box"></div>';
     const box = document.getElementById('merma-result-box');
@@ -1257,7 +1257,7 @@ async function buscarStockEmp(q) {
   stockSearchTimeout = setTimeout(async () => {
     const { data } = await db.from('productos')
       .select('id,nombre,cat,stock_gondola,stock_deposito')
-      .or('nombre.ilike.%' + q + '%,cod_barras.eq.' + q)
+      .or('nombre.ilike.%' + q + '%,cod_barras.ilike.%' + q + '%')
       .eq('activo', true).limit(5);
     if (!data?.length) { res.innerHTML = '<div style="font-size:11px;color:#555;padding:4px">Sin resultados</div>'; return; }
     const box = document.createElement('div');

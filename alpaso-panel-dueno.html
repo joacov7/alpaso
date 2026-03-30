@@ -1506,8 +1506,8 @@ function tab(btn, id) {
 // ESTADO LOCAL
 // ══════════════════════════════════════════════════
 async function loadEstado() {
-  const { data } = await db.from('configuracion').select('clave,valor')
-    .eq('clave','acepta_pedidos').single().catch(() => ({data:null}));
+  let data = null;
+  try { const _re = await db.from('configuracion').select('clave,valor').eq('clave','acepta_pedidos').single(); data = _re.data; } catch(e) {}
   const acepta = !data || data.valor !== 'false';
   $('tog-acepta').checked = acepta;
   updateEstadoUI(acepta);
@@ -2238,9 +2238,20 @@ let scanTimeout = null;
 
 async function buscarPorCodigo(cod) {
   clearTimeout(scanTimeout);
-  if (!cod || cod.length < 4) { $('scan-resultado').innerHTML = ''; $('scan-form').style.display='none'; return; }
+  if (!cod || cod.length < 3) { $('scan-resultado').innerHTML = ''; $('scan-form').style.display='none'; return; }
   scanTimeout = setTimeout(async () => {
-    const { data } = await db.from('productos').select('*').eq('cod_barras', cod).limit(1);
+    // Buscar por código exacto, también por nombre si es texto
+    const codLimpio = cod.trim();
+    let data = null;
+    // 1. Intento por código de barras exacto
+    const r1 = await db.from('productos').select('*').eq('cod_barras', codLimpio).limit(1);
+    if (r1.data?.length) {
+      data = r1.data;
+    } else {
+      // 2. Buscar ignorando ceros iniciales y espacios (ilike)
+      const r2 = await db.from('productos').select('*').ilike('cod_barras', '%' + codLimpio + '%').limit(3);
+      if (r2.data?.length) data = r2.data;
+    }
     const res = $('scan-resultado');
     if (data?.length) {
       const p = data[0];
@@ -3117,8 +3128,8 @@ async function loadCaja() {
   if($('cierre-esperado'))   $('cierre-esperado').textContent   = fmtC(efectEsperado);
 
   // Estado
-  const { data: cierre } = await db.from('cierres_caja')
-    .select('*').eq('caja_id', cajaId).eq('fecha', fecha).single().catch(()=>({data:null}));
+  let cierre = null;
+  try { const _rc = await db.from('cierres_caja').select('*').eq('caja_id', cajaId).eq('fecha', fecha).single(); cierre = _rc.data; } catch(e) {}
   const estadoTxt = $('caja-estado-txt');
   const cierreFrm = $('caja-cierre-form');
   if (cierre?.estado === 'cerrada') {
@@ -3557,7 +3568,8 @@ async function exportarMermasWsp() {
     (perdida > 0 ? '\uD83D\uDCB8 P\u00e9rdida estimada: $' + Math.round(perdida).toLocaleString('es-AR') + nl : '') +
     data.filter(m=>m.reclamo_proveedor).length + ' reclamos pendientes al proveedor';
 
-  const wsp = (await db.from('configuracion').select('valor').eq('clave','local_wsp').single().catch(()=>({data:null}))).data?.valor || '';
+  let wsp = '';
+  try { const _rw = await db.from('configuracion').select('valor').eq('clave','local_wsp').single(); wsp = _rw.data?.valor || ''; } catch(e) {}
   if (wsp) window.open('https://wa.me/' + wsp.replace(/\D/g,'') + '?text=' + encodeURIComponent(msg), '_blank');
   else { navigator.clipboard?.writeText(msg); toast('📋 Reporte copiado'); }
 }
@@ -3643,8 +3655,8 @@ async function loadObjetivos() {
   const hoy = new Date().toISOString().split('T')[0];
 
   // Objetivo de hoy
-  const { data: obj } = await db.from('objetivos_venta')
-    .select('*').eq('fecha',hoy).eq('tipo','diario').single().catch(()=>({data:null}));
+  let obj = null;
+  try { const _ro = await db.from('objetivos_venta').select('*').eq('fecha',hoy).eq('tipo','diario').single(); obj = _ro.data; } catch(e) {}
 
   // Ventas reales de hoy
   const { data: peds } = await db.from('pedidos')
@@ -3694,8 +3706,8 @@ async function loadObjetivos() {
 
 async function editarObjetivoDia() {
   const hoy = new Date().toISOString().split('T')[0];
-  const { data: obj } = await db.from('objetivos_venta')
-    .select('*').eq('fecha',hoy).eq('tipo','diario').single().catch(()=>({data:null}));
+  let obj = null;
+  try { const _ro2 = await db.from('objetivos_venta').select('*').eq('fecha',hoy).eq('tipo','diario').single(); obj = _ro2.data; } catch(e) {}
   $('obj-id').value    = obj?.id || '';
   $('obj-meta').value  = obj?.monto_meta || '';
   $('obj-fecha').value = hoy;
@@ -3886,7 +3898,7 @@ async function buscarProdCartel(q) {
   cartelBuscarTimeout = setTimeout(async () => {
     const { data } = await db.from('productos')
       .select('id,nombre,precio_venta,precio_costo,cat')
-      .or('nombre.ilike.%' + q + '%,cod_barras.eq.' + q)
+      .or('nombre.ilike.%' + q + '%,cod_barras.ilike.%' + q + '%')
       .eq('activo', true).limit(6);
     if (!data?.length) { res.innerHTML = '<div style="font-size:11px;color:#555">Sin resultados</div>'; return; }
     const box = document.createElement('div');
@@ -4192,8 +4204,8 @@ async function correrIA(modo) {
       .select('producto_nombre,cantidad,notas').eq('estado','pendiente').limit(10);
 
     // Objetivo del día
-    const { data: obj } = await db.from('objetivos_venta')
-      .select('monto_meta,monto_real').eq('fecha',hoy).single().catch(()=>({data:null}));
+    let obj = null;
+    try { const _roi = await db.from('objetivos_venta').select('monto_meta,monto_real').eq('fecha',hoy).single(); obj = _roi.data; } catch(e) {}
     const pctObjetivo = obj?.monto_meta > 0
       ? Math.round((obj.monto_real||0)/obj.monto_meta*100) : null;
 
