@@ -3292,7 +3292,11 @@ async function cerrarCaja() {
   const efectEsperado = fondoAp + ventaEf - egresos - retiros;
   const diferencia    = contado - efectEsperado;
 
-  const { error } = await db.from('cierres_caja').upsert({
+  // Verificar si ya existe un cierre para hoy
+  const { data: cierreExist } = await db.from('cierres_caja')
+    .select('id').eq('caja_id', cajaId).eq('fecha', fecha).limit(1);
+
+  const cierrePayload = {
     caja_id: cajaId, caja_nombre: cajaNom, fecha,
     fondo_apertura: fondoAp,
     ventas_efectivo: ventaEf, ventas_debito: ventaDeb, ventas_mp: ventaMp,
@@ -3303,7 +3307,14 @@ async function cerrarCaja() {
     diferencia, deposito,
     estado: 'cerrada', notas,
     cerrada_at: new Date().toISOString(),
-  }, { onConflict: 'caja_id,fecha' });
+  };
+
+  let error;
+  if (cierreExist?.length) {
+    ({ error } = await db.from('cierres_caja').update(cierrePayload).eq('id', cierreExist[0].id));
+  } else {
+    ({ error } = await db.from('cierres_caja').insert(cierrePayload));
+  }
 
   if (error) { toast('⚠️ Error: ' + error.message); return; }
 
