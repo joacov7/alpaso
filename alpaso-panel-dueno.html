@@ -160,6 +160,8 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
   <button class="tab"     onclick="tab(this,'mermas')">🗑 Mermas</button>
   <button class="tab"     onclick="tab(this,'stock')">📊 Stock</button>
   <button class="tab"     onclick="tab(this,'objetivos')">🎯 Objetivos</button>
+  <button class="tab"     onclick="tab(this,'carteles')">🖨 Carteles</button>
+  <button class="tab"     onclick="tab(this,'precios')">💰 Precios</button>
 </div>
 
 <!-- ═══ PEDIDOS ════════════════════════════════════ -->
@@ -1242,11 +1244,120 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
   <div id="alertas-list"><div class="loading-panel">⏳ Cargando...</div></div>
 </div>
 
+<!-- ═══ CARTELES ═══════════════════════════════════ -->
+<div id="tab-carteles" class="sec" style="display:none">
+  <div class="sec-title">Generador de carteles</div>
+
+  <!-- Sub-tabs -->
+  <div style="display:flex;gap:6px;margin-bottom:14px">
+    <button class="cart-stab on" onclick="cartelSubTab(this,'nuevo')" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#C9A84C;color:#0A0A0A;border:none">✏️ Crear</button>
+    <button class="cart-stab" onclick="cartelSubTab(this,'pendientes')" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">🖨 Pendientes</button>
+    <button class="cart-stab" onclick="cartelSubTab(this,'alertas-vto')" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">📅 Vencimientos</button>
+  </div>
+
+  <!-- CREAR CARTEL -->
+  <div id="carteles-nuevo">
+    <div class="card">
+      <div class="card-title">✏️ Nuevo cartel</div>
+      <div class="fg">
+        <label>Buscar producto</label>
+        <input id="cartel-buscar" placeholder="Nombre o código de barra..." oninput="buscarProdCartel(this.value)">
+        <div id="cartel-buscar-result" style="margin-top:6px"></div>
+      </div>
+      <input type="hidden" id="cartel-prod-id">
+
+      <div class="fg">
+        <label>Tipo de cartel</label>
+        <select id="cartel-tipo" onchange="actualizarPreviewCartel()"
+          style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
+          <option value="oferta">🟡 Oferta / Descuento</option>
+          <option value="vencimiento">🔴 Vencimiento próximo</option>
+          <option value="precio_nuevo">🟢 Precio nuevo</option>
+          <option value="combo">🔵 Combo</option>
+          <option value="manual">⚪ Manual</option>
+        </select>
+      </div>
+
+      <div class="fg-row">
+        <div class="fg">
+          <label>Precio anterior ($)</label>
+          <input id="cartel-precio-ant" type="number" placeholder="0" oninput="calcularDescCartel()">
+        </div>
+        <div class="fg">
+          <label>Precio nuevo ($)</label>
+          <input id="cartel-precio-nvo" type="number" placeholder="0" oninput="calcularDescCartel()">
+        </div>
+      </div>
+
+      <div class="fg">
+        <label>Descuento % <span id="cartel-desc-calc" style="color:#C9A84C;font-size:12px"></span></label>
+        <input id="cartel-desc-pct" type="number" placeholder="0" oninput="calcularPrecioCartel()">
+      </div>
+
+      <div class="fg">
+        <label>Texto extra (opcional)</label>
+        <input id="cartel-texto" placeholder="Ej: ¡Solo por hoy! · Por unidad · Lote limitado">
+      </div>
+
+      <button onclick="previsualizarCartel()" class="btn btn-gold btn-full" style="margin-bottom:8px">👁 Previsualizar cartel</button>
+    </div>
+
+    <!-- Preview -->
+    <div id="cartel-preview-wrap" style="display:none">
+      <div style="font-size:11px;font-weight:800;color:#C9A84C;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Vista previa</div>
+      <div id="cartel-preview" style="border:2px solid #2A2A2A;border-radius:12px;overflow:hidden;margin-bottom:12px"></div>
+      <div style="display:flex;gap:8px">
+        <button onclick="imprimirCartel()" class="btn btn-gold" style="flex:1;justify-content:center;padding:12px">🖨 Imprimir</button>
+        <button onclick="guardarCartel()" class="btn btn-ghost" style="flex:1;justify-content:center;padding:12px">💾 Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PENDIENTES -->
+  <div id="carteles-pendientes" style="display:none">
+    <div id="carteles-pendientes-list"><div class="loading-panel">⏳</div></div>
+  </div>
+
+  <!-- VENCIMIENTOS -->
+  <div id="carteles-alertas-vto" style="display:none">
+    <div style="font-size:12px;color:#555;margin-bottom:12px">Carteles sugeridos automáticamente por vencimientos próximos</div>
+    <div id="carteles-vto-list"><div class="loading-panel">⏳</div></div>
+  </div>
+</div>
+
+<!-- ═══ PRECIOS INTELIGENTES ════════════════════════ -->
+<div id="tab-precios" class="sec" style="display:none">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+    <div class="sec-title" style="margin:0">Sugerencias de precio</div>
+    <button onclick="analizarPrecios()" style="padding:7px 14px;border-radius:9px;background:#C9A84C;border:none;color:#0A0A0A;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer">⚡ Analizar</button>
+  </div>
+  <div style="font-size:11px;color:#555;margin-bottom:12px">Solo sugerencias — vos decidís si aplicarlas</div>
+
+  <div class="fg-row" style="margin-bottom:12px">
+    <select id="prec-filtro" onchange="loadPrecios()"
+      style="background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 10px;font-family:'Nunito';font-size:12px;color:#fff;outline:none">
+      <option value="">Todas las sugerencias</option>
+      <option value="subir_precio">📈 Subir precio</option>
+      <option value="bajar_precio">📉 Bajar precio</option>
+    </select>
+    <select id="prec-cat" onchange="loadPrecios()"
+      style="background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 10px;font-family:'Nunito';font-size:12px;color:#fff;outline:none">
+      <option value="">Todas las categorías</option>
+      <option>Bebidas</option><option>Lácteos</option><option>Almacén</option>
+      <option>Kiosco</option><option>Limpieza</option><option>Fiambres</option>
+    </select>
+  </div>
+
+  <div id="precios-list"><div class="loading-panel">⏳ Ejecutá el análisis para ver sugerencias</div></div>
+</div>
+
 </div><!-- /wrap -->
 
 <div class="toast" id="toast"></div>
 
 <script>
+
+
 
 
 
@@ -1273,7 +1384,7 @@ function toast(msg, dur=2600) {
 function tab(btn, id) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
   btn.classList.add('on');
-  ['alertas','pedidos','carga','dashboard','prediccion','clientes','visual','operaciones','productos','fidelidad','tareas','empleados','compras','caja','fichaje','mermas','stock','objetivos'].forEach(t => {
+  ['alertas','pedidos','carga','dashboard','prediccion','clientes','visual','operaciones','productos','fidelidad','tareas','empleados','compras','caja','fichaje','mermas','stock','objetivos','carteles','precios'].forEach(t => {
     const el = $('tab-'+t); if(el) el.style.display = t === id ? 'block' : 'none';
   });
   if (id === 'alertas')     loadAlertas();
@@ -1294,6 +1405,8 @@ function tab(btn, id) {
   if (id === 'mermas')     loadMermas();
   if (id === 'stock')      loadStockPanel();
   if (id === 'objetivos')  loadObjetivos();
+  if (id === 'carteles')   loadCarteles();
+  if (id === 'precios')    loadPrecios();
 }
 
 // ══════════════════════════════════════════════════
@@ -3647,6 +3760,277 @@ async function ignorarAlerta(id) {
   await db.from('alertas_sistema').update({ estado:'ignorada' }).eq('id', id);
   loadAlertas();
 }
+
+
+
+// ══════════════════════════════════════════════════
+// CARTELES
+// ══════════════════════════════════════════════════
+let cartelProdActual = null;
+let cartelBuscarTimeout = null;
+
+function cartelSubTab(btn, id) {
+  document.querySelectorAll('.cart-stab').forEach(b => {
+    b.style.background = '#1E1E1E'; b.style.color = '#aaa'; b.style.border = '1px solid #2A2A2A';
+  });
+  btn.style.background = '#C9A84C'; btn.style.color = '#0A0A0A'; btn.style.border = 'none';
+  ['nuevo','pendientes','alertas-vto'].forEach(t => {
+    const el = $('carteles-' + t);
+    if (el) el.style.display = t === id ? 'block' : 'none';
+  });
+  if (id === 'pendientes')  loadCartelesPendientes();
+  if (id === 'alertas-vto') loadCartelesVto();
+}
+
+function loadCarteles() {
+  loadCartelesPendientes();
+}
+
+async function buscarProdCartel(q) {
+  clearTimeout(cartelBuscarTimeout);
+  const res = $('cartel-buscar-result');
+  if (!res || !q || q.length < 3) { if(res) res.innerHTML = ''; return; }
+  cartelBuscarTimeout = setTimeout(async () => {
+    const { data } = await db.from('productos')
+      .select('id,nombre,precio_venta,precio_costo,cat')
+      .or('nombre.ilike.%' + q + '%,cod_barras.eq.' + q)
+      .eq('activo', true).limit(6);
+    if (!data?.length) { res.innerHTML = '<div style="font-size:11px;color:#555">Sin resultados</div>'; return; }
+    const box = document.createElement('div');
+    box.style.cssText = 'background:#1A1A1A;border-radius:9px;overflow:hidden';
+    data.forEach(p => {
+      const div = document.createElement('div');
+      div.style.cssText = 'padding:9px 12px;border-bottom:1px solid #222;cursor:pointer;display:flex;justify-content:space-between;align-items:center';
+      div.innerHTML = '<div><div style="font-size:12px;font-weight:700;color:#fff">' + p.nombre + '</div><div style="font-size:10px;color:#555">' + p.cat + '</div></div>' +
+        '<div style="font-size:13px;font-weight:800;color:#C9A84C">$' + Math.round(p.precio_venta).toLocaleString('es-AR') + '</div>';
+      div.onclick = () => {
+        cartelProdActual = p;
+        $('cartel-prod-id').value     = p.id;
+        $('cartel-buscar').value      = p.nombre;
+        $('cartel-precio-ant').value  = p.precio_venta;
+        $('cartel-precio-nvo').value  = '';
+        $('cartel-desc-pct').value    = '';
+        $('cartel-desc-calc').textContent = '';
+        res.innerHTML = '';
+      };
+      box.appendChild(div);
+    });
+    res.innerHTML = ''; res.appendChild(box);
+  }, 350);
+}
+
+function calcularDescCartel() {
+  const ant = parseFloat($('cartel-precio-ant')?.value) || 0;
+  const nvo = parseFloat($('cartel-precio-nvo')?.value) || 0;
+  if (ant > 0 && nvo > 0 && nvo < ant) {
+    const pct = Math.round((ant - nvo) / ant * 100);
+    if ($('cartel-desc-pct')) $('cartel-desc-pct').value = pct;
+    if ($('cartel-desc-calc')) $('cartel-desc-calc').textContent = '= ' + pct + '% OFF';
+  }
+}
+
+function calcularPrecioCartel() {
+  const ant = parseFloat($('cartel-precio-ant')?.value) || 0;
+  const pct = parseFloat($('cartel-desc-pct')?.value)  || 0;
+  if (ant > 0 && pct > 0) {
+    const nvo = Math.round(ant * (1 - pct/100));
+    if ($('cartel-precio-nvo')) $('cartel-precio-nvo').value = nvo;
+    if ($('cartel-desc-calc')) $('cartel-desc-calc').textContent = '→ $' + nvo.toLocaleString('es-AR');
+  }
+}
+
+function previsualizarCartel() {
+  const nombre  = cartelProdActual?.nombre || $('cartel-buscar')?.value || 'Producto';
+  const tipo    = $('cartel-tipo')?.value  || 'oferta';
+  const precAnt = parseFloat($('cartel-precio-ant')?.value) || 0;
+  const precNvo = parseFloat($('cartel-precio-nvo')?.value) || 0;
+  const descPct = parseFloat($('cartel-desc-pct')?.value)   || 0;
+  const texto   = $('cartel-texto')?.value || '';
+
+  const COLORES = {
+    oferta:      { bg:'#E53935', txt:'#fff',     accent:'#FFD600' },
+    vencimiento: { bg:'#B71C1C', txt:'#fff',     accent:'#FF8A65' },
+    precio_nuevo:{ bg:'#1B5E20', txt:'#fff',     accent:'#A5D6A7' },
+    combo:       { bg:'#1A237E', txt:'#fff',     accent:'#90CAF9' },
+    manual:      { bg:'#1A1A1A', txt:'#fff',     accent:'#C9A84C' },
+  };
+  const col = COLORES[tipo] || COLORES.manual;
+
+  const html = '<div style="background:' + col.bg + ';padding:24px 20px;font-family:Nunito,sans-serif;min-height:200px;position:relative;text-align:center" id="cartel-imprimible">' +
+    '<div style="font-size:11px;font-weight:900;letter-spacing:3px;color:' + col.accent + ';text-transform:uppercase;margin-bottom:8px">' +
+      (tipo==='vencimiento'?'⚡ LIQUIDACIÓN':tipo==='precio_nuevo'?'✅ PRECIO NUEVO':tipo==='combo'?'🔥 COMBO':tipo==='oferta'?'🏷 OFERTA':'📋 AL PASO') +
+    '</div>' +
+    '<div style="font-size:18px;font-weight:900;color:' + col.txt + ';margin-bottom:12px;line-height:1.2">' + nombre.toUpperCase() + '</div>' +
+    (precAnt > 0 && precNvo > 0 ? '<div style="font-size:14px;color:rgba(255,255,255,.5);text-decoration:line-through;margin-bottom:4px">$' + Math.round(precAnt).toLocaleString('es-AR') + '</div>' : '') +
+    (precNvo > 0 ? '<div style="font-size:42px;font-weight:900;color:' + col.accent + ';line-height:1">$' + Math.round(precNvo).toLocaleString('es-AR') + '</div>' : '') +
+    (descPct > 0 ? '<div style="display:inline-block;background:' + col.accent + ';color:' + col.bg + ';font-size:20px;font-weight:900;padding:4px 14px;border-radius:20px;margin-top:8px">-' + descPct + '% OFF</div>' : '') +
+    (texto ? '<div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:10px;font-weight:700">' + texto + '</div>' : '') +
+    '<div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:12px;letter-spacing:1px">AL PASO — Mercado de Proximidad</div>' +
+  '</div>';
+
+  const wrap = $('cartel-preview-wrap');
+  const prev = $('cartel-preview');
+  if (prev) prev.innerHTML = html;
+  if (wrap) wrap.style.display = 'block';
+}
+
+function imprimirCartel() {
+  const el = document.getElementById('cartel-imprimible');
+  if (!el) { toast('⚠️ Primero previsualizá el cartel'); return; }
+
+  const ventana = window.open('', '_blank');
+  ventana.document.write('<html><head><title>Cartel Al Paso</title>' +
+    '<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">' +
+    '<style>body{margin:0;padding:20px;background:#fff;display:flex;justify-content:center}' +
+    '.cartel{width:400px;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.2)}' +
+    '@media print{body{padding:0}@page{size:A6 landscape;margin:0}}</style></head>' +
+    '<body><div class="cartel">' + el.outerHTML + '</div>' +
+    '<script>window.onload=()=>window.print()<\/script></body></html>');
+  ventana.document.close();
+}
+
+async function guardarCartel() {
+  const nombre  = cartelProdActual?.nombre || $('cartel-buscar')?.value || 'Producto';
+  const tipo    = $('cartel-tipo')?.value  || 'manual';
+  const precAnt = parseFloat($('cartel-precio-ant')?.value) || null;
+  const precNvo = parseFloat($('cartel-precio-nvo')?.value) || null;
+  const descPct = parseFloat($('cartel-desc-pct')?.value)   || null;
+  const texto   = $('cartel-texto')?.value || null;
+
+  const { error } = await db.from('carteles').insert({
+    producto_id:     cartelProdActual?.id || null,
+    producto_nombre: nombre,
+    tipo, precio_anterior: precAnt, precio_nuevo: precNvo,
+    descuento_pct: descPct, texto_extra: texto, estado: 'pendiente',
+  });
+  if (error) { toast('⚠️ Error: ' + error.message); return; }
+  toast('✅ Cartel guardado');
+}
+
+async function loadCartelesPendientes() {
+  const el = $('carteles-pendientes-list');
+  if (!el) return;
+  const { data } = await db.from('carteles').select('*')
+    .eq('estado','pendiente').order('created_at',{ascending:false}).limit(20);
+  if (!data?.length) { el.innerHTML = '<div class="loading-panel" style="color:#555">Sin carteles pendientes</div>'; return; }
+  el.innerHTML = data.map(c => '<div style="background:#161616;border:1px solid #222;border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px">' +
+    '<div style="flex:1;min-width:0">' +
+      '<div style="font-size:13px;font-weight:700;color:#fff">' + c.producto_nombre + '</div>' +
+      '<div style="font-size:10px;color:#555">' + c.tipo + (c.precio_nuevo ? ' · $' + Math.round(c.precio_nuevo).toLocaleString('es-AR') : '') + (c.descuento_pct ? ' · -' + c.descuento_pct + '%' : '') + '</div>' +
+    '</div>' +
+    '<button onclick="marcarImpreso(' + c.id + ')" style="padding:5px 10px;border-radius:7px;background:#1A2E1A;color:#81C784;border:1px solid #2A3A2A;font-family:Nunito;font-size:11px;font-weight:700;cursor:pointer">✓ Impreso</button>' +
+  '</div>').join('');
+}
+
+async function marcarImpreso(id) {
+  await db.from('carteles').update({estado:'impreso'}).eq('id',id);
+  toast('✅ Marcado como impreso');
+  loadCartelesPendientes();
+}
+
+async function loadCartelesVto() {
+  const el = $('carteles-vto-list');
+  if (!el) return;
+  const { data } = await db.from('lotes_con_estado')
+    .select('*').lte('dias_para_vencer', 7).gte('dias_para_vencer', 0).order('dias_para_vencer');
+  if (!data?.length) { el.innerHTML = '<div class="loading-panel" style="color:#555">Sin vencimientos próximos 👍</div>'; return; }
+  el.innerHTML = data.map(l => '<div style="background:#161616;border:1px solid #2A1A1A;border-left:3px solid #E53935;border-radius:10px;padding:12px;margin-bottom:8px">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">' +
+      '<div><div style="font-size:13px;font-weight:700;color:#fff">' + l.producto_nombre + '</div>' +
+        '<div style="font-size:10px;color:#E53935">Vence en ' + l.dias_para_vencer + ' día(s) · ' + l.cantidad + ' unidades</div></div>' +
+      '<div style="font-size:14px;font-weight:900;color:#FFB74D">-' + l.descuento_sugerido + '%</div>' +
+    '</div>' +
+    '<button data-pid="' + l.producto_id + '" data-precio="' + l.precio_venta + '" data-desc="' + l.descuento_sugerido + '" data-nombre="' + (l.producto_nombre||'').replace(/"/g,'&quot;') + '" class="vto-cartel-btn" style="width:100%;padding:8px;background:#E53935;border:none;border-radius:8px;font-size:12px;font-weight:800;color:#fff;cursor:pointer">🖨 Generar cartel</button>' +
+      'style="width:100%;padding:8px;background:#E53935;border:none;border-radius:8px;font-family:Nunito;font-size:12px;font-weight:800;color:#fff;cursor:pointer">🖨 Generar cartel</button>' +
+  '</div>').join('');
+}
+
+async function generarCartelVto(prodId, precioActual, descPct, nombre) {
+  const precNvo = Math.round(precioActual * (1 - descPct/100));
+  // Pre-cargar el formulario
+  cartelProdActual = { id: prodId, nombre };
+  $('cartel-buscar').value     = nombre;
+  $('cartel-tipo').value       = 'vencimiento';
+  $('cartel-precio-ant').value = precioActual;
+  $('cartel-precio-nvo').value = precNvo;
+  $('cartel-desc-pct').value   = descPct;
+  $('cartel-texto').value      = '⚡ Liquidación por vencimiento';
+  // Ir a la pestaña crear
+  cartelSubTab(document.querySelector('.cart-stab'), 'nuevo');
+  previsualizarCartel();
+  toast('✅ Cartel generado — revisá y presioná Imprimir');
+}
+
+// ══════════════════════════════════════════════════
+// PRECIOS INTELIGENTES
+// ══════════════════════════════════════════════════
+let preciosSugerencias = [];
+
+async function analizarPrecios() {
+  toast('⏳ Analizando precios...', 5000);
+  // Ejecutar análisis via RPC
+  const { data, error } = await db.rpc('generar_alertas_precio');
+  if (error) { toast('⚠️ Error: ' + error.message); return; }
+  toast('✅ Análisis completado · ' + (data||0) + ' sugerencias generadas');
+  loadPrecios();
+}
+
+async function loadPrecios() {
+  const el     = $('precios-list');
+  const filtro = $('prec-filtro')?.value || '';
+  const cat    = $('prec-cat')?.value    || '';
+  if (!el) return;
+
+  // Cargar alertas de precio
+  let query = db.from('alertas_sistema').select('*').eq('tipo','precio').eq('estado','activa').order('prioridad').order('created_at',{ascending:false}).limit(50);
+  const { data: alertas } = await query;
+
+  if (!alertas?.length) {
+    el.innerHTML = '<div style="text-align:center;padding:32px;color:#555;font-size:12px">Sin sugerencias de precio activas.<br>Ejecutá el análisis primero.</div>';
+    return;
+  }
+
+  let items = alertas;
+  if (filtro) items = items.filter(a => (a.datos_json?.accion||'') === filtro);
+
+  el.innerHTML = items.map(a => {
+    const d       = a.datos_json || {};
+    const esSubir = d.accion === 'subir_precio';
+    const color   = esSubir ? '#43A047' : '#E53935';
+    const icon    = esSubir ? '📈' : '📉';
+    const precSug = d.precio_sugerido ? '$' + Math.round(d.precio_sugerido).toLocaleString('es-AR') : '—';
+    return '<div style="background:#161616;border:1px solid #222;border-left:3px solid ' + color + ';border-radius:10px;padding:13px;margin-bottom:8px">' +
+      '<div style="display:flex;align-items:flex-start;gap:10px">' +
+        '<div style="font-size:20px;flex-shrink:0">' + icon + '</div>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:3px">' + a.producto_nombre + '</div>' +
+          '<div style="font-size:11px;color:' + color + ';margin-bottom:5px">' + a.accion_sugerida + '</div>' +
+          '<div style="display:flex;gap:12px;font-size:10px;color:#555">' +
+            '<span>Actual: $' + Math.round(d.precio_actual||0).toLocaleString('es-AR') + '</span>' +
+            (d.precio_sugerido ? '<span style="color:' + color + ';font-weight:700">Sugerido: ' + precSug + '</span>' : '') +
+            (d.margen_actual ? '<span>Margen: ' + d.margen_actual + '%</span>' : '') +
+            (d.ventas_7dias >= 0 ? '<span>Ventas 7d: ' + d.ventas_7dias + '</span>' : '') +
+          '</div>' +
+          '<div style="font-size:10px;color:#333;margin-top:4px">' + a.descripcion + '</div>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">' +
+          (d.precio_sugerido ? '<button data-pid="' + (d.producto_id||0) + '" data-precio="' + (d.precio_sugerido||0) + '" data-alerta="' + a.id + '" class="prec-aplicar-btn" style="padding:5px 8px;border-radius:7px;background:' + color + '22;color:' + color + ';border:1px solid ' + color + '44;font-size:10px;font-weight:700;cursor:pointer">Aplicar</button>' : '') +
+          '<button data-id="' + a.id + '" class="al-ignorar-btn" style="padding:5px 8px;border-radius:7px;background:#1E1E1E;color:#555;border:1px solid #2A2A2A;font-family:Nunito;font-size:10px;cursor:pointer">✕</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+async function aplicarPrecio(prodId, precioNuevo, alertaId) {
+  if (!confirm('¿Aplicar precio $' + Math.round(precioNuevo).toLocaleString('es-AR') + '?')) return;
+  const { error } = await db.from('productos').update({ precio_venta: precioNuevo }).eq('id', prodId);
+  if (error) { toast('⚠️ Error: ' + error.message); return; }
+  await resolverAlerta(alertaId);
+  toast('✅ Precio actualizado — historial guardado automáticamente');
+  loadPrecios();
+}
+
 
 
 </script>
