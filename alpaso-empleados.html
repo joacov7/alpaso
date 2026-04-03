@@ -555,32 +555,12 @@ async function entrar() {
 // ── TAREAS ───────────────────────────────────────
 async function generarTareasDelDia() {
   const hoy = new Date().toISOString().split('T')[0];
-  const dia  = new Date().getDay().toString();
-
-  // Ver si ya hay tareas para hoy
-  const { data: existentes } = await db.from('tareas').select('id').eq('fecha', hoy).limit(1);
-  if (existentes?.length) return; // ya generadas
-
-  // Obtener plantillas del día
-  const { data: plantillas } = await db.from('tareas_plantilla').select('*').eq('activa', true).order('orden');
-  if (!plantillas?.length) return;
-
-  const tareasHoy = plantillas.filter(p => {
-    const dias = (p.dias_semana || '1,2,3,4,5,6,0').split(',');
-    return dias.includes(dia);
-  });
-
-  if (!tareasHoy.length) return;
-
-  await db.from('tareas').insert(tareasHoy.map(p => ({
-    plantilla_id:  p.id,
-    titulo:        p.titulo,
-    descripcion:   p.descripcion,
-    categoria:     p.categoria,
-    turno:         p.turno,
-    fecha:         hoy,
-    estado:        'pendiente',
-  })));
+  try {
+    // Usar función SQL — ya verifica si existen tareas
+    await db.rpc('generar_tareas_dia', { p_fecha: hoy });
+  } catch(e) {
+    console.warn('Error generando tareas:', e.message);
+  }
 }
 
 async function cargarTareas() {

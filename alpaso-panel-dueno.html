@@ -2654,6 +2654,13 @@ async function loadTareas() {
   const el  = $('tareas-list-panel');
   if (!el) return;
   el.innerHTML = '<div class="loading-panel">⏳</div>';
+  // Auto-generar si no hay tareas hoy (silencioso)
+  try {
+    const { data: check } = await db.from('tareas').select('id').eq('fecha', hoy).limit(1);
+    if (!check?.length) {
+      await db.rpc('generar_tareas_dia', { p_fecha: hoy });
+    }
+  } catch(e) {}
 
   const { data, error } = await db.from('tareas').select('*').eq('fecha', hoy).order('categoria').order('id');
   if (error) { el.innerHTML = '<div class="loading-panel" style="color:#E53935">Error: ' + error.message + '</div>'; return; }
@@ -2712,22 +2719,19 @@ async function asignarTarea(tareaId, sel) {
 }
 
 async function generarTareasHoy() {
-  const hoy = new Date().toISOString().split('T')[0];
-  const dia  = new Date().getDay().toString();
-  const { data: plantillas } = await db.from('tareas_plantilla').select('*').eq('activa', true).order('orden');
-  if (!plantillas?.length) { toast('No hay plantillas configuradas'); return; }
-  const tareasHoy = plantillas.filter(p => {
-    const dias = (p.dias_semana || '1,2,3,4,5,6,0').split(',');
-    return dias.includes(dia);
-  });
-  if (!tareasHoy.length) { toast('No hay tareas para hoy según las plantillas'); return; }
-  await db.from('tareas').delete().eq('fecha', hoy);
-  await db.from('tareas').insert(tareasHoy.map(p => ({
-    plantilla_id: p.id, titulo: p.titulo, descripcion: p.descripcion,
-    categoria: p.categoria, turno: p.turno, fecha: hoy, estado: 'pendiente',
-  })));
-  toast('✅ Tareas regeneradas');
-  loadTareas();
+  try {
+    const hoy = new Date().toISOString().split('T')[0];
+    // Borrar tareas existentes del día primero
+    await db.from('tareas').delete().eq('fecha', hoy);
+    // Usar función SQL para regenerar
+    const { data, error } = await db.rpc('generar_tareas_dia', { p_fecha: hoy });
+    if (error) throw error;
+    const n = data?.generadas || 0;
+    toast('✅ ' + n + ' tareas generadas para hoy');
+    loadTareas();
+  } catch(e) {
+    toast('⚠️ Error: ' + e.message);
+  }
 }
 
 // ══════════════════════════════════════════════════
