@@ -1680,6 +1680,8 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
 
 
 
+
+
 // ══════════════════════════════════════════════════
 // SUPABASE
 // ══════════════════════════════════════════════════
@@ -2771,7 +2773,7 @@ async function loadEmpleados() {
         <div style="font-size:13px;font-weight:700;color:${e.activo?'#fff':'#444'}">${e.nombre}</div>
         <div style="font-size:10px;color:#555">PIN: ${e.pin} · ${e.activo?'<span style="color:#43A047">Activo</span>':'<span style="color:#555">Inactivo</span>'}</div>
       </div>
-      <button onclick="editarEmpleado(${e.id},'${e.nombre.replace(/'/g,"\'")}','${e.pin}',${e.activo})"
+      <button data-eid="${e.id}" data-enombre="${e.nombre.replace(/"/g,'&quot;')}" data-epin="${e.pin}" data-eactivo="${e.activo}" class="emp-editar-btn" style="padding:5px 10px;border-radius:7px;font-family:'Nunito';font-size:11px;font-weight:700;cursor:pointer;background:#1A1A2E;color:#64B5F6;border:1px solid #2A2A3A">✏️</button>
         style="padding:5px 10px;border-radius:7px;font-family:'Nunito';font-size:11px;font-weight:700;cursor:pointer;background:#1A1A2E;color:#64B5F6;border:1px solid #2A2A3A">✏️</button>
     </div>`).join('') + '<div style="height:8px"></div>';
   loadPlantillas();
@@ -3569,9 +3571,18 @@ async function guardarMovimiento() {
 }
 
 async function cerrarCaja() {
-  const cajaId  = parseInt($('caja-sel')?.value) || 1;
+  // Verificar que haya apertura registrada
+  const cajaId = parseInt($('caja-sel')?.value) || 1;
+  const fecha  = $('caja-fecha')?.value || new Date().toISOString().split('T')[0];
+  const { data: checkAp } = await db.from('movimientos_caja')
+    .select('id').eq('caja_id', cajaId).eq('fecha', fecha).eq('tipo', 'apertura').limit(1);
+  if (!checkAp?.length) {
+    const ok = await confirmar('⚠️ No hay apertura registrada para esta caja hoy.\n\n¿Querés cerrar igual?');
+    if (!ok) return;
+  }
+  // cajaId and fecha already declared above
   const cajaNom = $('caja-sel')?.selectedOptions[0]?.text || 'Caja 1';
-  const fecha   = $('caja-fecha')?.value || new Date().toISOString().split('T')[0];
+  // fecha already declared above
   const contado = parseFloat($('caja-contado')?.value) || 0;
   const deposito = parseFloat($('caja-deposito')?.value) || 0;
   const notas   = $('caja-notas-cierre')?.value?.trim() || '';
@@ -5646,8 +5657,8 @@ async function loadIAUso() {
   const el = $('ia-uso-list');
   if (!el) return;
 
-  const { data: limites } = await db.rpc('verificar_limite_ia').catch(()=>({data:null}));
-  const { data: uso }     = await db.from('ia_uso_resumen' ).select('*').limit(7).catch(()=>({data:null}));
+  let limites = null; try { const _rl = await db.rpc('verificar_limite_ia'); limites = _rl.data; } catch(e) {}
+  let uso = null; try { const _ru = await db.from('ia_uso_resumen').select('*').limit(7); uso = _ru.data; } catch(e) {}
 
   // Mostrar límites configurados
   let html = '';
@@ -5687,8 +5698,8 @@ async function loadIAUso() {
 }
 
 async function editarLimitesIA() {
-  const { data: limDia } = await db.from('configuracion_global').select('valor').eq('clave','ia_limite_diario').single().catch(()=>({data:{valor:'5'}}));
-  const { data: limMes } = await db.from('configuracion_global').select('valor').eq('clave','ia_limite_mensual_usd').single().catch(()=>({data:{valor:'2.00'}}));
+  let limDia = {valor:'5'}; try { const _rd = await db.from('configuracion_global').select('valor').eq('clave','ia_limite_diario').single(); if(_rd.data) limDia = _rd.data; } catch(e) {}
+  let limMes = {valor:'2.00'}; try { const _rm = await db.from('configuracion_global').select('valor').eq('clave','ia_limite_mensual_usd').single(); if(_rm.data) limMes = _rm.data; } catch(e) {}
 
   mostrarModal('⚙️ Límites de IA',
     '<div style="margin-bottom:14px">' +
@@ -5718,6 +5729,92 @@ async function guardarLimitesIA() {
   actualizarContadorIA();
   loadIAUso();
 }
+
+
+// ══════════════════════════════════════════════════
+// EVENT DELEGATION GLOBAL
+// ══════════════════════════════════════════════════
+document.addEventListener('click', async function(e) {
+
+  // ── Caja: editar movimiento ──
+  const editBtn = e.target.closest('.mov-edit-btn');
+  if (editBtn) {
+    editarMovimiento(
+      editBtn.dataset.id,
+      editBtn.dataset.tipo,
+      parseFloat(editBtn.dataset.monto),
+      editBtn.dataset.concepto || ''
+    );
+    return;
+  }
+
+  // ── Caja: eliminar movimiento ──
+  const delBtn = e.target.closest('.mov-del-btn');
+  if (delBtn) {
+    const ok = await confirmar('¿Eliminar este movimiento?\n\nEsta acción no se puede deshacer.');
+    if (!ok) return;
+    const { error } = await db.from('movimientos_caja').delete().eq('id', delBtn.dataset.id);
+    if (error) { toast('⚠️ Error: ' + error.message); return; }
+    toast('✅ Movimiento eliminado');
+    loadCaja();
+    return;
+  }
+
+  // ── Stock: pasar a góndola ──
+  const stockBtn = e.target.closest('.stock-pasar-btn');
+  if (stockBtn) {
+    abrirStockModal(parseInt(stockBtn.dataset.pid));
+    return;
+  }
+
+  // ── Alertas: resolver ──
+  const resBtn = e.target.closest('.al-resolver-btn');
+  if (resBtn) {
+    resolverAlerta(resBtn.dataset.id);
+    return;
+  }
+
+  // ── Alertas: ignorar ──
+  const ignBtn = e.target.closest('.al-ignorar-btn');
+  if (ignBtn) {
+    ignorarAlerta(ignBtn.dataset.id);
+    return;
+  }
+
+  // ── Precios: aplicar ──
+  const precBtn = e.target.closest('.prec-aplicar-btn');
+  if (precBtn) {
+    aplicarPrecio(parseInt(precBtn.dataset.pid), parseFloat(precBtn.dataset.precio), precBtn.dataset.alerta);
+    return;
+  }
+
+  // ── Empleados: editar ──
+  const empBtn = e.target.closest('.emp-editar-btn');
+  if (empBtn) {
+    editarEmpleado(
+      parseInt(empBtn.dataset.eid),
+      empBtn.dataset.enombre,
+      empBtn.dataset.epin,
+      empBtn.dataset.eactivo === 'true'
+    );
+    return;
+  }
+
+  // ── Carteles VTO ──
+  const vtoBtn = e.target.closest('.vto-cartel-btn');
+  if (vtoBtn) {
+    generarCartelVto(
+      parseInt(vtoBtn.dataset.pid),
+      parseFloat(vtoBtn.dataset.precio),
+      parseFloat(vtoBtn.dataset.desc),
+      vtoBtn.dataset.nombre
+    );
+    return;
+  }
+
+});
+
+
 
 </script>
 </body>
