@@ -164,6 +164,7 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
   <button class="tab"     onclick="tab(this,'precios')">💰 Precios</button>
   <button class="tab"     onclick="tab(this,'ia')">🤖 IA</button>
   <button class="tab"     onclick="tab(this,'finanzas')">📈 Finanzas</button>
+  <button class="tab"     onclick="tab(this,'ayuda')">❓ Ayuda</button>
 </div>
 
 <!-- ═══ PEDIDOS ════════════════════════════════════ -->
@@ -465,6 +466,24 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
             <div style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:10px;color:#555">editable</div>
           </div>
           <div class="fg-hint" id="scan-margen-real">Margen real: —</div>
+        </div>
+
+        <div class="fg-row">
+          <div class="fg">
+            <label>Stock en góndola</label>
+            <input id="scan-stock-gondola" type="number" placeholder="0" min="0" step="0.5"
+              style="font-size:18px;font-weight:800;color:#43A047;text-align:center">
+          </div>
+          <div class="fg">
+            <label>Stock en depósito</label>
+            <input id="scan-stock-deposito" type="number" placeholder="0" min="0" step="0.5"
+              style="font-size:18px;font-weight:800;color:#C9A84C;text-align:center">
+          </div>
+        </div>
+        <div class="fg">
+          <label>Stock mínimo góndola (alerta)</label>
+          <input id="scan-stock-minimo" type="number" placeholder="0" min="0" step="1">
+          <div class="fg-hint">Cuando baje de este número aparece una alerta</div>
         </div>
 
         <div class="fg">
@@ -1616,6 +1635,15 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
 
 </div>
 
+<!-- ═══ AYUDA ════════════════════════════════════════ -->
+<div id="tab-ayuda" class="sec" style="display:none">
+  <div class="sec-title">❓ Guía de uso</div>
+
+  <div style="font-size:12px;color:#555;margin-bottom:16px">Tocá cada módulo para ver cómo usarlo</div>
+
+  <div id="ayuda-list"></div>
+</div>
+
 </div><!-- /wrap -->
 
 <div class="toast" id="toast"></div>
@@ -1639,6 +1667,40 @@ const db = supabase.createClient(SB_URL, SB_KEY);
 const $ = id => document.getElementById(id);
 const fmt = n => '$' + Math.round(n||0).toLocaleString('es-AR');
 
+function mostrarModal(titulo, contenido) {
+  var prev = document.getElementById('modal-global');
+  if (prev) prev.remove();
+  var m = document.createElement('div');
+  m.id = 'modal-global';
+  m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:flex-end;z-index:9999';
+  var box = document.createElement('div');
+  box.style.cssText = 'background:#161616;border-radius:20px 20px 0 0;padding:24px 20px 32px;width:100%;max-width:680px;margin:0 auto;max-height:80vh;overflow-y:auto';
+  var tit = document.createElement('div');
+  tit.style.cssText = 'font-size:16px;font-weight:800;color:#fff;margin-bottom:14px';
+  tit.textContent = titulo;
+  var bod = document.createElement('div');
+  bod.style.marginBottom = '20px';
+  bod.innerHTML = contenido;
+  var btn = document.createElement('button');
+  btn.style.cssText = 'width:100%;padding:12px;background:#C9A84C;border:none;border-radius:9px;font-family:Nunito;font-size:13px;font-weight:800;color:#0A0A0A;cursor:pointer';
+  btn.textContent = 'Cerrar';
+  btn.onclick = function(){ m.remove(); };
+  box.appendChild(tit); box.appendChild(bod); box.appendChild(btn);
+  m.appendChild(box);
+  document.body.appendChild(m);
+}
+
+function confirmar(msg) {
+  return new Promise(function(resolve) {
+    var m = document.createElement('div');
+    m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px';
+    m.innerHTML = '<div style="background:#161616;border-radius:16px;padding:24px 20px;width:100%;max-width:360px"><div style="font-size:14px;color:#fff;margin-bottom:20px;line-height:1.5">' + msg + '</div><div style="display:flex;gap:8px"><button id="cn" style="flex:1;padding:11px;background:#1E1E1E;border:1px solid #2A2A2A;border-radius:9px;font-family:Nunito;font-size:13px;font-weight:800;color:#aaa;cursor:pointer">Cancelar</button><button id="cs" style="flex:1;padding:11px;background:#C9A84C;border:none;border-radius:9px;font-family:Nunito;font-size:13px;font-weight:800;color:#0A0A0A;cursor:pointer">Confirmar</button></div></div>';
+    document.body.appendChild(m);
+    m.querySelector('#cs').onclick = function(){ m.remove(); resolve(true); };
+    m.querySelector('#cn').onclick = function(){ m.remove(); resolve(false); };
+  });
+}
+
 function toast(msg, dur=2600) {
   const el = $('toast');
   el.textContent = msg;
@@ -1652,7 +1714,7 @@ function toast(msg, dur=2600) {
 function tab(btn, id) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
   btn.classList.add('on');
-  ['alertas','pedidos','carga','dashboard','prediccion','clientes','visual','operaciones','productos','fidelidad','tareas','empleados','compras','caja','fichaje','mermas','stock','objetivos','carteles','precios','ia','finanzas'].forEach(t => {
+  ['alertas','pedidos','carga','dashboard','prediccion','clientes','visual','operaciones','productos','fidelidad','tareas','empleados','compras','caja','fichaje','mermas','stock','objetivos','carteles','precios','ia','finanzas','ayuda'].forEach(t => {
     const el = $('tab-'+t); if(el) el.style.display = t === id ? 'block' : 'none';
   });
   if (id === 'alertas')     loadAlertas();
@@ -1677,6 +1739,7 @@ function tab(btn, id) {
   if (id === 'precios')    loadPrecios();
   if (id === 'ia')         initIA();
   if (id === 'finanzas')   loadFinanzas();
+  if (id === 'ayuda')      loadAyuda();
 }
 
 // ══════════════════════════════════════════════════
@@ -1929,7 +1992,7 @@ async function verItems(pedidoId) {
   const { data } = await db.from('pedido_items').select('*').eq('pedido_id',pedidoId);
   if (!data?.length) { toast('Sin items'); return; }
   const txt = data.map(i => `· ${i.nombre} x${i.cantidad} — ${fmt(i.subtotal)}`).join('\n');
-  alert('Items del pedido:\n\n' + txt);
+  mostrarModal('📋 Items del pedido', '<pre style="font-size:12px;color:#aaa;line-height:1.8;white-space:pre-wrap">' + txt + '</pre>');
 }
 
 function wsp(tel, num, total) {
@@ -2464,6 +2527,9 @@ async function abrirEditar(id) {
   $('scan-margen').value      = data.margen || '30';
   $('scan-cat').value         = data.cat || 'Sin categoría';
   $('scan-activo').checked    = data.activo || false;
+  if ($('scan-stock-gondola'))  $('scan-stock-gondola').value  = data.stock_gondola  || 0;
+  if ($('scan-stock-deposito')) $('scan-stock-deposito').value = data.stock_deposito || 0;
+  if ($('scan-stock-minimo'))   $('scan-stock-minimo').value   = data.stock_minimo_gondola || 0;
   actualizarMargenReal();
   $('scan-form').style.display = 'block';
   $('scan-form').scrollIntoView({behavior:'smooth'});
@@ -2522,7 +2588,15 @@ async function guardarProducto() {
   if (!nombre) { toast('⚠️ Ingresá el nombre'); return; }
   if (!precio)  { toast('⚠️ Ingresá el precio de venta'); return; }
 
-  const payload = { nombre, precio_venta: precio, precio_costo: costo || null, margen: margen || null, cat, activo, cod_barras: codbar || null };
+  const stockGondola  = parseFloat($('scan-stock-gondola')?.value)  || 0;
+  const stockDeposito = parseFloat($('scan-stock-deposito')?.value) || 0;
+  const stockMinimo   = parseFloat($('scan-stock-minimo')?.value)   || 0;
+  const payload = {
+    nombre, precio_venta: precio, precio_costo: costo || null,
+    margen: margen || null, cat, activo, cod_barras: codbar || null,
+    stock_gondola: stockGondola, stock_deposito: stockDeposito,
+    stock_minimo_gondola: stockMinimo,
+  };
 
   let error;
   if (id) {
@@ -2696,8 +2770,11 @@ async function guardarEmpleado() {
   const nombre = $('emp-nombre').value.trim();
   const pin    = String($('emp-pin').value).trim();
   const activo = $('emp-activo').checked;
-  if (!nombre) { toast('⚠️ Ingresá el nombre'); return; }
-  if (!pin || pin.length !== 4 || isNaN(pin)) { toast('⚠️ El PIN debe ser de 4 dígitos'); return; }
+  if (!nombre || nombre.length < 2) { toast('⚠️ Ingresá un nombre válido'); return; }
+  if (!pin || pin.length !== 4 || isNaN(Number(pin))) { toast('⚠️ El PIN debe ser exactamente 4 dígitos numéricos'); return; }
+  // Verificar PIN duplicado
+  const { data: pinExist } = await db.from('empleados').select('id,nombre').eq('pin', pin).neq('id', id||0);
+  if (pinExist?.length) { toast('⚠️ Ese PIN ya lo usa ' + pinExist[0].nombre); return; }
   let error;
   if (id) {
     ({ error } = await db.from('empleados').update({nombre, pin, activo}).eq('id', id));
@@ -3049,7 +3126,8 @@ async function enviarPedidoWsp() {
   } else {
     // Sin número → copiar al portapapeles
     navigator.clipboard?.writeText(msg).then(() => toast('📋 Pedido copiado al portapapeles'));
-    alert('Sin número de WhatsApp del proveedor.\n\nMensaje listo:\n\n' + msg);
+    navigator.clipboard?.writeText(msg).then(()=>toast('📋 Pedido copiado — pegalo en WhatsApp',4000));
+  mostrarModal('💬 Pedido sin WhatsApp', '<div style="font-size:11px;color:#aaa;margin-bottom:10px">Este proveedor no tiene número cargado. El pedido fue copiado al portapapeles.</div><pre style="font-size:11px;color:#C9A84C;line-height:1.8;white-space:pre-wrap;background:#1A1A1A;border-radius:8px;padding:12px">' + msg.replace(/</g,'&lt;') + '</pre>');
   }
 
   toast('✅ Pedido enviado');
@@ -3422,8 +3500,11 @@ function cerrarMovimiento() {
 
 async function guardarMovimiento() {
   const tipo    = $('mov-tipo').value;
-  const monto   = parseFloat($('mov-monto').value);
+  const montoRaw = $('mov-monto').value;
+  const monto   = parseFloat(montoRaw);
   const concepto = $('mov-concepto').value.trim();
+  if (!montoRaw || isNaN(monto) || monto <= 0) { toast('⚠️ Ingresá un monto válido mayor a 0'); return; }
+  if (monto > 50000000) { toast('⚠️ Monto demasiado alto — verificá'); return; }
   const cajaId  = parseInt($('caja-sel')?.value) || 1;
   const cajaNom = $('caja-sel')?.selectedOptions[0]?.text || 'Caja 1';
   const fecha   = $('caja-fecha')?.value || new Date().toISOString().split('T')[0];
@@ -3917,7 +3998,8 @@ async function guardarObjetivo() {
   const notas = $('obj-notas')?.value || '';
   const id    = $('obj-id')?.value;
 
-  if (!meta) { toast('⚠️ Ingresá la meta'); return; }
+  if (!meta || isNaN(meta) || meta <= 0) { toast('⚠️ Ingresá una meta válida mayor a 0'); return; }
+  if (meta > 100000000) { toast('⚠️ Meta demasiado alta — verificá'); return; }
 
   let error;
   if (id) {
@@ -4321,7 +4403,7 @@ async function loadPrecios() {
 }
 
 async function aplicarPrecio(prodId, precioNuevo, alertaId) {
-  if (!confirm('¿Aplicar precio $' + Math.round(precioNuevo).toLocaleString('es-AR') + '?')) return;
+  const okP = await confirmar('¿Aplicar precio $' + Math.round(precioNuevo).toLocaleString('es-AR') + '?\n\nEl historial quedará guardado automáticamente.'); if (!okP) return;
   const { error } = await db.from('productos').update({ precio_venta: precioNuevo }).eq('id', prodId);
   if (error) { toast('⚠️ Error: ' + error.message); return; }
   await resolverAlerta(alertaId);
@@ -4336,6 +4418,27 @@ async function aplicarPrecio(prodId, precioNuevo, alertaId) {
 // IA — ANÁLISIS INTELIGENTE CON CLAUDE
 // ══════════════════════════════════════════════════
 let iaHistorial = [];
+
+// URL del proxy (Supabase Edge Function)
+const IA_PROXY_URL = 'https://tlsyakbhceolczjzadpc.supabase.co/functions/v1/ia-alpaso';
+const IA_HEADERS = {
+  'Content-Type': 'application/json',
+  'Authorization': 'Bearer sb_publishable_pdCPXmVa47gh3rSURJsgaQ_axezH12Z',
+};
+
+async function llamarIA(messages, max_tokens=1000) {
+  const response = await fetch(IA_PROXY_URL, {
+    method: 'POST',
+    headers: IA_HEADERS,
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens,
+      messages,
+    })
+  });
+  if (!response.ok) throw new Error('Error proxy IA: ' + response.status);
+  return await response.json();
+}
 
 function initIA() {
   // Mostrar historial si hay
@@ -4442,18 +4545,7 @@ async function correrIA(modo) {
     const prompt = promptParts.filter(function(p){return p;}).join(nl);
 
     // ── 3. LLAMAR A CLAUDE API ───────────────────────
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-
-    if (!response.ok) throw new Error('Error API: ' + response.status);
-    const apiData = await response.json();
+    const apiData = await llamarIA([{ role: 'user', content: prompt }], 1000);
     const rawText = (apiData.content||[]).map(c=>c.text||'').join('');
 
     // ── 4. PARSEAR RESPUESTA ─────────────────────────
@@ -4853,8 +4945,9 @@ async function guardarCosto() {
   const cat    = $('costo-cat')?.value || 'otro';
   const notas  = $('costo-notas')?.value.trim() || null;
   const id     = $('costo-id')?.value;
-  if (!nombre) { toast('⚠️ Ingresá el nombre'); return; }
-  if (!monto)  { toast('⚠️ Ingresá el monto'); return; }
+  if (!nombre || nombre.trim().length < 2) { toast('⚠️ Ingresá un nombre válido'); return; }
+  if (!monto || isNaN(monto) || monto <= 0) { toast('⚠️ Ingresá un monto válido mayor a 0'); return; }
+  if (monto > 50000000) { toast('⚠️ Monto demasiado alto — verificá'); return; }
   let error;
   if (id) { ({error} = await db.from('costos_fijos').update({nombre,monto,categoria:cat,notas}).eq('id',id)); }
   else    { ({error} = await db.from('costos_fijos').insert({nombre,monto,categoria:cat,notas})); }
@@ -4938,13 +5031,7 @@ async function analizarFinanzasIA() {
   const configs = configsR.data || [];
   const totalCostos = costos.reduce((s,c)=>s+c.monto,0);
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({
-      model:'claude-sonnet-4-20250514',
-      max_tokens:800,
-      messages:[{ role:'user', content:
+  let _finIA_msgs = [{ role:'user', content:
         'Sos asesor financiero de Al Paso, supermercado de barrio en Argentina. ' +
         'Analizá datos y devolvé SOLO JSON válido con formato: {"sugerencias":["string"],"alertas":["string"],"conclusion":"string"}. ' +
         'COSTOS FIJOS total: $' + Math.round(totalCostos).toLocaleString('es-AR') + '/mes. ' +
@@ -4952,12 +5039,9 @@ async function analizarFinanzasIA() {
         'MEDIOS DE PAGO: ' + configs.map(function(c){return c.nombre+' '+c.comision_pct+'%';}).join(', ') + '. ' +
         'CONTEXTO: inflación alta Argentina, supermercado barrio, 6 empleados. ' +
         'Sugerí cómo aumentar ganancia neta. Específico y accionable. Solo JSON sin markdown.'
-      }]
-    })
-  });
-
-  if (!response.ok) { el.innerHTML = '<div style="color:#E53935;font-size:12px;padding:12px">⚠️ Error al consultar IA</div>'; return; }
-  const data = await response.json();
+      }];
+  let data;
+  try { data = await llamarIA(_finIA_msgs, 800); } catch(e) { el.innerHTML = '<div style="color:#E53935;font-size:12px;padding:12px">⚠️ Error al consultar IA: ' + e.message + '</div>'; return; }
   const raw  = (data.content||[]).map(c=>c.text||'').join('');
   try {
     const r = JSON.parse(raw.replace(/```json|```/g,'').trim());
@@ -5102,9 +5186,11 @@ async function guardarLote() {
   const notas     = $('lote-notas')?.value.trim() || null;
   const id        = $('lote-id')?.value;
 
-  if (!prodNom) { toast('⚠️ Seleccioná un producto'); return; }
-  if (!cantidad) { toast('⚠️ Ingresá la cantidad'); return; }
+  if (!prodNom || prodNom.trim().length < 2) { toast('⚠️ Seleccioná un producto'); return; }
+  if (!cantidad || isNaN(cantidad) || cantidad <= 0) { toast('⚠️ Ingresá una cantidad válida mayor a 0'); return; }
   if (!fechaVto) { toast('⚠️ Ingresá la fecha de vencimiento'); return; }
+  const diasVto = Math.ceil((new Date(fechaVto) - new Date()) / 86400000);
+  if (diasVto < -365) { toast('⚠️ La fecha de vencimiento es muy antigua'); return; }
 
   const payload = {
     producto_id:    prodId ? parseInt(prodId) : null,
@@ -5127,12 +5213,240 @@ async function guardarLote() {
 }
 
 async function cerrarLote(id) {
-  if (!confirm('¿Marcar este lote como vendido/cerrado?')) return;
+  const okL = await confirmar('¿Marcar este lote como vendido/cerrado?'); if (!okL) return;
   await db.from('lotes').update({estado:'vendido'}).eq('id',id);
   toast('✅ Lote cerrado');
   loadLotes();
 }
 
+
+
+// ══════════════════════════════════════════════════
+// AYUDA — GUÍA DE USO
+// ══════════════════════════════════════════════════
+const AYUDA_MODULOS = [
+  {
+    icono:'🚨', titulo:'Alertas',
+    desc:'Central de inteligencia del negocio.',
+    pasos:[
+      'Tocá "⚡ Correr análisis ahora" cada mañana para generar las alertas del día',
+      'Las alertas rojas son críticas — atendelas primero',
+      'Tocá ✓ para marcar una alerta como resuelta, ✕ para ignorarla',
+      'Las alertas se generan automáticamente por stock bajo, vencimientos y precios',
+    ],
+    tips:'💡 Correlo todos los días a primera hora. Si hay vencimientos próximos aparecen acá antes que en la góndola.',
+  },
+  {
+    icono:'📋', titulo:'Pedidos',
+    desc:'Gestión de pedidos de la app cliente.',
+    pasos:[
+      'Los pedidos nuevos aparecen con badge verde "NUEVO"',
+      'Tocá "Preparando" cuando empezás a armarlo',
+      'Tocá "Listo" cuando está listo para entregar o retirar',
+      'Tocá "Entregado" al finalizar',
+      'Podés cancelar un pedido con el botón rojo',
+    ],
+    tips:'💡 Activá el toggle "Local abierto" arriba para aceptar pedidos. Desactivalo cuando cerrás.',
+  },
+  {
+    icono:'⚡', titulo:'Carga rápida',
+    desc:'Tomá pedidos en el mostrador sin que el cliente use la app.',
+    pasos:[
+      'Buscá el cliente por nombre o teléfono',
+      'Agregá productos al carrito con el buscador',
+      'Confirmá el pedido — queda registrado en el sistema',
+    ],
+    tips:'💡 Ideal para clientes que prefieren pedir en persona. El pedido queda en el historial igual que los de la app.',
+  },
+  {
+    icono:'💰', titulo:'Caja',
+    desc:'Control diario del dinero.',
+    pasos:[
+      'Al abrir: tocá "🔓 Apertura" e ingresá el fondo inicial',
+      'Durante el día: registrá cada venta (efectivo, débito, MP) y cada gasto',
+      'Para contar efectivo: tocá "🪙 Contar por billetes" en el cierre',
+      'Al cerrar: ingresá el efectivo contado — te calcula la diferencia automáticamente',
+      'Tocá "🔒 Cerrar caja del día" para finalizar',
+    ],
+    tips:'💡 Registrá cada movimiento en el momento. Una diferencia chica al cierre es normal, una grande indica un error.',
+  },
+  {
+    icono:'✅', titulo:'Tareas',
+    desc:'Control de tareas diarias del equipo.',
+    pasos:[
+      'Las tareas se generan automáticamente cada día según las plantillas',
+      'Asigná cada tarea a un empleado con el selector',
+      'Los empleados ven sus tareas en la app de empleados',
+      'Tocá "🔄 Regenerar" si las tareas no se generaron',
+      'El 🏆 Ranking muestra el rendimiento de cada empleado',
+    ],
+    tips:'💡 Configurá las plantillas en la pestaña Empleados. Asigná tareas por turno (mañana/tarde).',
+  },
+  {
+    icono:'👷', titulo:'Empleados',
+    desc:'ABM de empleados y plantillas de tareas.',
+    pasos:[
+      'Agregá empleados con nombre y PIN de 4 dígitos',
+      'Cada empleado necesita un PIN único',
+      'Las plantillas de tareas se repiten automáticamente según los días configurados',
+      'Editá cada plantilla con el botón ✏️',
+      'Asignás un empleado por defecto a cada plantilla',
+    ],
+    tips:'💡 PINs de los empleados actuales: Paola 1111, Micaela 2222, Héctor 3333, Federico 1234, Maru 4444, Rocío 5555.',
+  },
+  {
+    icono:'⏱', titulo:'Fichaje',
+    desc:'Control de entrada y salida del personal.',
+    pasos:[
+      'Los empleados fichan desde su celular en la app de empleados',
+      'El sistema calcula tardanzas automáticamente según el horario configurado',
+      'Filtrá por fecha y empleado para ver el historial',
+      'El resumen semanal muestra horas trabajadas y tardanzas por empleado',
+    ],
+    tips:'💡 Configurá el horario de entrada de cada empleado en la pestaña Empleados para que calcule las tardanzas correctamente.',
+  },
+  {
+    icono:'🗑', titulo:'Mermas',
+    desc:'Registro de pérdidas de productos.',
+    pasos:[
+      'Los empleados reportan mermas desde su app',
+      'Filtrá por tipo (vencido, roto, robado) y período',
+      'Activá "Reclamo al proveedor" para productos vencidos que llegaron mal',
+      'Cambiá el estado del reclamo (Pendiente → Enviado → Resuelto)',
+      'Usá "💬 Enviar reporte" para mandar el resumen por WhatsApp',
+    ],
+    tips:'💡 En la sub-pestaña "📦 Lotes" cargás los vencimientos de cada producto para que el sistema alerte automáticamente.',
+  },
+  {
+    icono:'📦', titulo:'Lotes / Vencimientos',
+    desc:'Control de vencimientos por lote de mercadería.',
+    pasos:[
+      'Cada vez que entra mercadería, creá un nuevo lote con la fecha de vencimiento',
+      'El sistema calcula automáticamente cuántos días faltan',
+      'A 7 días: alerta media, a 3 días: alerta alta, a 1 día: crítico',
+      'Generá el cartel de descuento directamente desde el lote',
+      'Cuando se vende todo, tocá "✓ Cerrar" para cerrar el lote',
+    ],
+    tips:'💡 El dulce de batata fraccionado, lácteos y fiambres son los productos más importantes para cargar en lotes.',
+  },
+  {
+    icono:'📊', titulo:'Stock',
+    desc:'Control de inventario en góndola y depósito.',
+    pasos:[
+      'Cada producto tiene stock en góndola (a la venta) y depósito (guardado)',
+      'Editá los números directamente en la tabla — se guardan solos',
+      'El campo "mín" es la cantidad mínima en góndola — cuando baja, genera una alerta',
+      'Filtrá por "⚠️ Stock bajo" para ver qué falta reponer',
+      'Los empleados usan su app para pasar mercadería del depósito a la góndola',
+    ],
+    tips:'💡 Cargá el stock inicial de al menos los 50 productos más vendidos para que el sistema de alertas funcione.',
+  },
+  {
+    icono:'🛍️', titulo:'Compras',
+    desc:'Gestión de pedidos a proveedores.',
+    pasos:[
+      'Los faltantes reportados por empleados aparecen acá',
+      'El análisis IA analiza los faltantes y sugiere qué pedir',
+      '"Armar pedido" → elegís proveedor → se cargan los faltantes automáticamente',
+      'Ajustás cantidades y precios → "💬 Enviar por WhatsApp"',
+      'En "Proveedores" configurás los días de pedido de cada uno',
+    ],
+    tips:'💡 El sistema avisa cuando es día de pedido para cada proveedor. Configurá los días en la sección Proveedores.',
+  },
+  {
+    icono:'🖨', titulo:'Carteles',
+    desc:'Generador de carteles para imprimir.',
+    pasos:[
+      'Buscá el producto, elegí el tipo de cartel',
+      'Ingresá precio anterior y nuevo — el % se calcula solo',
+      'Tocá "👁 Previsualizar" para ver el cartel',
+      'Tocá "🖨 Imprimir" → se abre una ventana lista para la impresora',
+      'Los carteles de vencimiento se generan automáticamente desde los Lotes',
+    ],
+    tips:'💡 Imprimí en papel de 10x15cm (foto) o A6 para los carteles de góndola.',
+  },
+  {
+    icono:'💰', titulo:'Precios',
+    desc:'Sugerencias inteligentes de ajuste de precios.',
+    pasos:[
+      'Tocá "⚡ Analizar" para generar sugerencias',
+      'El sistema detecta productos con margen bajo o sin ventas hace días',
+      '"Aplicar" actualiza el precio — el historial se guarda automáticamente',
+      '"✕" ignora la sugerencia',
+      'Filtrá por "📈 Subir" o "📉 Bajar" según lo que necesitás',
+    ],
+    tips:'💡 En Argentina con inflación alta, revisá los precios al menos una vez por semana. El costo de reposición sube aunque el precio de venta no.',
+  },
+  {
+    icono:'🤖', titulo:'IA',
+    desc:'Análisis inteligente con Claude.',
+    pasos:[
+      'Elegí el tipo de análisis según lo que necesitás',
+      'Podés agregar contexto en el campo de texto (ej: "esta semana hay feria")',
+      'La IA analiza ventas, stock, mermas y vencimientos',
+      'Las sugerencias son concretas y accionables',
+      'La IA SOLO sugiere — vos decidís qué hacer',
+    ],
+    tips:'💡 Necesita configurar la Edge Function en Supabase para funcionar. Consultá la guía de instalación.',
+  },
+  {
+    icono:'📈', titulo:'Finanzas',
+    desc:'Motor de decisiones financieras.',
+    pasos:[
+      'Primero cargá tus costos fijos en la sub-pestaña "💸 Costos fijos"',
+      'El Dashboard muestra si estás ganando o perdiendo en tiempo real',
+      'La barra de punto de equilibrio muestra cuánto % de tus costos ya cubriste',
+      '"💳 Medios de pago" te muestra cuánto te cuestan las comisiones',
+      '"🏆 Rentabilidad" rankea tus productos por margen',
+    ],
+    tips:'💡 Cargá el sueldo de cada empleado vinculado a su nombre para ver el análisis de personal.',
+  },
+  {
+    icono:'📦', titulo:'Productos',
+    desc:'ABM completo de productos.',
+    pasos:[
+      'En "📋 Lista" activás/desactivás productos para la app cliente',
+      'Usá "✅ Activar categoría" para activar todos los de una categoría de golpe',
+      'En "📷 Cargar producto" escaneás o escribís el código de barras',
+      'Si el producto no existe podés crearlo directamente',
+      'Cargá costo, margen y precio — el precio se calcula solo',
+    ],
+    tips:'💡 Ejecutá el SQL de categorización para clasificar los 2500 productos automáticamente.',
+  },
+];
+
+function loadAyuda() {
+  const el = $('ayuda-list');
+  if (!el) return;
+
+  el.innerHTML = AYUDA_MODULOS.map((m, idx) =>
+    '<div style="background:#161616;border:1px solid #222;border-radius:12px;margin-bottom:8px;overflow:hidden">' +
+      '<div onclick="toggleAyuda(' + idx + ')" style="display:flex;align-items:center;gap:12px;padding:14px;cursor:pointer">' +
+        '<div style="font-size:22px">' + m.icono + '</div>' +
+        '<div style="flex:1">' +
+          '<div style="font-size:13px;font-weight:800;color:#fff">' + m.titulo + '</div>' +
+          '<div style="font-size:11px;color:#555">' + m.desc + '</div>' +
+        '</div>' +
+        '<div style="color:#555;font-size:14px" id="ayuda-arrow-' + idx + '">▶</div>' +
+      '</div>' +
+      '<div id="ayuda-body-' + idx + '" style="display:none;padding:0 14px 14px">' +
+        '<div style="font-size:11px;font-weight:800;color:#C9A84C;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Paso a paso</div>' +
+        m.pasos.map((p,i) => '<div style="display:flex;gap:8px;margin-bottom:7px;font-size:12px;color:#aaa;line-height:1.4">' +
+          '<span style="color:#C9A84C;font-weight:800;flex-shrink:0">' + (i+1) + '.</span>' + p + '</div>').join('') +
+        (m.tips ? '<div style="background:#1A1500;border:1px solid #C9A84C22;border-radius:8px;padding:10px;margin-top:10px;font-size:11px;color:#C9A84C;line-height:1.5">' + m.tips + '</div>' : '') +
+      '</div>' +
+    '</div>'
+  ).join('');
+}
+
+function toggleAyuda(idx) {
+  const body  = document.getElementById('ayuda-body-' + idx);
+  const arrow = document.getElementById('ayuda-arrow-' + idx);
+  if (!body) return;
+  const visible = body.style.display !== 'none';
+  body.style.display  = visible ? 'none' : 'block';
+  if (arrow) arrow.textContent = visible ? '▶' : '▼';
+}
 
 </script>
 </body>
