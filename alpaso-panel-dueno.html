@@ -1667,394 +1667,221 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
   <div id="ayuda-list"></div>
 </div>
 
-<!-- ═══ CARNICERÍA ══════════════════════════════════ -->
+<!-- ═══ CARNICERÍA V2 ══════════════════════════════ -->
 <div id="tab-carniceria" class="sec" style="display:none">
 
   <!-- Sub-tabs -->
   <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px">
-    <button class="carn-stab on" onclick="carnSubTab(this,'romaneo')"    style="flex:1;min-width:70px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#C9A84C;color:#0A0A0A;border:none">🐄 Romaneo</button>
-    <button class="carn-stab" onclick="carnSubTab(this,'vacio')"         style="flex:1;min-width:70px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">🫙 Al vacío</button>
-    <button class="carn-stab" onclick="carnSubTab(this,'elaborados')"    style="flex:1;min-width:70px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">🥩 Elaborados</button>
-    <button class="carn-stab" onclick="carnSubTab(this,'balance')"       style="flex:1;min-width:70px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">⚖️ Balance</button>
-    <button class="carn-stab" onclick="carnSubTab(this,'comparador')"    style="flex:1;min-width:70px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">📊 Comparar</button>
-    <button class="carn-stab" onclick="carnSubTab(this,'config-carn')"   style="flex:1;min-width:70px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">⚙️ Config</button>
+    <button class="carn-stab on" onclick="carnSubTab(this,'romaneo')"     style="flex:1;min-width:60px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#C9A84C;color:#0A0A0A;border:none">🐄 Romaneo</button>
+    <button class="carn-stab" onclick="carnSubTab(this,'transf')"         style="flex:1;min-width:60px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">🔄 Transform.</button>
+    <button class="carn-stab" onclick="carnSubTab(this,'dashboard')"      style="flex:1;min-width:60px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">📊 Dashboard</button>
+    <button class="carn-stab" onclick="carnSubTab(this,'simulador')"      style="flex:1;min-width:60px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">🎯 Simulador</button>
+    <button class="carn-stab" onclick="carnSubTab(this,'precios-mkt')"    style="flex:1;min-width:60px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">📋 Lista</button>
+    <button class="carn-stab" onclick="carnSubTab(this,'carn-cfg')"       style="flex:1;min-width:60px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">⚙️ Config</button>
   </div>
 
-  <!-- ══ ROMANEO ══════════════════════════════════ -->
+  <!-- ══ ROMANEO SEMANAL ══════════════════════════ -->
   <div id="carn-romaneo">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <div style="font-size:13px;font-weight:800;color:#fff">Nuevo romaneo</div>
-      <button onclick="verHistorialRomaneos()" style="padding:6px 12px;border-radius:8px;background:#1E1E1E;border:1px solid #2A2A2A;color:#aaa;font-family:'Nunito';font-size:11px;cursor:pointer">📋 Historial</button>
-    </div>
-
-    <div class="card">
-      <div class="fg-row">
-        <div class="fg">
-          <label>Modalidad</label>
-          <select id="rom-modalidad" onchange="actualizarRomaneo()"
-            style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
-            <option value="media_res">Media res (frigorífico)</option>
-            <option value="animal_pie">Animal en pie + faena</option>
-            <option value="cortes_sueltos">Cortes sueltos</option>
-          </select>
-        </div>
-        <div class="fg">
-          <label>Fecha</label>
-          <input id="rom-fecha" type="date">
-        </div>
-      </div>
-      <div class="fg-row">
-        <div class="fg">
-          <label id="rom-peso-label">Peso entrada (kg)</label>
-          <input id="rom-peso" type="number" placeholder="0" step="0.1" oninput="actualizarRomaneo()"
-            style="font-size:20px;font-weight:900;color:#C9A84C;text-align:center">
-        </div>
-        <div class="fg">
-          <label>Precio compra ($/kg)</label>
-          <input id="rom-precio-kg" type="number" placeholder="0" oninput="actualizarRomaneo()"
-            style="font-size:20px;font-weight:900;color:#C9A84C;text-align:center">
-        </div>
-      </div>
-      <div class="fg-row">
-        <div class="fg">
-          <label id="rom-merma-faena-label">% Merma faena</label>
-          <input id="rom-merma-faena" type="number" value="45" step="0.5" oninput="actualizarRomaneo()"
-            style="text-align:center;font-size:16px;font-weight:800;color:#FFB74D">
-          <div class="fg-hint">Pérdida en faena (animal en pie ~45%)</div>
-        </div>
-        <div class="fg">
-          <label>% Merma romaneo</label>
-          <input id="rom-merma-romaneo" type="number" value="18" step="0.5" oninput="actualizarRomaneo()"
-            style="text-align:center;font-size:16px;font-weight:800;color:#FFB74D">
-          <div class="fg-hint">Hueso, grasa, pérdida (~18%)</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Costos adicionales -->
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <div class="card-title" style="margin:0">💸 Costos adicionales</div>
-        <button onclick="agregarCostoRomaneo()" style="padding:5px 10px;border-radius:7px;background:#C9A84C;border:none;color:#0A0A0A;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer">+ Agregar</button>
-      </div>
-      <div id="rom-costos-lista"></div>
-      <div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #222;margin-top:6px">
-        <span style="font-size:12px;color:#555">Total costos adicionales</span>
-        <span style="font-size:13px;font-weight:800;color:#E53935" id="rom-costos-total">$0</span>
-      </div>
-    </div>
-
-    <!-- Preview cálculo -->
-    <div class="card" style="background:linear-gradient(135deg,#0A1A0A,#0A0A0A);border-color:#43A04744">
-      <div class="card-title">📊 Resultado del romaneo</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-        <div style="text-align:center;background:#1A1A1A;border-radius:10px;padding:12px">
-          <div style="font-size:11px;color:#555;margin-bottom:4px">Costo base</div>
-          <div style="font-size:18px;font-weight:900;color:#fff" id="rom-costo-base">$0</div>
-        </div>
-        <div style="text-align:center;background:#1A1A1A;border-radius:10px;padding:12px">
-          <div style="font-size:11px;color:#555;margin-bottom:4px">Costo total</div>
-          <div style="font-size:18px;font-weight:900;color:#E53935" id="rom-costo-total">$0</div>
-        </div>
-        <div style="text-align:center;background:#1A1A1A;border-radius:10px;padding:12px">
-          <div style="font-size:11px;color:#555;margin-bottom:4px">Kg vendibles</div>
-          <div style="font-size:18px;font-weight:900;color:#C9A84C" id="rom-kg-vendibles">0 kg</div>
-        </div>
-        <div style="text-align:center;background:#1A2E1A;border-radius:10px;padding:12px;border:1px solid #43A04733">
-          <div style="font-size:11px;color:#555;margin-bottom:4px">Costo real /kg</div>
-          <div style="font-size:22px;font-weight:900;color:#43A047" id="rom-costo-kg">$0</div>
-        </div>
-      </div>
-      <button onclick="confirmarRomaneo()" class="btn btn-gold btn-full">✅ Confirmar y distribuir cortes</button>
-    </div>
-
-    <!-- Distribución de cortes -->
-    <div id="rom-cortes-wrap" style="display:none">
-      <div style="font-size:11px;font-weight:800;color:#C9A84C;text-transform:uppercase;letter-spacing:1px;margin:14px 0 10px">
-        Cortes obtenidos — ajustá los pesos reales
-      </div>
-      <div id="rom-cortes-lista"></div>
-      <button onclick="guardarRomaneoCompleto()" class="btn btn-gold btn-full" style="margin-top:10px">💾 Guardar romaneo completo</button>
-    </div>
-  </div>
-
-  <!-- ══ AL VACÍO ══════════════════════════════════ -->
-  <div id="carn-vacio" style="display:none">
-    <div class="card">
-      <div class="card-title">🫙 Calculadora al vacío</div>
-      <div class="fg">
-        <label>Corte</label>
-        <select id="vacio-corte" onchange="calcularVacio()"
-          style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
-          <option value="">Seleccioná un corte...</option>
-        </select>
-      </div>
-      <div class="fg-row">
-        <div class="fg">
-          <label>Peso del paquete (kg)</label>
-          <input id="vacio-peso" type="number" placeholder="1.5" step="0.1" oninput="calcularVacio()"
-            style="font-size:18px;font-weight:800;color:#C9A84C;text-align:center">
-        </div>
-        <div class="fg">
-          <label>Costo corte ($/kg)</label>
-          <input id="vacio-costo-kg" type="number" placeholder="0" oninput="calcularVacio()"
-            style="font-size:18px;font-weight:800;color:#C9A84C;text-align:center">
-          <div class="fg-hint" id="vacio-costo-hint">O se toma del último romaneo</div>
-        </div>
-      </div>
-
-      <!-- Costos del proceso -->
-      <div style="background:#1A1A1A;border-radius:10px;padding:12px;margin-bottom:12px">
-        <div style="font-size:11px;font-weight:800;color:#555;text-transform:uppercase;margin-bottom:8px">Costos del proceso</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <div class="fg" style="margin:0">
-            <label>Bolsa ($)</label>
-            <input id="vacio-bolsa" type="number" placeholder="0" value="0" oninput="calcularVacio()">
-          </div>
-          <div class="fg" style="margin:0">
-            <label>Selladora ($)</label>
-            <input id="vacio-selladora" type="number" placeholder="0" value="0" oninput="calcularVacio()">
-          </div>
-          <div class="fg" style="margin:0">
-            <label>Energía ($)</label>
-            <input id="vacio-energia" type="number" placeholder="0" value="0" oninput="calcularVacio()">
-          </div>
-          <div class="fg" style="margin:0">
-            <label>Mano de obra ($)</label>
-            <input id="vacio-mo" type="number" placeholder="0" value="0" oninput="calcularVacio()">
-          </div>
-        </div>
-      </div>
-
-      <!-- Resultado -->
-      <div id="vacio-resultado" style="display:none;background:#161616;border:1px solid #222;border-radius:12px;padding:14px;margin-bottom:12px">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-          <div style="text-align:center">
-            <div style="font-size:11px;color:#555;margin-bottom:3px">Costo paquete</div>
-            <div style="font-size:18px;font-weight:900;color:#E53935" id="vacio-costo-total">$0</div>
-          </div>
-          <div style="text-align:center">
-            <div style="font-size:11px;color:#555;margin-bottom:3px">Costo /kg</div>
-            <div style="font-size:18px;font-weight:900;color:#E53935" id="vacio-costo-kg-final">$0</div>
-          </div>
-          <div style="text-align:center">
-            <div style="font-size:11px;color:#555;margin-bottom:3px">Precio sugerido</div>
-            <div style="font-size:20px;font-weight:900;color:#43A047" id="vacio-precio-sugerido">$0</div>
-          </div>
-          <div style="text-align:center">
-            <div style="font-size:11px;color:#555;margin-bottom:3px">vs fresco</div>
-            <div style="font-size:14px;font-weight:800" id="vacio-vs-fresco">—</div>
-          </div>
-        </div>
-        <div style="background:#1A1A1A;border-radius:8px;padding:10px;font-size:12px;color:#C9A84C;text-align:center" id="vacio-conclusion"></div>
-      </div>
-      <div class="fg">
-        <label>Margen objetivo (%)</label>
-        <input id="vacio-margen" type="number" value="45" oninput="calcularVacio()"
-          style="text-align:center;font-size:16px;font-weight:800;color:#C9A84C">
-      </div>
-    </div>
-  </div>
-
-  <!-- ══ ELABORADOS ════════════════════════════════ -->
-  <div id="carn-elaborados" style="display:none">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <div style="font-size:13px;font-weight:800;color:#fff">Calculadora de elaborados</div>
-      <button onclick="nuevoElaborado()" style="padding:6px 12px;border-radius:8px;background:#C9A84C;border:none;color:#0A0A0A;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer">+ Nueva receta</button>
-    </div>
-
-    <!-- Selector elaborado -->
-    <div class="fg">
-      <label>Elaborado</label>
-      <select id="elab-sel" onchange="cargarElaborado()"
-        style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
-        <option value="">Seleccioná un elaborado...</option>
+    <!-- Selector de semana -->
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+      <select id="carn-semana-sel" onchange="loadRomaneoSemana()"
+        style="flex:1;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;font-weight:800;color:#C9A84C;outline:none">
+        <option value="">Cargando semanas...</option>
       </select>
+      <button onclick="nuevaSemanaCarn()" style="padding:10px 14px;border-radius:9px;background:#C9A84C;border:none;color:#0A0A0A;font-family:'Nunito';font-size:12px;font-weight:800;cursor:pointer">+ Semana</button>
     </div>
 
-    <div id="elab-form" style="display:none">
-      <div class="card">
-        <div class="card-title" id="elab-form-titulo">📋 Receta</div>
-        <div style="font-size:11px;font-weight:800;color:#C9A84C;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Ingredientes</div>
-        <div id="elab-ingredientes-lista"></div>
-        <button onclick="agregarIngrediente()" style="width:100%;padding:9px;background:#1A1A1A;border:1px dashed #333;border-radius:9px;font-family:'Nunito';font-size:12px;font-weight:700;color:#555;cursor:pointer;margin-top:6px">+ Agregar ingrediente</button>
-      </div>
+    <!-- Compras de la semana -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div style="font-size:11px;font-weight:800;color:#C9A84C;text-transform:uppercase;letter-spacing:1px">Compras de la semana</div>
+      <button onclick="agregarItemCarn()" style="padding:6px 12px;border-radius:8px;background:#1E1E1E;border:1px solid #2A2A2A;color:#aaa;font-family:'Nunito';font-size:11px;cursor:pointer">+ Agregar compra</button>
+    </div>
+    <div id="carn-items-lista" style="margin-bottom:12px"></div>
 
-      <!-- Parámetros -->
+    <!-- Cortes obtenidos -->
+    <div id="carn-cortes-section" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:11px;font-weight:800;color:#C9A84C;text-transform:uppercase;letter-spacing:1px">Cortes obtenidos</div>
+        <button onclick="sugerirDestinosIA()" style="padding:6px 10px;border-radius:8px;background:#1A1500;border:1px solid #C9A84C44;color:#C9A84C;font-family:'Nunito';font-size:10px;font-weight:700;cursor:pointer">🤖 Sugerir destinos</button>
+      </div>
+      <div id="carn-cortes-lista"></div>
+      <button onclick="guardarRomaneoSemanal()" class="btn btn-gold btn-full" style="margin-top:10px">💾 Guardar romaneo</button>
+    </div>
+  </div>
+
+  <!-- ══ TRANSFORMACIONES ══════════════════════════ -->
+  <div id="carn-transf" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div>
+        <div style="font-size:13px;font-weight:800;color:#fff">Transformaciones</div>
+        <div style="font-size:10px;color:#555">Registrá cuando transformás un corte en otro producto</div>
+      </div>
+      <button onclick="nuevaTransformacion()" style="padding:6px 12px;border-radius:8px;background:#C9A84C;border:none;color:#0A0A0A;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer">+ Nueva</button>
+    </div>
+
+    <!-- Form transformación -->
+    <div id="transf-form" style="display:none">
       <div class="card">
+        <div class="card-title">🔄 Nueva transformación</div>
+        <div class="fg">
+          <label>Corte origen</label>
+          <select id="transf-origen" onchange="cargarDatosOrigen()"
+            style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
+            <option value="">Seleccioná el corte...</option>
+          </select>
+          <div class="fg-hint" id="transf-origen-stock"></div>
+        </div>
+        <div class="fg-row">
+          <div class="fg">
+            <label>Producto destino</label>
+            <select id="transf-destino"
+              style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
+              <option value="milanesa">Milanesa</option>
+              <option value="picada">Picada especial</option>
+              <option value="chorizo">Chorizo</option>
+              <option value="hamburguesa">Hamburguesa</option>
+              <option value="vacio">Al vacío</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Kg a transformar</label>
+            <input id="transf-kg" type="number" placeholder="0" step="0.1" oninput="calcularTransf()"
+              style="font-size:18px;font-weight:800;color:#C9A84C;text-align:center">
+          </div>
+        </div>
         <div class="fg-row">
           <div class="fg">
             <label>Merma elaboración (%)</label>
-            <input id="elab-merma" type="number" value="10" step="0.5" oninput="calcularElaborado()"
+            <input id="transf-merma" type="number" value="10" step="0.5" oninput="calcularTransf()"
               style="text-align:center;font-size:16px;font-weight:800;color:#FFB74D">
-            <div class="fg-hint">Lo que se pierde al preparar</div>
           </div>
           <div class="fg">
-            <label>Mano de obra ($)</label>
-            <input id="elab-mo" type="number" value="0" oninput="calcularElaborado()"
-              style="text-align:center;font-size:16px;font-weight:800;color:#C9A84C">
+            <label>Costo adicional ($)</label>
+            <input id="transf-costo-adic" type="number" value="0" oninput="calcularTransf()"
+              style="text-align:center">
+            <div class="fg-hint">Pan rallado, condimentos, etc</div>
           </div>
         </div>
-        <div class="fg-row">
-          <div class="fg">
-            <label>Margen objetivo (%)</label>
-            <input id="elab-margen" type="number" value="50" oninput="calcularElaborado()"
-              style="text-align:center;font-size:16px;font-weight:800;color:#C9A84C">
-          </div>
-          <div class="fg">
-            <label>Unidad de venta</label>
-            <select id="elab-unidad" onchange="calcularElaborado()"
-              style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
-              <option value="kg">Por kg</option>
-              <option value="unidad">Por unidad</option>
-              <option value="docena">Por docena</option>
-            </select>
+        <div id="transf-resultado" style="display:none;background:#161616;border:1px solid #222;border-radius:10px;padding:12px;margin-bottom:10px">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+            <div style="text-align:center"><div style="font-size:10px;color:#555">Kg producto</div><div style="font-size:16px;font-weight:800;color:#C9A84C" id="transf-kg-final">0</div></div>
+            <div style="text-align:center"><div style="font-size:10px;color:#555">Costo real/kg</div><div style="font-size:16px;font-weight:800;color:#E53935" id="transf-costo-kg">$0</div></div>
+            <div style="text-align:center"><div style="font-size:10px;color:#555">Precio sugerido</div><div style="font-size:16px;font-weight:800;color:#43A047" id="transf-precio-sug">$0</div></div>
           </div>
         </div>
-        <div id="elab-peso-wrap" style="display:none" class="fg">
-          <label>Peso por unidad (kg)</label>
-          <input id="elab-peso-unidad" type="number" placeholder="0.15" step="0.01" oninput="calcularElaborado()">
+        <div class="fg">
+          <label>Precio de venta ($/kg)</label>
+          <input id="transf-precio-venta" type="number" placeholder="0" oninput="calcularTransf()"
+            style="font-size:20px;font-weight:900;color:#43A047;text-align:center">
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="guardarTransformacion()" class="btn btn-gold" style="flex:1;justify-content:center;padding:12px">💾 Guardar</button>
+          <button onclick="$('transf-form').style.display='none'" class="btn btn-ghost" style="padding:12px 16px">Cancelar</button>
         </div>
       </div>
+    </div>
 
-      <!-- Resultado elaborado -->
-      <div class="card" style="background:linear-gradient(135deg,#0A1A0A,#0A0A0A);border-color:#43A04744">
-        <div class="card-title">📊 Resultado</div>
-        <div id="elab-resultado"></div>
-        <button onclick="guardarPrecioElaborado()" class="btn btn-gold btn-full" style="margin-top:10px">💾 Aplicar precio de venta</button>
+    <!-- Lista transformaciones -->
+    <div id="transf-lista"><div class="loading-panel">⏳</div></div>
+  </div>
+
+  <!-- ══ DASHBOARD ════════════════════════════════ -->
+  <div id="carn-dashboard" style="display:none">
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <select id="dash-semana" onchange="loadDashboard()"
+        style="flex:1;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:12px;color:#fff;outline:none">
+      </select>
+      <button onclick="loadDashboard()" style="padding:9px 12px;border-radius:9px;background:#1E1E1E;border:1px solid #2A2A2A;color:#aaa;font-family:'Nunito';font-size:11px;cursor:pointer">🔄</button>
+    </div>
+
+    <!-- KPIs principales -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <div class="kpi" style="padding:12px"><div class="kpi-val" style="font-size:20px;color:#43A047" id="dash-ganancia">$0</div><div class="kpi-lbl">Ganancia semana</div></div>
+      <div class="kpi" style="padding:12px"><div class="kpi-val" style="font-size:20px" id="dash-margen">0%</div><div class="kpi-lbl">Margen total</div></div>
+      <div class="kpi" style="padding:12px"><div class="kpi-val" style="font-size:20px;color:#E53935" id="dash-costo">$0</div><div class="kpi-lbl">Costo total</div></div>
+      <div class="kpi" style="padding:12px"><div class="kpi-val" style="font-size:20px" id="dash-kg">0 kg</div><div class="kpi-lbl">Kg totales</div></div>
+    </div>
+
+    <!-- Ranking de rentabilidad -->
+    <div class="card" style="margin-bottom:10px">
+      <div class="card-title">🏆 Ranking — cortes más rentables</div>
+      <div id="dash-ranking"></div>
+    </div>
+
+    <!-- Alertas -->
+    <div class="card" style="margin-bottom:10px">
+      <div class="card-title">🚨 Alertas carnicería</div>
+      <div id="dash-alertas"></div>
+    </div>
+
+    <!-- Teórico vs Real -->
+    <div class="card">
+      <div class="card-title">📐 Teórico vs Real</div>
+      <div id="dash-teorico-real"></div>
+    </div>
+  </div>
+
+  <!-- ══ SIMULADOR ════════════════════════════════ -->
+  <div id="carn-simulador" style="display:none">
+    <div style="font-size:11px;color:#555;margin-bottom:12px">Modificá precios y destinos — el sistema calcula el impacto en la ganancia total</div>
+
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <select id="sim-semana" onchange="loadSimulador()"
+        style="flex:1;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:12px;color:#fff;outline:none">
+      </select>
+    </div>
+
+    <div id="sim-cortes-lista"></div>
+
+    <div id="sim-resultado" style="display:none">
+      <div class="card" style="background:linear-gradient(135deg,#0A1A0A,#0A0A0A);border-color:#43A04744;margin-top:10px">
+        <div class="card-title">📊 Resultado simulado</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div style="text-align:center"><div style="font-size:11px;color:#555;margin-bottom:4px">Ganancia actual</div><div style="font-size:18px;font-weight:900;color:#555" id="sim-ganancia-actual">$0</div></div>
+          <div style="text-align:center"><div style="font-size:11px;color:#555;margin-bottom:4px">Ganancia simulada</div><div style="font-size:18px;font-weight:900;color:#43A047" id="sim-ganancia-nueva">$0</div></div>
+        </div>
+        <div style="margin-top:10px;text-align:center;font-size:14px;font-weight:800" id="sim-diferencia"></div>
+        <button onclick="aplicarSimulacion()" class="btn btn-gold btn-full" style="margin-top:10px">✅ Aplicar estos precios</button>
       </div>
     </div>
   </div>
 
-  <!-- ══ BALANCE ═══════════════════════════════════ -->
-  <div id="carn-balance" style="display:none">
-    <div style="font-size:11px;color:#555;margin-bottom:12px">Modificá un precio y el sistema sugiere qué ajustar para mantener la ganancia total</div>
-
-    <div class="card" style="margin-bottom:12px">
-      <div class="card-title">📉 Simulador de cambio de precio</div>
-      <div class="fg">
-        <label>Corte o elaborado</label>
-        <select id="bal-corte" onchange="cargarBalanceCorte()"
-          style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
-          <option value="">Seleccioná...</option>
-        </select>
+  <!-- ══ LISTA DE PRECIOS MERCADO ══════════════════ -->
+  <div id="carn-precios-mkt" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div>
+        <div style="font-size:13px;font-weight:800;color:#fff">Lista La Morena</div>
+        <div style="font-size:10px;color:#555">Vigencia 02/03/2026</div>
       </div>
-      <div class="fg-row">
-        <div class="fg">
-          <label>Precio actual ($/kg)</label>
-          <input id="bal-precio-actual" type="number" readonly
-            style="color:#555;font-size:16px;font-weight:800;text-align:center">
-        </div>
-        <div class="fg">
-          <label>Precio nuevo ($/kg)</label>
-          <input id="bal-precio-nuevo" type="number" placeholder="0" oninput="calcularBalance()"
-            style="font-size:18px;font-weight:900;color:#C9A84C;text-align:center">
-        </div>
-      </div>
-      <div class="fg">
-        <label>Kg estimados a vender por semana</label>
-        <input id="bal-kg-semana" type="number" placeholder="10" value="10" oninput="calcularBalance()"
-          style="text-align:center">
-      </div>
+      <button onclick="actualizarListaPrecios()" style="padding:6px 12px;border-radius:8px;background:#1E1E1E;border:1px solid #2A2A2A;color:#aaa;font-family:'Nunito';font-size:11px;cursor:pointer">📋 Actualizar</button>
     </div>
-
-    <!-- Resultado balance -->
-    <div id="bal-resultado" style="display:none">
-      <div id="bal-impacto" class="card" style="margin-bottom:10px"></div>
-      <div id="bal-sugerencias" class="card"></div>
-    </div>
-  </div>
-
-  <!-- ══ COMPARADOR DE COMPRA ═══════════════════════ -->
-  <div id="carn-comparador" style="display:none">
-    <div style="font-size:11px;color:#555;margin-bottom:12px">Compará el costo real /kg vendible de cada forma de comprar</div>
-
-    <div class="card">
-      <div class="card-title">🐄 Opción A — Animal en pie</div>
-      <div class="fg-row">
-        <div class="fg"><label>Precio $/kg vivo</label><input id="cmp-precio-pie" type="number" placeholder="0" oninput="calcularComparador()"></div>
-        <div class="fg"><label>Peso animal (kg)</label><input id="cmp-peso-animal" type="number" placeholder="250" oninput="calcularComparador()"></div>
-      </div>
-      <div class="fg-row">
-        <div class="fg"><label>Flete ida ($)</label><input id="cmp-flete-ida" type="number" placeholder="0" value="0" oninput="calcularComparador()"></div>
-        <div class="fg"><label>Faena ($)</label><input id="cmp-faena" type="number" placeholder="0" value="0" oninput="calcularComparador()"></div>
-      </div>
-      <div class="fg-row">
-        <div class="fg"><label>SENASA ($)</label><input id="cmp-senasa-pie" type="number" placeholder="0" value="0" oninput="calcularComparador()"></div>
-        <div class="fg"><label>Flete vuelta ($)</label><input id="cmp-flete-vuelta" type="number" placeholder="0" value="0" oninput="calcularComparador()"></div>
-      </div>
-      <div class="fg-row">
-        <div class="fg"><label>Frío/cámara ($)</label><input id="cmp-frio" type="number" placeholder="0" value="0" oninput="calcularComparador()"></div>
-        <div class="fg"><label>% Merma faena</label><input id="cmp-merma-faena" type="number" value="45" oninput="calcularComparador()"
-          style="color:#FFB74D;font-weight:800;text-align:center"></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">🏭 Opción B — Media res (frigorífico)</div>
-      <div class="fg-row">
-        <div class="fg"><label>Precio $/kg</label><input id="cmp-precio-mr" type="number" placeholder="0" oninput="calcularComparador()"></div>
-        <div class="fg"><label>Flete ($)</label><input id="cmp-flete-mr" type="number" placeholder="0" value="0" oninput="calcularComparador()"></div>
-      </div>
-      <div class="fg"><label>SENASA/guía ($)</label><input id="cmp-senasa-mr" type="number" placeholder="0" value="0" oninput="calcularComparador()"></div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">🛒 Opción C — Cortes individuales</div>
-      <div class="fg"><label>Precio promedio $/kg</label><input id="cmp-precio-cortes" type="number" placeholder="0" oninput="calcularComparador()"></div>
-      <div class="fg-hint">Ya viene listo para vender — sin merma de romaneo</div>
-    </div>
-
-    <!-- Resultado comparador -->
-    <div id="cmp-resultado" style="display:none">
-      <div class="card" style="background:linear-gradient(135deg,#0A1A0A,#0A0A0A)">
-        <div class="card-title">📊 Comparación de costos reales</div>
-        <div id="cmp-tabla"></div>
-      </div>
-      <div class="card" style="margin-top:0">
-        <div id="cmp-conclusion"></div>
-        <button onclick="guardarComparacion()" class="btn btn-ghost btn-full" style="margin-top:10px;font-size:12px">💾 Guardar esta comparación</button>
-      </div>
-    </div>
+    <div id="precios-mkt-lista"><div class="loading-panel">⏳</div></div>
   </div>
 
   <!-- ══ CONFIGURACIÓN ════════════════════════════ -->
-  <div id="carn-config-carn" style="display:none">
-    <!-- Sub-tabs config -->
-    <div style="display:flex;gap:6px;margin-bottom:12px">
-      <button class="carn-cfg-tab on" onclick="carnCfgTab(this,'cortes-cfg')"  style="flex:1;padding:7px;border-radius:8px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#C9A84C;color:#0A0A0A;border:none">🥩 Cortes</button>
-      <button class="carn-cfg-tab" onclick="carnCfgTab(this,'costos-cfg')"    style="flex:1;padding:7px;border-radius:8px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">💸 Costos</button>
-      <button class="carn-cfg-tab" onclick="carnCfgTab(this,'vacio-cfg')"     style="flex:1;padding:7px;border-radius:8px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">🫙 Vacío</button>
+  <div id="carn-carn-cfg" style="display:none">
+    <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+      <button class="carn-cfg2-tab on" onclick="carnCfg2Tab(this,'plantillas')" style="flex:1;padding:7px;border-radius:8px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#C9A84C;color:#0A0A0A;border:none">📋 Plantillas</button>
+      <button class="carn-cfg2-tab" onclick="carnCfg2Tab(this,'reglas')"      style="flex:1;padding:7px;border-radius:8px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">⚖️ Reglas</button>
     </div>
 
-    <!-- Cortes config -->
-    <div id="carn-cortes-cfg">
+    <!-- Plantillas -->
+    <div id="carn-cfg-plantillas">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <div style="font-size:12px;font-weight:800;color:#fff">Cortes y rendimientos</div>
-        <button onclick="nuevoCorte()" style="padding:6px 12px;border-radius:8px;background:#C9A84C;border:none;color:#0A0A0A;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer">+ Nuevo</button>
+        <div style="font-size:12px;font-weight:800;color:#fff">Plantillas de romaneo</div>
+        <select id="cfg-plantilla-sel" onchange="loadPlantillaCfg()"
+          style="background:#1E1E1E;border:1px solid #2A2A2A;border-radius:8px;padding:6px 10px;font-family:'Nunito';font-size:12px;color:#fff;outline:none">
+          <option value="">Seleccioná...</option>
+        </select>
       </div>
-      <div id="cortes-cfg-list"><div class="loading-panel">⏳</div></div>
+      <div id="plantilla-cfg-lista"><div style="color:#333;font-size:12px;text-align:center;padding:12px">Seleccioná una plantilla para editar</div></div>
     </div>
 
-    <!-- Costos config -->
-    <div id="carn-costos-cfg" style="display:none">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <div style="font-size:12px;font-weight:800;color:#fff">Costos adicionales</div>
-        <button onclick="nuevoCostoCarn()" style="padding:6px 12px;border-radius:8px;background:#C9A84C;border:none;color:#0A0A0A;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer">+ Nuevo</button>
-      </div>
-      <div id="costos-cfg-list"><div class="loading-panel">⏳</div></div>
-    </div>
-
-    <!-- Vacío config -->
-    <div id="carn-vacio-cfg" style="display:none">
-      <div class="card" id="vacio-cfg-form">
-        <div class="card-title">⚙️ Configuración al vacío</div>
-        <div class="fg"><label>Costo por bolsa ($)</label><input id="vcfg-bolsa" type="number" placeholder="0"></div>
-        <div class="fg"><label>Amortización selladora por uso ($)</label><input id="vcfg-selladora" type="number" placeholder="0"></div>
-        <div class="fg"><label>Costo energía por proceso ($)</label><input id="vcfg-energia" type="number" placeholder="0"></div>
-        <div class="fg"><label>Peso máximo por bolsa (kg)</label><input id="vcfg-peso-max" type="number" placeholder="3" value="3"></div>
-        <button onclick="guardarVacioCfg()" class="btn btn-gold btn-full">💾 Guardar</button>
-      </div>
+    <!-- Reglas -->
+    <div id="carn-cfg-reglas" style="display:none">
+      <div style="font-size:11px;color:#555;margin-bottom:10px">Las reglas determinan automáticamente el destino sugerido de cada corte</div>
+      <div id="reglas-lista"><div class="loading-panel">⏳</div></div>
     </div>
   </div>
 
@@ -2065,6 +1892,9 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
 <div class="toast" id="toast"></div>
 
 <script>
+
+
+
 
 
 
@@ -6127,6 +5957,631 @@ async function guardarLimitesIA() {
 
 
 // ══════════════════════════════════════════════════
+// CARNICERÍA V2
+// ══════════════════════════════════════════════════
+let carnRomaneoActual = null;
+let carnItemsActual   = [];
+let carnCortesActual  = [];
+
+function carnSubTab(btn, id) {
+  document.querySelectorAll('.carn-stab').forEach(b => {
+    b.style.background='#1E1E1E'; b.style.color='#aaa'; b.style.border='1px solid #2A2A2A';
+  });
+  btn.style.background='#C9A84C'; btn.style.color='#0A0A0A'; btn.style.border='none';
+  ['romaneo','transf','dashboard','simulador','precios-mkt','carn-cfg'].forEach(t => {
+    const el = $('carn-' + t); if(el) el.style.display = t===id ? 'block' : 'none';
+  });
+  if (id==='dashboard')    loadDashboardCarn();
+  if (id==='transf')       loadTransformaciones();
+  if (id==='simulador')    loadSimuladorCarn();
+  if (id==='precios-mkt')  loadPreciosMercado();
+  if (id==='carn-cfg')     loadCarnCfg();
+}
+
+function carnCfg2Tab(btn, id) {
+  document.querySelectorAll('.carn-cfg2-tab').forEach(b => {
+    b.style.background='#1E1E1E'; b.style.color='#aaa'; b.style.border='1px solid #2A2A2A';
+  });
+  btn.style.background='#C9A84C'; btn.style.color='#0A0A0A'; btn.style.border='none';
+  const ps = $('carn-cfg-plantillas'); if(ps) ps.style.display = id==='plantillas'?'block':'none';
+  const rs = $('carn-cfg-reglas');     if(rs) rs.style.display = id==='reglas'?'block':'none';
+  if (id==='plantillas') loadPlantillasCfg();
+  if (id==='reglas')     loadReglasCfg();
+}
+
+async function loadCarniceria() {
+  await cargarSemanasCarn();
+}
+
+// ── SEMANAS ───────────────────────────────────────
+function getSemanaKey(fecha) {
+  const d = fecha || new Date();
+  const onejan = new Date(d.getFullYear(), 0, 1);
+  const week = Math.ceil((((d - onejan) / 86400000) + onejan.getDay() + 1) / 7);
+  return d.getFullYear() + '-W' + String(week).padStart(2,'0');
+}
+
+function getSemanaLabel(key) {
+  const [year, wStr] = key.split('-W');
+  const week = parseInt(wStr);
+  const d = new Date(year, 0, 1 + (week - 1) * 7);
+  const fin = new Date(d); fin.setDate(fin.getDate() + 6);
+  return 'Sem ' + week + ' · ' + d.toLocaleDateString('es-AR',{day:'numeric',month:'short'}) + ' al ' + fin.toLocaleDateString('es-AR',{day:'numeric',month:'short'});
+}
+
+async function cargarSemanasCarn() {
+  const { data } = await db.from('carn_romaneos').select('*').order('fecha_inicio', {ascending:false}).limit(10);
+  const sels = ['carn-semana-sel','dash-semana','sim-semana'];
+  sels.forEach(id => {
+    const sel = $(id); if(!sel) return;
+    const current = getSemanaKey(new Date());
+    const opts = (data||[]).map(r => '<option value="' + r.id + '">' + getSemanaLabel(r.semana) + '</option>').join('');
+    sel.innerHTML = '<option value="">Semana actual (' + getSemanaLabel(current) + ')</option>' + opts;
+  });
+  if (data?.length) { carnRomaneoActual = data[0]; }
+  loadRomaneoSemana();
+}
+
+async function nuevaSemanaCarn() {
+  const hoy = new Date();
+  const semana = getSemanaKey(hoy);
+  // Check if exists
+  const { data: existe } = await db.from('carn_romaneos').select('id').eq('semana', semana).limit(1);
+  if (existe?.length) { toast('⚠️ Ya existe un romaneo para esta semana'); return; }
+  const { data, error } = await db.from('carn_romaneos').insert({
+    semana, fecha_inicio: hoy.toISOString().split('T')[0], estado: 'activo'
+  }).select().single();
+  if (error) { toast('⚠️ Error: ' + error.message); return; }
+  toast('✅ Nueva semana creada');
+  await cargarSemanasCarn();
+}
+
+async function loadRomaneoSemana() {
+  const selVal = $('carn-semana-sel')?.value;
+  let romaneo = null;
+  if (selVal) {
+    const { data } = await db.from('carn_romaneos').select('*').eq('id', selVal).single();
+    romaneo = data;
+  } else {
+    const semana = getSemanaKey(new Date());
+    const { data } = await db.from('carn_romaneos').select('*').eq('semana', semana).limit(1);
+    if (data?.length) romaneo = data[0];
+  }
+  carnRomaneoActual = romaneo;
+  if (!romaneo) { $('carn-items-lista').innerHTML = '<div style="color:#333;font-size:12px;text-align:center;padding:20px">Sin romaneo para esta semana.<br><br>Tocá "+ Semana" para crear uno.</div>'; return; }
+  await loadItemsCarn(romaneo.id);
+  await loadCortesCarn(romaneo.id);
+}
+
+async function loadItemsCarn(romaneoId) {
+  const el = $('carn-items-lista'); if(!el) return;
+  const { data } = await db.from('carn_romaneo_items').select('*').eq('romaneo_id', romaneoId).order('orden');
+  carnItemsActual = data || [];
+  if (!data?.length) {
+    el.innerHTML = '<div style="color:#333;font-size:12px;text-align:center;padding:16px">Sin compras cargadas.<br>Tocá "+ Agregar compra"</div>';
+    return;
+  }
+  el.innerHTML = data.map(item => '<div style="background:#161616;border:1px solid #222;border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px">' +
+    '<div style="flex:1">' +
+      '<div style="font-size:13px;font-weight:700;color:#fff">' + item.descripcion + '</div>' +
+      '<div style="font-size:10px;color:#555">' + item.peso_kg + 'kg · ' + fmtM(item.precio_compra_kg) + '/kg · Total: ' + fmtM(item.costo_total) + '</div>' +
+    '</div>' +
+    '<button data-iid="' + item.id + '" class="carn-del-item-btn" style="padding:5px 8px;border-radius:7px;background:#2E1A1A;color:#EF9A9A;border:1px solid #3A2A2A;font-size:11px;cursor:pointer">🗑</button>' +
+  '</div>').join('');
+}
+
+async function agregarItemCarn() {
+  if (!carnRomaneoActual) { toast('⚠️ Primero creá una semana'); return; }
+  // Load plantillas and precios
+  const [plRes, precRes] = await Promise.all([
+    db.from('carn_plantillas').select('*').eq('activa',true),
+    db.from('carn_precios_mercado').select('*').eq('activo',true).order('categoria').order('nombre'),
+  ]);
+  const plantillas = plRes.data || [];
+  const precios    = precRes.data || [];
+
+  mostrarModal('➕ Agregar compra',
+    '<div class="fg"><label style="display:block;font-size:10px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase">Tipo</label>' +
+    '<select id="ni-tipo" onchange="actualizarFormItem()" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px;font-family:Nunito;font-size:13px;color:#fff;outline:none;margin-bottom:10px">' +
+    '<option value="media_res">Media res</option><option value="mocho">Mocho</option><option value="corte_suelto">Corte suelto en caja</option>' +
+    '</select></div>' +
+    '<div class="fg"><label style="display:block;font-size:10px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase">Descripción / Producto</label>' +
+    '<select id="ni-desc-sel" onchange="cargarPrecioItem(this)" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px;font-family:Nunito;font-size:12px;color:#fff;outline:none;margin-bottom:6px">' +
+    '<option value="">Seleccioná de la lista...</option>' +
+    precios.map(p => '<option value="' + p.nombre + '" data-precio="' + p.precio_kg + '">' + p.nombre + ' — ' + fmtM(p.precio_kg) + '/kg</option>').join('') +
+    '</select>' +
+    '<input id="ni-desc" placeholder="O escribí manualmente..." style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px;font-family:Nunito;font-size:13px;color:#fff;outline:none;margin-bottom:10px"></div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">' +
+    '<div class="fg" style="margin:0"><label style="display:block;font-size:10px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase">Peso (kg)</label><input id="ni-peso" type="number" placeholder="0" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px;font-family:Nunito;font-size:18px;font-weight:900;color:#C9A84C;outline:none;text-align:center"></div>' +
+    '<div class="fg" style="margin:0"><label style="display:block;font-size:10px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase">Precio $/kg</label><input id="ni-precio" type="number" placeholder="0" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px;font-family:Nunito;font-size:18px;font-weight:900;color:#C9A84C;outline:none;text-align:center"></div>' +
+    '</div>' +
+    '<button onclick="guardarItemCarn()" style="width:100%;padding:12px;background:#C9A84C;border:none;border-radius:9px;font-family:Nunito;font-size:13px;font-weight:800;color:#0A0A0A;cursor:pointer">✅ Agregar</button>'
+  );
+}
+
+function cargarPrecioItem(sel) {
+  const precio = sel.selectedOptions[0]?.dataset?.precio;
+  const desc   = sel.selectedOptions[0]?.text?.split(' — ')[0];
+  if (precio && $('ni-precio')) $('ni-precio').value = precio;
+  if (desc && $('ni-desc'))     $('ni-desc').value   = desc;
+}
+
+async function guardarItemCarn() {
+  const tipo   = $('ni-tipo')?.value || 'media_res';
+  const desc   = $('ni-desc')?.value?.trim() || $('ni-desc-sel')?.selectedOptions[0]?.text?.split(' — ')[0] || '';
+  const peso   = parseFloat($('ni-peso')?.value) || 0;
+  const precio = parseFloat($('ni-precio')?.value) || 0;
+  if (!desc) { toast('⚠️ Ingresá una descripción'); return; }
+  if (!peso || !precio) { toast('⚠️ Ingresá peso y precio'); return; }
+
+  // Find matching plantilla
+  const tipoPlantilla = tipo === 'mocho' ? 'mocho' : tipo === 'media_res' ? 'media_res' : null;
+  let plantillaId = null;
+  if (tipoPlantilla) {
+    const { data: pl } = await db.from('carn_plantillas').select('id').eq('tipo', tipoPlantilla).limit(1);
+    if (pl?.length) plantillaId = pl[0].id;
+  }
+
+  const { error } = await db.from('carn_romaneo_items').insert({
+    romaneo_id: carnRomaneoActual.id, plantilla_id: plantillaId,
+    tipo, descripcion: desc, peso_kg: peso, precio_compra_kg: precio,
+    orden: carnItemsActual.length + 1,
+  });
+  if (error) { toast('⚠️ Error: ' + error.message); return; }
+  document.getElementById('modal-global')?.remove();
+  toast('✅ Compra agregada');
+  await loadItemsCarn(carnRomaneoActual.id);
+  await generarCortesCarn();
+}
+
+async function generarCortesCarn() {
+  if (!carnRomaneoActual) return;
+  const { data: items } = await db.from('carn_romaneo_items').select('*,carn_plantillas(id,tipo)').eq('romaneo_id', carnRomaneoActual.id);
+  if (!items?.length) return;
+
+  let todosCortes = [];
+  for (const item of items) {
+    if (item.tipo === 'corte_suelto') {
+      todosCortes.push({
+        item_id: item.id, romaneo_id: carnRomaneoActual.id,
+        nombre: item.descripcion,
+        kg_esperado: item.peso_kg, kg_real: item.peso_kg,
+        costo_kg: item.precio_compra_kg,
+        costo_total: item.peso_kg * item.precio_compra_kg,
+        kg_disponible: item.peso_kg,
+        destino: 'mostrador',
+      });
+    } else if (item.plantilla_id) {
+      const { data: plantCortes } = await db.from('carn_plantilla_cortes')
+        .select('*').eq('plantilla_id', item.plantilla_id).order('orden');
+      (plantCortes||[]).forEach(pc => {
+        const kgEsp = Math.round(item.peso_kg * pc.rendimiento_pct / 100 * 1000) / 1000;
+        todosCortes.push({
+          item_id: item.id, romaneo_id: carnRomaneoActual.id,
+          nombre: pc.nombre,
+          kg_esperado: kgEsp, kg_real: kgEsp,
+          costo_kg: item.precio_compra_kg,
+          costo_total: kgEsp * item.precio_compra_kg,
+          kg_disponible: kgEsp,
+          destino: pc.destino_default || 'mostrador',
+          destino_sugerido: pc.destino_default || 'mostrador',
+          precio_venta_kg: pc.precio_venta || 0,
+        });
+      });
+    }
+  }
+  carnCortesActual = todosCortes;
+  renderCortesCarn();
+  $('carn-cortes-section').style.display = todosCortes.length ? 'block' : 'none';
+}
+
+function renderCortesCarn() {
+  const el = $('carn-cortes-lista'); if(!el) return;
+  if (!carnCortesActual.length) { el.innerHTML = '<div style="color:#333;font-size:12px;text-align:center;padding:12px">Sin cortes</div>'; return; }
+
+  const DEST_COL = {mostrador:'#43A047',milanesa:'#C9A84C',picada:'#FFB74D',chorizo:'#FF7043',vacio:'#64B5F6',elaborado:'#BA68C8'};
+  const DEST_LBL = {mostrador:'🏪 Mostrador',milanesa:'🍖 Milanesa',picada:'🥩 Picada',chorizo:'🌭 Chorizo',vacio:'🫙 Vacío',elaborado:'⚗️ Elaborado'};
+
+  el.innerHTML = carnCortesActual.map((c,i) => {
+    const margen = c.precio_venta_kg > 0 && c.costo_kg > 0
+      ? Math.round((c.precio_venta_kg - c.costo_kg) / c.costo_kg * 100) : 0;
+    const color = DEST_COL[c.destino] || '#555';
+    return '<div style="background:#161616;border:1px solid #222;border-left:3px solid ' + color + ';border-radius:10px;padding:11px;margin-bottom:6px">' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">' +
+        '<div style="flex:1;font-size:13px;font-weight:700;color:#fff">' + c.nombre + '</div>' +
+        '<div style="font-size:10px;font-weight:700;color:' + color + '">' + (DEST_LBL[c.destino]||c.destino) + '</div>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:5px;margin-bottom:8px">' +
+        '<div><div style="font-size:9px;color:#555">Kg esp.</div><div style="font-size:12px;font-weight:700;color:#555">' + (c.kg_esperado||0).toFixed(2) + '</div></div>' +
+        '<div><div style="font-size:9px;color:#555">Kg real</div><input type="number" value="' + c.kg_real + '" step="0.1" min="0" onchange="carnCortesActual[' + i + '].kg_real=parseFloat(this.value)||0;carnCortesActual[' + i + '].kg_disponible=parseFloat(this.value)||0;renderCortesCarn()" style="width:100%;background:#1A1A1A;border:1px solid #333;border-radius:6px;padding:4px;font-family:Nunito;font-size:12px;font-weight:800;color:#C9A84C;outline:none;text-align:center"></div>' +
+        '<div><div style="font-size:9px;color:#555">Precio vta</div><input type="number" value="' + (c.precio_venta_kg||0) + '" step="100" onchange="carnCortesActual[' + i + '].precio_venta_kg=parseFloat(this.value)||0;renderCortesCarn()" style="width:100%;background:#1A1A1A;border:1px solid #333;border-radius:6px;padding:4px;font-family:Nunito;font-size:12px;font-weight:800;color:#43A047;outline:none;text-align:center"></div>' +
+        '<div style="background:#1A1A1A;border-radius:6px;padding:4px;text-align:center"><div style="font-size:11px;font-weight:900;color:' + (margen>=35?'#43A047':margen>=25?'#C9A84C':'#E53935') + '">' + margen + '%</div><div style="font-size:9px;color:#555">margen</div></div>' +
+      '</div>' +
+      '<select onchange="carnCortesActual[' + i + '].destino=this.value;renderCortesCarn()" style="width:100%;background:#1A1A1A;border:1px solid #333;border-radius:7px;padding:5px 8px;font-family:Nunito;font-size:11px;font-weight:700;color:' + color + ';outline:none">' +
+      Object.entries(DEST_LBL).map(([v,l]) => '<option value="' + v + '"' + (c.destino===v?' selected':'') + '>' + l + '</option>').join('') +
+      '</select>' +
+    '</div>';
+  }).join('');
+}
+
+async function loadCortesCarn(romaneoId) {
+  const { data } = await db.from('carn_romaneo_cortes').select('*').eq('romaneo_id', romaneoId).order('orden');
+  if (data?.length) {
+    carnCortesActual = data;
+    renderCortesCarn();
+    $('carn-cortes-section').style.display = 'block';
+  } else {
+    await generarCortesCarn();
+  }
+}
+
+async function guardarRomaneoSemanal() {
+  if (!carnRomaneoActual || !carnCortesActual.length) { toast('⚠️ Sin datos para guardar'); return; }
+  // Delete existing and reinsert
+  await db.from('carn_romaneo_cortes').delete().eq('romaneo_id', carnRomaneoActual.id);
+  const rows = carnCortesActual.map((c,i) => ({
+    romaneo_id: carnRomaneoActual.id,
+    item_id: c.item_id,
+    nombre: c.nombre,
+    kg_esperado: c.kg_esperado || c.kg_real,
+    kg_real: c.kg_real,
+    desviacion_pct: c.kg_esperado > 0 ? Math.round((c.kg_real - c.kg_esperado) / c.kg_esperado * 100 * 10) / 10 : 0,
+    costo_kg: c.costo_kg,
+    costo_total: c.kg_real * c.costo_kg,
+    destino: c.destino,
+    destino_sugerido: c.destino_sugerido || c.destino,
+    precio_venta_kg: c.precio_venta_kg || 0,
+    margen_pct: c.precio_venta_kg > 0 && c.costo_kg > 0 ? Math.round((c.precio_venta_kg - c.costo_kg) / c.costo_kg * 100 * 10) / 10 : 0,
+    ganancia_total: c.precio_venta_kg > 0 ? (c.precio_venta_kg - c.costo_kg) * c.kg_real : 0,
+    kg_disponible: c.kg_real,
+    orden: i,
+  }));
+  const { error } = await db.from('carn_romaneo_cortes').insert(rows);
+  if (error) { toast('⚠️ Error: ' + error.message); return; }
+  // Update resumen
+  try { await db.rpc('resumen_romaneo_semanal', {p_romaneo_id: carnRomaneoActual.id}); } catch(e) {}
+  toast('✅ Romaneo guardado — ' + rows.length + ' cortes');
+}
+
+async function sugerirDestinosIA() {
+  if (!carnCortesActual.length) { toast('⚠️ Sin cortes cargados'); return; }
+  const ok = await verificarLimiteIA();
+  if (!ok) return;
+  toast('🤖 Consultando IA...', 5000);
+  const resumen = carnCortesActual.map(c =>
+    c.nombre + ': ' + c.kg_real + 'kg, costo $' + c.costo_kg + '/kg, precio actual $' + (c.precio_venta_kg||0) + '/kg'
+  ).join('; ');
+  try {
+    const apiData = await llamarIA([{ role:'user', content:
+      'Sos asesor de carnicería argentina. Analizá estos cortes del romaneo semanal y sugerí el destino óptimo para maximizar ganancia. ' +
+      'Cortes: ' + resumen + '. ' +
+      'Destinos posibles: mostrador (venta directa), milanesa (transforma nalga/cuadrada/peceto), picada (osobuco frenado/recortes), chorizo (grasa+recortes), vacio (nobres con baja demanda). ' +
+      'Respondé SOLO con JSON: [{"nombre":"corte","destino":"mostrador|milanesa|picada|chorizo|vacio","razon":"texto corto"}]. Sin markdown.'
+    }], 800, 'carniceria_destinos');
+    const raw = (apiData.content||[]).map(c=>c.text||'').join('');
+    const sugerencias = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    sugerencias.forEach(s => {
+      const idx = carnCortesActual.findIndex(c => c.nombre.toLowerCase().includes(s.nombre.toLowerCase()));
+      if (idx >= 0) {
+        carnCortesActual[idx].destino = s.destino;
+        carnCortesActual[idx].destino_sugerido = s.destino;
+        carnCortesActual[idx].razon_sugerencia = s.razon;
+      }
+    });
+    renderCortesCarn();
+    toast('✅ Destinos sugeridos por IA');
+  } catch(e) { toast('⚠️ Error IA: ' + e.message); }
+}
+
+// ── TRANSFORMACIONES ──────────────────────────────
+async function loadTransformaciones() {
+  const el = $('transf-lista'); if(!el) return;
+  el.innerHTML = '<div class="loading-panel">⏳</div>';
+  const romaneoId = carnRomaneoActual?.id;
+  let query = db.from('carn_transformaciones').select('*').order('created_at', {ascending:false}).limit(20);
+  if (romaneoId) query = query.eq('romaneo_id', romaneoId);
+  const { data } = await query;
+  if (!data?.length) { el.innerHTML = '<div style="color:#333;font-size:12px;text-align:center;padding:20px">Sin transformaciones registradas</div>'; return; }
+  el.innerHTML = data.map(t => '<div style="background:#161616;border:1px solid #222;border-radius:10px;padding:12px;margin-bottom:8px">' +
+    '<div style="display:flex;justify-content:space-between;margin-bottom:6px">' +
+      '<div style="font-size:12px;font-weight:700;color:#fff">' + t.corte_origen_nombre + ' → ' + t.producto_destino + '</div>' +
+      '<div style="font-size:10px;color:#555">' + new Date(t.fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'short'}) + '</div>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">' +
+      '<div style="background:#1A1A1A;border-radius:7px;padding:6px;text-align:center"><div style="font-size:11px;font-weight:700;color:#fff">' + t.kg_utilizados + 'kg</div><div style="font-size:9px;color:#555">origen</div></div>' +
+      '<div style="background:#1A1A1A;border-radius:7px;padding:6px;text-align:center"><div style="font-size:11px;font-weight:700;color:#FFB74D">' + (t.kg_producto_final||0).toFixed(2) + 'kg</div><div style="font-size:9px;color:#555">final</div></div>' +
+      '<div style="background:#1A1A1A;border-radius:7px;padding:6px;text-align:center"><div style="font-size:11px;font-weight:700;color:#E53935">' + fmtM(t.costo_real_kg) + '</div><div style="font-size:9px;color:#555">costo/kg</div></div>' +
+      '<div style="background:#1A2E1A;border-radius:7px;padding:6px;text-align:center"><div style="font-size:11px;font-weight:700;color:#43A047">' + Math.round(t.margen_pct||0) + '%</div><div style="font-size:9px;color:#555">margen</div></div>' +
+    '</div>' +
+  '</div>').join('');
+
+  // Load cortes for new transformacion form
+  await cargarCortesDisponiblesTransf();
+}
+
+async function cargarCortesDisponiblesTransf() {
+  const sel = $('transf-origen'); if(!sel) return;
+  const romaneoId = carnRomaneoActual?.id;
+  if (!romaneoId) { sel.innerHTML = '<option value="">Sin romaneo activo</option>'; return; }
+  const { data } = await db.from('carn_romaneo_cortes').select('*').eq('romaneo_id', romaneoId).gt('kg_disponible', 0).order('nombre');
+  sel.innerHTML = '<option value="">Seleccioná el corte...</option>' +
+    (data||[]).map(c => '<option value="' + c.id + '" data-costo="' + c.costo_kg + '" data-disp="' + c.kg_disponible + '" data-nombre="' + c.nombre + '">' +
+      c.nombre + ' — ' + c.kg_disponible.toFixed(2) + 'kg disp. · $' + c.costo_kg + '/kg' + '</option>').join('');
+}
+
+function cargarDatosOrigen() {
+  const opt = $('transf-origen')?.selectedOptions[0];
+  if (!opt?.value) return;
+  const hint = $('transf-origen-stock');
+  if (hint) hint.textContent = opt.dataset.disp + ' kg disponibles';
+  calcularTransf();
+}
+
+function calcularTransf() {
+  const opt    = $('transf-origen')?.selectedOptions[0];
+  const costoKg= parseFloat(opt?.dataset?.costo) || 0;
+  const kg     = parseFloat($('transf-kg')?.value) || 0;
+  const merma  = parseFloat($('transf-merma')?.value) || 10;
+  const adic   = parseFloat($('transf-costo-adic')?.value) || 0;
+  if (!kg || !costoKg) { $('transf-resultado').style.display='none'; return; }
+  const kgFinal   = kg * (1 - merma/100);
+  const costoTotal= kg * costoKg + adic;
+  const costoRealKg = kgFinal > 0 ? costoTotal / kgFinal : 0;
+  const precioSug = Math.round(costoRealKg * 1.45);
+  if ($('transf-kg-final'))   $('transf-kg-final').textContent  = kgFinal.toFixed(2) + ' kg';
+  if ($('transf-costo-kg'))   $('transf-costo-kg').textContent  = fmtM(costoRealKg);
+  if ($('transf-precio-sug')) $('transf-precio-sug').textContent = fmtM(precioSug);
+  if (!$('transf-precio-venta')?.value) if($('transf-precio-venta')) $('transf-precio-venta').value = precioSug;
+  $('transf-resultado').style.display = 'block';
+}
+
+function nuevaTransformacion() { $('transf-form').style.display='block'; $('transf-form').scrollIntoView({behavior:'smooth'}); }
+
+async function guardarTransformacion() {
+  const opt    = $('transf-origen')?.selectedOptions[0];
+  const corteId= opt?.value;
+  const nombre = opt?.dataset?.nombre || '';
+  const costoKg= parseFloat(opt?.dataset?.costo) || 0;
+  const dispKg = parseFloat(opt?.dataset?.disp) || 0;
+  const destino= $('transf-destino')?.value || 'milanesa';
+  const kg     = parseFloat($('transf-kg')?.value) || 0;
+  const merma  = parseFloat($('transf-merma')?.value) || 10;
+  const adic   = parseFloat($('transf-costo-adic')?.value) || 0;
+  const precio = parseFloat($('transf-precio-venta')?.value) || 0;
+  if (!corteId || !kg) { toast('⚠️ Completá los datos'); return; }
+  if (kg > dispKg) { toast('⚠️ No hay ' + kg + 'kg disponibles (disp: ' + dispKg + 'kg)'); return; }
+  const kgFinal    = kg * (1 - merma/100);
+  const costoTotal = kg * costoKg + adic;
+  const costoRealKg= kgFinal > 0 ? costoTotal / kgFinal : 0;
+  const margen     = precio > 0 ? Math.round((precio - costoRealKg) / costoRealKg * 100 * 10) / 10 : 0;
+  const { error } = await db.from('carn_transformaciones').insert({
+    romaneo_id: carnRomaneoActual?.id, corte_origen_id: parseInt(corteId),
+    corte_origen_nombre: nombre, producto_destino: destino,
+    kg_utilizados: kg, merma_pct: merma, kg_producto_final: kgFinal,
+    costo_kg_origen: costoKg, costo_adicional: adic,
+    costo_real_kg: Math.round(costoRealKg), precio_venta_kg: precio,
+    margen_pct: margen, ganancia_total: (precio - costoRealKg) * kgFinal,
+    fecha: new Date().toISOString().split('T')[0],
+  });
+  if (error) { toast('⚠️ Error: ' + error.message); return; }
+  // Update disponible
+  await db.from('carn_romaneo_cortes').update({
+    kg_disponible: Math.max(0, dispKg - kg),
+    kg_transformado: kg,
+  }).eq('id', parseInt(corteId));
+  $('transf-form').style.display = 'none';
+  toast('✅ Transformación registrada');
+  loadTransformaciones();
+}
+
+// ── DASHBOARD ─────────────────────────────────────
+async function loadDashboardCarn() {
+  const romaneoId = carnRomaneoActual?.id;
+  if (!romaneoId) { toast('⚠️ Sin romaneo activo'); return; }
+
+  const { data: cortes } = await db.from('carn_romaneo_cortes').select('*').eq('romaneo_id', romaneoId).order('ganancia_total', {ascending:false});
+  if (!cortes?.length) { toast('⚠️ Guardá el romaneo primero'); return; }
+
+  // Sync semana selector
+  const { data: romaneos } = await db.from('carn_romaneos').select('*').order('fecha_inicio',{ascending:false}).limit(10);
+  const dashSel = $('dash-semana');
+  if (dashSel) dashSel.innerHTML = (romaneos||[]).map(r => '<option value="' + r.id + '"' + (r.id===romaneoId?' selected':'') + '>' + getSemanaLabel(r.semana) + '</option>').join('');
+
+  const totCosto    = cortes.reduce((s,c)=>s+(c.costo_total||0),0);
+  const totGanancia = cortes.reduce((s,c)=>s+(c.ganancia_total||0),0);
+  const totKg       = cortes.reduce((s,c)=>s+(c.kg_real||0),0);
+  const margenTotal = totCosto > 0 ? Math.round(totGanancia/totCosto*100*10)/10 : 0;
+
+  if($('dash-ganancia')) { $('dash-ganancia').textContent=fmtM(totGanancia); $('dash-ganancia').style.color=totGanancia>=0?'#43A047':'#E53935'; }
+  if($('dash-margen'))   $('dash-margen').textContent = margenTotal + '%';
+  if($('dash-costo'))    $('dash-costo').textContent  = fmtM(totCosto);
+  if($('dash-kg'))       $('dash-kg').textContent     = totKg.toFixed(1) + ' kg';
+
+  // Ranking
+  const rankEl = $('dash-ranking');
+  if (rankEl) rankEl.innerHTML = cortes.filter(c=>c.precio_venta_kg>0).slice(0,10).map((c,i) => {
+    const col = i<3?'#C9A84C':i<6?'#43A047':'#555';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #1A1A1A">' +
+      '<div style="font-size:13px;font-weight:900;color:' + col + ';width:20px">' + (i+1) + '</div>' +
+      '<div style="flex:1"><div style="font-size:12px;font-weight:700;color:#fff">' + c.nombre + '</div>' +
+        '<div style="font-size:10px;color:#555">' + c.kg_real + 'kg · costo ' + fmtM(c.costo_kg) + '/kg</div></div>' +
+      '<div style="text-align:right"><div style="font-size:13px;font-weight:800;color:#43A047">' + Math.round(c.margen_pct||0) + '%</div>' +
+        '<div style="font-size:10px;color:#555">' + fmtM(c.ganancia_total) + '</div></div>' +
+    '</div>';
+  }).join('') || '<div style="color:#333;font-size:12px;text-align:center;padding:12px">Cargá precios de venta para ver el ranking</div>';
+
+  // Alertas
+  const alertEl = $('dash-alertas');
+  if (alertEl) {
+    const alertas = [];
+    cortes.forEach(c => {
+      if (c.precio_venta_kg <= 0) alertas.push({ tipo:'info', txt: c.nombre + ': sin precio de venta cargado' });
+      else if ((c.margen_pct||0) < 25) alertas.push({ tipo:'error', txt: c.nombre + ': margen muy bajo (' + Math.round(c.margen_pct) + '%)' });
+      else if ((c.margen_pct||0) < 32) alertas.push({ tipo:'warn', txt: c.nombre + ': margen bajo (' + Math.round(c.margen_pct) + '%) — considerá subir precio o transformar' });
+      if (c.desviacion_pct && Math.abs(c.desviacion_pct) > 20) alertas.push({ tipo:'warn', txt: c.nombre + ': rendimiento real difiere ' + c.desviacion_pct + '% del esperado' });
+    });
+    alertEl.innerHTML = alertas.length ? alertas.map(a =>
+      '<div style="background:' + (a.tipo==='error'?'rgba(229,57,53,.1)':a.tipo==='warn'?'rgba(201,168,76,.1)':'rgba(100,181,246,.1)') + ';border-radius:8px;padding:8px;margin-bottom:6px;font-size:11px;color:' + (a.tipo==='error'?'#EF9A9A':a.tipo==='warn'?'#E8C96A':'#64B5F6') + '">' +
+      (a.tipo==='error'?'🔴 ':a.tipo==='warn'?'⚠️ ':'ℹ️ ') + a.txt + '</div>').join('') :
+      '<div style="color:#43A047;font-size:12px;text-align:center;padding:8px">✅ Todo en orden</div>';
+  }
+
+  // Teórico vs Real
+  const tvrEl = $('dash-teorico-real');
+  if (tvrEl) {
+    const conDesv = cortes.filter(c => c.kg_esperado > 0 && Math.abs(c.desviacion_pct||0) > 5);
+    tvrEl.innerHTML = !conDesv.length ? '<div style="color:#43A047;font-size:12px;text-align:center;padding:8px">✅ Rendimientos dentro del rango</div>' :
+      conDesv.map(c => '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #1A1A1A">' +
+        '<div style="font-size:12px;font-weight:700;color:#fff">' + c.nombre + '</div>' +
+        '<div style="display:flex;gap:8px;font-size:11px">' +
+          '<span style="color:#555">Esp: ' + c.kg_esperado.toFixed(2) + 'kg</span>' +
+          '<span style="color:#C9A84C">Real: ' + c.kg_real.toFixed(2) + 'kg</span>' +
+          '<span style="color:' + (Math.abs(c.desviacion_pct)>20?'#E53935':'#FFB74D') + ';font-weight:800">' + (c.desviacion_pct>0?'+':'') + c.desviacion_pct + '%</span>' +
+        '</div>' +
+      '</div>').join('');
+  }
+}
+
+// ── SIMULADOR ─────────────────────────────────────
+async function loadSimuladorCarn() {
+  const romaneoId = carnRomaneoActual?.id;
+  if (!romaneoId) return;
+  const { data: romaneos } = await db.from('carn_romaneos').select('*').order('fecha_inicio',{ascending:false}).limit(10);
+  const simSel = $('sim-semana');
+  if (simSel) simSel.innerHTML = (romaneos||[]).map(r => '<option value="' + r.id + '"' + (r.id===romaneoId?' selected':'') + '>' + getSemanaLabel(r.semana) + '</option>').join('');
+  const { data: cortes } = await db.from('carn_romaneo_cortes').select('*').eq('romaneo_id', romaneoId).order('orden');
+  if (!cortes?.length) { $('sim-cortes-lista').innerHTML = '<div style="color:#333;font-size:12px;text-align:center;padding:20px">Guardá el romaneo para usar el simulador</div>'; return; }
+
+  let gananciaActual = cortes.reduce((s,c)=>s+(c.ganancia_total||0),0);
+  if($('sim-ganancia-actual')) $('sim-ganancia-actual').textContent = fmtM(gananciaActual);
+
+  $('sim-cortes-lista').innerHTML = cortes.filter(c=>c.precio_venta_kg>0).map((c,i) => {
+    const margen = Math.round(c.margen_pct||0);
+    return '<div style="background:#161616;border:1px solid #222;border-radius:10px;padding:11px;margin-bottom:6px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
+        '<div style="font-size:12px;font-weight:700;color:#fff">' + c.nombre + ' <span style="color:#555;font-weight:400;font-size:10px">(' + c.kg_real + 'kg)</span></div>' +
+        '<div style="font-size:11px;color:#555">Costo: ' + fmtM(c.costo_kg) + '/kg</div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:8px">' +
+        '<input type="range" min="' + Math.round(c.costo_kg*1.05) + '" max="' + Math.round(c.costo_kg*2.5) + '" value="' + c.precio_venta_kg + '" step="100" ' +
+          'data-kg="' + c.kg_real + '" data-costo="' + c.costo_kg + '" data-base="' + c.ganancia_total + '" data-idx="' + i + '" ' +
+          'class="sim-rng" oninput="handleSimRange(this)" style="flex:1;accent-color:#C9A84C">' +
+        '<span class="sim-val" style="font-size:14px;font-weight:800;color:#43A047;min-width:80px;text-align:right">' + fmtM(c.precio_venta_kg) + '</span>' +
+        '<span style="font-size:11px;color:#555;min-width:35px">' + margen + '%</span>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  $('sim-resultado').style.display = 'none';
+}
+
+let simDelta = 0;
+function calcularSimulacion(idx, nuevoPrecio, kg, costo, gananciaOrig) {
+  const nuevaGanancia = (nuevoPrecio - costo) * kg;
+  simDelta += (nuevaGanancia - gananciaOrig);
+  const actual   = parseFloat($('sim-ganancia-actual')?.textContent?.replace(/[^0-9,-]/g,'').replace(',','.')) || 0;
+  const nueva    = actual + simDelta;
+  if ($('sim-ganancia-nueva')) { $('sim-ganancia-nueva').textContent = fmtM(nueva); $('sim-ganancia-nueva').style.color = nueva >= actual ? '#43A047' : '#E53935'; }
+  const diff = nueva - actual;
+  if ($('sim-diferencia')) { $('sim-diferencia').textContent = (diff>=0?'▲ +':' ▼ ') + fmtM(Math.abs(diff)) + ' vs actual'; $('sim-diferencia').style.color = diff>=0?'#43A047':'#E53935'; }
+  $('sim-resultado').style.display = 'block';
+}
+
+function handleSimRange(el) {
+  const nuevoPrecio = parseFloat(el.value);
+  const kg    = parseFloat(el.dataset.kg) || 0;
+  const costo = parseFloat(el.dataset.costo) || 0;
+  const base  = parseFloat(el.dataset.base) || 0;
+  const idx   = parseInt(el.dataset.idx) || 0;
+  // Update display
+  const span = el.nextElementSibling;
+  if (span) span.textContent = fmtM(nuevoPrecio);
+  calcularSimulacion(idx, nuevoPrecio, kg, costo, base);
+}
+
+async function aplicarSimulacion() {
+  toast('ℹ️ Para aplicar cambios, editá los precios directamente en el romaneo y volvé a guardar');
+}
+
+// ── LISTA PRECIOS MERCADO ─────────────────────────
+async function loadPreciosMercado() {
+  const el = $('precios-mkt-lista'); if(!el) return;
+  const { data } = await db.from('carn_precios_mercado').select('*').eq('activo',true).order('categoria').order('nombre');
+  if (!data?.length) { el.innerHTML = '<div style="color:#333;text-align:center;padding:20px">Sin precios cargados</div>'; return; }
+  const cats = [...new Set(data.map(p=>p.categoria))];
+  const CAT_LBL = {media_res:'🐄 Media res',cuartos:'🔪 Cuartos',cortes_caja:'📦 Cortes en caja',asados:'🔥 Asados',cerdo:'🐷 Cerdo'};
+  el.innerHTML = cats.map(cat =>
+    '<div style="font-size:9px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;padding:10px 0 4px">' + (CAT_LBL[cat]||cat) + '</div>' +
+    data.filter(p=>p.categoria===cat).map(p =>
+      '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #1A1A1A">' +
+        '<div><div style="font-size:12px;font-weight:700;color:#fff">' + p.nombre + '</div><div style="font-size:10px;color:#555">Cód: ' + (p.codigo||'—') + '</div></div>' +
+        '<div style="font-size:14px;font-weight:800;color:#C9A84C">' + fmtM(p.precio_kg) + '</div>' +
+      '</div>'
+    ).join('')
+  ).join('');
+}
+
+function actualizarListaPrecios() {
+  mostrarModal('📋 Actualizar lista', '<div style="font-size:12px;color:#aaa;line-height:1.6">Para actualizar los precios de La Morena:<br><br>1. Andá a ⚙️ Config → 📋 Lista<br>2. Editá el precio de cada ítem<br><br>O mandame la nueva lista PDF y la cargo automáticamente.</div>');
+}
+
+// ── CONFIG ────────────────────────────────────────
+async function loadCarnCfg() {
+  loadPlantillasCfg();
+}
+
+async function loadPlantillasCfg() {
+  const { data: plantas } = await db.from('carn_plantillas').select('*').eq('activa',true);
+  const sel = $('cfg-plantilla-sel');
+  if (sel) sel.innerHTML = '<option value="">Seleccioná...</option>' +
+    (plantas||[]).map(p => '<option value="' + p.id + '">' + p.nombre + '</option>').join('');
+}
+
+async function loadPlantillaCfg() {
+  const id = $('cfg-plantilla-sel')?.value;
+  const el = $('plantilla-cfg-lista'); if(!el) return;
+  if (!id) { el.innerHTML = '<div style="color:#333;font-size:12px;text-align:center;padding:12px">Seleccioná una plantilla</div>'; return; }
+  const { data } = await db.from('carn_plantilla_cortes').select('*').eq('plantilla_id',id).order('orden');
+  if (!data?.length) { el.innerHTML = '<div style="color:#333;font-size:12px;text-align:center;padding:12px">Sin cortes</div>'; return; }
+  el.innerHTML = data.map(c => '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #1A1A1A">' +
+    '<div style="flex:1"><div style="font-size:12px;font-weight:700;color:#fff">' + c.nombre + '</div></div>' +
+    '<div style="display:flex;align-items:center;gap:4px">' +
+      '<input type="number" value="' + c.rendimiento_pct + '" step="0.1" min="0" max="100" ' +
+        'onchange="actualizarRendimiento(' + c.id + ',this.value)" ' +
+        'style="width:65px;background:#1A1A1A;border:1px solid #333;border-radius:7px;padding:5px 6px;font-family:Nunito;font-size:13px;font-weight:800;color:#C9A84C;outline:none;text-align:center">' +
+      '<span style="font-size:11px;color:#555">%</span>' +
+    '</div>' +
+    '<input type="number" value="' + (c.precio_venta||0) + '" step="100" placeholder="Precio vta" ' +
+      'onchange="actualizarPrecioPlantilla(' + c.id + ',this.value)" ' +
+      'style="width:90px;background:#1A1A1A;border:1px solid #333;border-radius:7px;padding:5px 6px;font-family:Nunito;font-size:12px;font-weight:800;color:#43A047;outline:none;text-align:center">' +
+  '</div>').join('') +
+  '<div style="font-size:10px;color:#555;margin-top:8px;text-align:right">Total: ' +
+    Math.round(data.reduce((s,c)=>s+c.rendimiento_pct,0)*10)/10 + '% (resto es merma/hueso/grasa)</div>';
+}
+
+async function actualizarRendimiento(id, val) {
+  await db.from('carn_plantilla_cortes').update({rendimiento_pct: parseFloat(val)||0}).eq('id',id);
+  toast('✅ Guardado');
+}
+async function actualizarPrecioPlantilla(id, val) {
+  await db.from('carn_plantilla_cortes').update({precio_venta: parseFloat(val)||0}).eq('id',id);
+}
+
+async function loadReglasCfg() {
+  const el = $('reglas-lista'); if(!el) return;
+  const { data } = await db.from('carn_reglas_destino').select('*').order('prioridad');
+  el.innerHTML = (data||[]).map(r => '<div style="background:#161616;border:1px solid #222;border-radius:9px;padding:10px;margin-bottom:6px;display:flex;align-items:center;gap:8px">' +
+    '<label class="tog" style="flex-shrink:0"><input type="checkbox" ' + (r.activa?'checked':'') + ' onchange="toggleRegla(' + r.id + ',this.checked)"><div class="tog-sl"></div></label>' +
+    '<div style="flex:1"><div style="font-size:12px;font-weight:700;color:#fff">' + r.nombre + '</div>' +
+      '<div style="font-size:10px;color:#555">Si ' + r.condicion + ' < ' + (r.umbral||'—') + ' → ' + r.destino + '</div></div>' +
+    '<input type="number" value="' + (r.umbral||0) + '" step="1" onchange="actualizarRegla(' + r.id + ',this.value)" style="width:60px;background:#1A1A1A;border:1px solid #333;border-radius:7px;padding:5px;font-family:Nunito;font-size:13px;font-weight:800;color:#C9A84C;outline:none;text-align:center">' +
+  '</div>').join('');
+}
+
+async function toggleRegla(id, val) { await db.from('carn_reglas_destino').update({activa:val}).eq('id',id); }
+async function actualizarRegla(id, val) { await db.from('carn_reglas_destino').update({umbral:parseFloat(val)||0}).eq('id',id); toast('✅ Regla actualizada'); }
+
+// ══════════════════════════════════════════════════
 // EVENT DELEGATION GLOBAL
 // ══════════════════════════════════════════════════
 document.addEventListener('click', async function(e) {
@@ -6183,10 +6638,14 @@ document.addEventListener('click', async function(e) {
     return;
   }
 
-  // ── Carnicería: editar corte ──
-  const carnEditBtn = e.target.closest('.carn-edit-corte-btn');
-  if (carnEditBtn) {
-    toast('✏️ Editar corte — funcionalidad en desarrollo');
+  // ── Carnicería: eliminar item ──
+  const carnDelItem = e.target.closest('.carn-del-item-btn');
+  if (carnDelItem) {
+    const ok = await confirmar('¿Eliminar esta compra?');
+    if (!ok) return;
+    await db.from('carn_romaneo_items').delete().eq('id', carnDelItem.dataset.iid);
+    toast('✅ Compra eliminada');
+    if (carnRomaneoActual) { await loadItemsCarn(carnRomaneoActual.id); await generarCortesCarn(); }
     return;
   }
 
@@ -6926,6 +7385,9 @@ async function verHistorialRomaneos() {
     '</div>').join('')
   );
 }
+
+
+
 
 </script>
 </body>
