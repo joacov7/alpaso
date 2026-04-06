@@ -6107,7 +6107,16 @@ async function cargarSemanasCarn() {
     const opts = (data||[]).map(r => '<option value="' + r.id + '">' + getSemanaLabel(r.semana) + '</option>').join('');
     sel.innerHTML = '<option value="">Semana actual (' + getSemanaLabel(current) + ')</option>' + opts;
   });
-  if (data?.length) { carnRomaneoActual = data[0]; }
+  if (data?.length) {
+    // Select romaneo activo or first
+    const activo = data.find(r => r.estado === 'activo') || data[0];
+    carnRomaneoActual = activo;
+    // Sync selector
+    sels.forEach(id => {
+      const sel = $(id); if(!sel) return;
+      if (activo) sel.value = activo.id;
+    });
+  }
   loadRomaneoSemana();
 }
 
@@ -6116,7 +6125,12 @@ async function nuevaSemanaCarn() {
   const semana = getSemanaKey(hoy);
   // Check if exists
   const { data: existe } = await db.from('carn_romaneos').select('id').eq('semana', semana).limit(1);
-  if (existe?.length) { toast('⚠️ Ya existe un romaneo para esta semana'); return; }
+  if (existe?.length) {
+    toast('ℹ️ Ya existe un romaneo para esta semana — cargando...');
+    carnRomaneoActual = { id: existe[0].id };
+    await cargarSemanasCarn();
+    return;
+  }
   const { data, error } = await db.from('carn_romaneos').insert({
     semana, fecha_inicio: hoy.toISOString().split('T')[0], estado: 'activo'
   }).select().single();
@@ -6137,7 +6151,22 @@ async function loadRomaneoSemana() {
     if (data?.length) romaneo = data[0];
   }
   carnRomaneoActual = romaneo;
-  if (!romaneo) { $('carn-items-lista').innerHTML = '<div style="color:#333;font-size:12px;text-align:center;padding:20px">Sin romaneo para esta semana.<br><br>Tocá "+ Semana" para crear uno.</div>'; return; }
+  if (!romaneo) {
+    // Auto-crear romaneo para la semana actual
+    const hoy = new Date();
+    const semana = getSemanaKey(hoy);
+    const { data: nuevo, error } = await db.from('carn_romaneos').insert({
+      semana, fecha_inicio: hoy.toISOString().split('T')[0], estado: 'activo'
+    }).select().single();
+    if (!error && nuevo) {
+      carnRomaneoActual = nuevo;
+      await cargarSemanasCarn();
+    } else {
+      $('carn-items-lista').innerHTML = '<div style="color:#333;font-size:12px;text-align:center;padding:20px">Sin romaneo. Tocá "+ Semana".</div>';
+      $('carn-cortes-section').style.display = 'none';
+    }
+    return;
+  }
   await loadItemsCarn(romaneo.id);
   await loadCortesCarn(romaneo.id);
 }
@@ -6147,7 +6176,13 @@ async function loadItemsCarn(romaneoId) {
   const { data } = await db.from('carn_romaneo_items').select('*').eq('romaneo_id', romaneoId).order('orden');
   carnItemsActual = data || [];
   if (!data?.length) {
-    el.innerHTML = '<div style="color:#333;font-size:12px;text-align:center;padding:16px">Sin compras cargadas.<br>Tocá "+ Agregar compra"</div>';
+    el.innerHTML = '<div style="background:#161616;border:1px dashed #333;border-radius:12px;padding:20px;text-align:center">' +
+      '<div style="font-size:24px;margin-bottom:8px">🐄</div>' +
+      '<div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:4px">Romaneo semana ' + getSemanaLabel(carnRomaneoActual?.semana||'') + '</div>' +
+      '<div style="font-size:11px;color:#555;margin-bottom:12px">Agregá las compras de esta semana</div>' +
+      '<button onclick="agregarItemCarn()" style="padding:9px 18px;border-radius:9px;background:#C9A84C;border:none;color:#0A0A0A;font-family:Nunito;font-size:12px;font-weight:800;cursor:pointer">+ Agregar primera compra</button>' +
+    '</div>';
+    $('carn-cortes-section').style.display = 'none';
     return;
   }
   el.innerHTML = data.map(item => '<div style="background:#161616;border:1px solid #222;border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px">' +
