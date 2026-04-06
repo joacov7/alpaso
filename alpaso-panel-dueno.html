@@ -1110,6 +1110,14 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
 <!-- ═══ MERMAS ═════════════════════════════════════ -->
 <div id="tab-mermas" class="sec" style="display:none">
 
+  <!-- Sub-tabs mermas/lotes -->
+  <div style="display:flex;gap:6px;margin-bottom:14px">
+    <button class="merma-stab on" onclick="mermaSubTab(this,'mermas')" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#C9A84C;color:#0A0A0A;border:none">🗑 Mermas</button>
+    <button class="merma-stab" onclick="mermaSubTab(this,'lotes')" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">📦 Lotes / Vencimientos</button>
+  </div>
+
+  <!-- MERMAS -->
+  <div id="mermas-panel-mermas">
   <!-- Filtros -->
   <div style="display:flex;gap:8px;margin-bottom:10px">
     <input type="date" id="merma-desde" onchange="loadMermas()"
@@ -1147,6 +1155,86 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
     </div>
   </div>
   <div class="card" id="mermas-panel-list" style="padding:0 14px"><div class="loading-panel">⏳</div></div>
+
+  </div><!-- /mermas-panel-mermas -->
+
+  <!-- LOTES / VENCIMIENTOS -->
+  <div id="mermas-panel-lotes" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div>
+        <div style="font-size:13px;font-weight:800;color:#fff">Lotes con vencimiento</div>
+        <div style="font-size:10px;color:#555">Registrá cada ingreso con su fecha de vto</div>
+      </div>
+      <button onclick="abrirNuevoLote()" class="btn btn-gold" style="padding:7px 14px;font-size:12px">+ Nuevo lote</button>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <select id="lote-filtro" onchange="loadLotes()"
+        style="flex:1;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:8px 10px;font-family:'Nunito';font-size:12px;color:#fff;outline:none">
+        <option value="">Todos los lotes activos</option>
+        <option value="urgente">🔴 Vencen en 3 días</option>
+        <option value="proximo">🟡 Vencen en 7 días</option>
+        <option value="ok">✅ Sin urgencia</option>
+      </select>
+      <button onclick="loadLotes()" style="padding:8px 12px;border-radius:9px;background:#1E1E1E;border:1px solid #2A2A2A;color:#aaa;font-family:'Nunito';font-size:11px;cursor:pointer">🔄</button>
+    </div>
+    <div id="lotes-list"><div class="loading-panel">⏳</div></div>
+
+    <!-- Form nuevo lote -->
+    <div id="lote-form" style="display:none">
+      <div class="card" style="margin-top:12px">
+        <div class="card-title" id="lote-form-titulo">➕ Nuevo lote</div>
+        <input type="hidden" id="lote-id">
+        <div class="fg">
+          <label>Buscar producto</label>
+          <input id="lote-buscar" placeholder="Nombre o código de barra..." oninput="buscarProdLote(this.value)">
+          <div id="lote-buscar-result" style="margin-top:6px"></div>
+        </div>
+        <input type="hidden" id="lote-prod-id">
+        <div class="fg">
+          <label>Producto seleccionado</label>
+          <input id="lote-prod-nombre" placeholder="Buscá arriba para seleccionar" readonly style="color:#C9A84C;font-weight:700">
+        </div>
+        <div class="fg-row">
+          <div class="fg">
+            <label>Cantidad</label>
+            <input id="lote-cantidad" type="number" placeholder="0" min="0.1" step="0.1" style="font-size:20px;font-weight:900;color:#C9A84C;text-align:center">
+          </div>
+          <div class="fg">
+            <label>Unidad</label>
+            <select id="lote-unidad" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
+              <option value="unidad">Unidad</option>
+              <option value="kg">Kg</option>
+              <option value="caja">Caja</option>
+              <option value="pack">Pack</option>
+            </select>
+          </div>
+        </div>
+        <div class="fg">
+          <label>Fecha de vencimiento</label>
+          <input id="lote-fecha-vto" type="date" style="font-size:15px;font-weight:700;color:#E53935">
+          <div class="fg-hint" id="lote-dias-hint"></div>
+        </div>
+        <div class="fg-row">
+          <div class="fg">
+            <label>Precio de compra ($) — opcional</label>
+            <input id="lote-precio-compra" type="number" placeholder="0">
+          </div>
+          <div class="fg">
+            <label>Proveedor — opcional</label>
+            <select id="lote-proveedor" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
+              <option value="">Sin proveedor</option>
+            </select>
+          </div>
+        </div>
+        <div class="fg"><label>Notas</label><input id="lote-notas" placeholder="Ej: Lote del martes, 2da entrega..."></div>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button onclick="guardarLote()" class="btn btn-gold" style="flex:1;justify-content:center;padding:12px">💾 Guardar lote</button>
+          <button onclick="$('lote-form').style.display='none'" class="btn btn-ghost" style="padding:12px 16px">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div><!-- /lotes -->
+
 </div>
 
 <!-- ═══ STOCK ══════════════════════════════════════ -->
@@ -1892,6 +1980,7 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
 <div class="toast" id="toast"></div>
 
 <script>
+
 
 
 
@@ -6638,6 +6727,14 @@ document.addEventListener('click', async function(e) {
     return;
   }
 
+  // ── Carnicería: editar corte en config ──
+  const carnEditCorte = e.target.closest('.carn-edit-corte-btn');
+  if (carnEditCorte) {
+    const cid = carnEditCorte.dataset.cid;
+    toast('✏️ Para editar el corte, usá ⚙️ Config → 📋 Plantillas');
+    return;
+  }
+
   // ── Carnicería: eliminar item ──
   const carnDelItem = e.target.closest('.carn-del-item-btn');
   if (carnDelItem) {
@@ -6688,19 +6785,7 @@ let ultimoCostoKgRomaneo = 0; // para pre-cargar en vacío
 
 const fmtKg = n => (n||0).toFixed(2) + ' kg';
 
-function carnSubTab(btn, id) {
-  document.querySelectorAll('.carn-stab').forEach(b => {
-    b.style.background = '#1E1E1E'; b.style.color = '#aaa'; b.style.border = '1px solid #2A2A2A';
-  });
-  btn.style.background = '#C9A84C'; btn.style.color = '#0A0A0A'; btn.style.border = 'none';
-  ['romaneo','vacio','elaborados','balance','comparador','config-carn'].forEach(t => {
-    const el = $('carn-' + t); if (el) el.style.display = t === id ? 'block' : 'none';
-  });
-  if (id === 'vacio')       initVacio();
-  if (id === 'elaborados')  initElaborados();
-  if (id === 'balance')     initBalance();
-  if (id === 'config-carn') loadCortesCfg();
-}
+// carnSubTab: see carniceria V2 section
 
 function carnCfgTab(btn, id) {
   document.querySelectorAll('.carn-cfg-tab').forEach(b => {
@@ -6913,7 +6998,7 @@ async function initVacio() {
     (data||[]).map(c => '<option value="' + c.id + '" data-costo="' + (c.precio_costo_kg||ultimoCostoKgRomaneo||0) + '" data-margen="' + (c.margen_objetivo||45) + '" data-precio="' + (c.precio_venta||0) + '">' + c.nombre + '</option>').join('');
 
   // Pre-cargar config vacío
-  const { data: cfg } = await db.from('carniceria_vacio_config').select('*').eq('activo',true).single().catch(()=>({data:null}));
+  let cfg = null; try { const _rv = await db.from('carniceria_vacio_config').select('*').eq('activo',true).single(); cfg = _rv.data; } catch(e) {}
   if (cfg) {
     if ($('vacio-bolsa'))    $('vacio-bolsa').value    = cfg.costo_bolsa || 0;
     if ($('vacio-selladora'))$('vacio-selladora').value = cfg.costo_selladora_uso || 0;
@@ -7300,7 +7385,7 @@ async function actualizarCostoCfg(id, valor) {
 }
 
 async function loadVacioCfg() {
-  const { data } = await db.from('carniceria_vacio_config').select('*').eq('activo',true).single().catch(()=>({data:null}));
+  let data = null; try { const _rvv = await db.from('carniceria_vacio_config').select('*').eq('activo',true).single(); data = _rvv.data; } catch(e) {}
   if (data) {
     if ($('vcfg-bolsa'))    $('vcfg-bolsa').value    = data.costo_bolsa || 0;
     if ($('vcfg-selladora'))$('vcfg-selladora').value = data.costo_selladora_uso || 0;
@@ -7385,6 +7470,7 @@ async function verHistorialRomaneos() {
     '</div>').join('')
   );
 }
+
 
 
 
