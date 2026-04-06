@@ -2153,6 +2153,7 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
 
 
 
+
 // ══════════════════════════════════════════════════
 // SUPABASE
 // ══════════════════════════════════════════════════
@@ -6260,23 +6261,15 @@ function getSemanaLabel(key) {
 async function cargarSemanasCarn() {
   const { data } = await db.from('carn_romaneos').select('*').order('fecha_inicio', {ascending:false}).limit(10);
   const sels = ['carn-semana-sel','dash-semana','sim-semana'];
-  sels.forEach(id => {
-    const sel = $(id); if(!sel) return;
+  const activo = data?.length ? (data.find(r => r.estado === 'activo') || data[0]) : null;
+  carnRomaneoActual = activo || null;
+  sels.forEach(sid => {
+    const sel = $(sid); if(!sel) return;
     const current = getSemanaKey(new Date());
-    const opts = (data||[]).map(r => '<option value="' + r.id + '">' + getSemanaLabel(r.semana) + '</option>').join('');
-    sel.innerHTML = '<option value="">Semana actual (' + getSemanaLabel(current) + ')</option>' + opts;
+    sel.innerHTML = '<option value="">Semana actual (' + getSemanaLabel(current) + ')</option>' +
+      (data||[]).map(r => '<option value="' + r.id + '"' + (activo && r.id===activo.id?' selected':'') + '>' + getSemanaLabel(r.semana) + '</option>').join('');
   });
-  if (data?.length) {
-    // Select romaneo activo or first
-    const activo = data.find(r => r.estado === 'activo') || data[0];
-    carnRomaneoActual = activo;
-    // Sync selector
-    sels.forEach(id => {
-      const sel = $(id); if(!sel) return;
-      if (activo) sel.value = activo.id;
-    });
-  }
-  loadRomaneoSemana();
+  await loadRomaneoSemana();
 }
 
 async function nuevaSemanaCarn() {
@@ -6299,17 +6292,13 @@ async function nuevaSemanaCarn() {
 }
 
 async function loadRomaneoSemana() {
+  // Use carnRomaneoActual set by cargarSemanasCarn, or find by selector
   const selVal = $('carn-semana-sel')?.value;
-  let romaneo = null;
-  if (selVal) {
-    const { data } = await db.from('carn_romaneos').select('*').eq('id', selVal).single();
-    romaneo = data;
-  } else {
-    const semana = getSemanaKey(new Date());
-    const { data } = await db.from('carn_romaneos').select('*').eq('semana', semana).limit(1);
-    if (data?.length) romaneo = data[0];
+  if (selVal && (!carnRomaneoActual || carnRomaneoActual.id !== parseInt(selVal))) {
+    const { data } = await db.from('carn_romaneos').select('*').eq('id', parseInt(selVal)).single();
+    carnRomaneoActual = data || carnRomaneoActual;
   }
-  carnRomaneoActual = romaneo;
+  let romaneo = carnRomaneoActual;
   if (!romaneo) {
     // Auto-crear romaneo para la semana actual
     const hoy = new Date();
@@ -6516,10 +6505,9 @@ async function guardarItemCarn() {
   }
   if (error) { toast('⚠️ Error: ' + error.message); return; }
   document.getElementById('modal-global')?.remove();
-  _costosItemModal = []; // reset
+  _costosItemModal = [];
   toast('✅ Compra agregada');
-  await loadItemsCarn(carnRomaneoActual.id);
-  await generarCortesCarn();
+  await loadRomaneoSemana();
 }
 
 async function generarCortesCarn() {
@@ -8063,7 +8051,12 @@ function calcularComparadorV2() {
   const tablaEl = $('cmp2-tabla');
   const concEl  = $('cmp2-conclusion');
   const resEl   = $('cmp2-resultado');
-  if (!resultados.length || !tablaEl) { if(resEl) resEl.style.display='none'; return; }
+  if (!resultados.length) {
+    if (resEl) resEl.style.display = 'none';
+    if (tablaEl) tablaEl.innerHTML = '<div style="color:#555;font-size:12px;text-align:center;padding:20px">Ingresá al menos un precio para ver la comparación</div>';
+    return;
+  }
+  if (!tablaEl) return;
 
   const minKg = Math.min(...resultados.map(r => r.costoKg));
   const maxKg = Math.max(...resultados.map(r => r.costoKg));
@@ -8245,6 +8238,7 @@ function confirmarCostoItemModal() {
   if (wrap) wrap.style.display = 'block';
   toast('✅ Costo agregado');
 }
+
 
 </script>
 </body>
