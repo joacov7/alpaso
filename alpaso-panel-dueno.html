@@ -1829,21 +1829,87 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
     <div class="card" style="margin-bottom:10px">
       <div class="card-title">🐃 Opción A — Animal en pie</div>
       <div class="fg-row">
-        <div class="fg"><label>Precio $/kg vivo</label><input id="cmp2-precio-pie" type="number" placeholder="0" oninput="calcularComparadorV2()"></div>
-        <div class="fg"><label>Peso animal (kg)</label><input id="cmp2-peso" type="number" placeholder="250" value="250" oninput="calcularComparadorV2()"></div>
+        <div class="fg">
+          <label>Precio $/kg vivo</label>
+          <input id="cmp2-precio-pie" type="number" placeholder="0" oninput="calcularComparadorV2()">
+        </div>
+        <div class="fg">
+          <label>Peso animal (kg vivo)</label>
+          <input id="cmp2-peso" type="number" placeholder="250" value="250" oninput="calcularComparadorV2()">
+        </div>
       </div>
-      <div class="fg-row">
-        <div class="fg"><label>Flete ida ($)</label><input id="cmp2-flete-ida" type="number" placeholder="0" value="0" oninput="calcularComparadorV2()"></div>
-        <div class="fg"><label>Faena ($)</label><input id="cmp2-faena" type="number" placeholder="0" value="0" oninput="calcularComparadorV2()"></div>
+      <div class="fg">
+        <label>% Merma faena (hueso + mengua)</label>
+        <input id="cmp2-merma-faena" type="number" value="45" oninput="calcularComparadorV2()" style="font-size:18px;font-weight:900;color:#FFB74D;text-align:center">
+        <div class="fg-hint">Cuánto % del peso vivo se pierde en faena — típico ~45%</div>
       </div>
-      <div class="fg-row">
-        <div class="fg"><label>SENASA ($)</label><input id="cmp2-senasa" type="number" placeholder="0" value="0" oninput="calcularComparadorV2()"></div>
-        <div class="fg"><label>Flete vuelta ($)</label><input id="cmp2-flete-vuelta" type="number" placeholder="0" value="0" oninput="calcularComparadorV2()"></div>
+
+      <div style="font-size:10px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin:12px 0 8px">Costos adicionales</div>
+
+      <!-- Flete: fijo por viaje -->
+      <div style="background:#1A1A1A;border-radius:9px;padding:10px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#fff">🚚 Flete (ida + vuelta)</div>
+            <div style="font-size:9px;color:#555">Fijo por viaje — igual sea 1 o 20 animales</div>
+          </div>
+          <div style="font-size:9px;background:#1A1500;color:#C9A84C;padding:3px 7px;border-radius:5px">Fijo</div>
+        </div>
+        <input id="cmp2-flete" type="number" placeholder="130000" value="130000" oninput="calcularComparadorV2()"
+          style="width:100%;background:#222;border:1px solid #333;border-radius:7px;padding:8px;font-family:Nunito;font-size:16px;font-weight:800;color:#C9A84C;outline:none;text-align:center">
+        <div class="fg-hint" id="cmp2-flete-kg-hint" style="margin-top:4px;text-align:center"></div>
       </div>
-      <div class="fg-row">
-        <div class="fg"><label>Frío/cámara ($)</label><input id="cmp2-frio" type="number" placeholder="0" value="0" oninput="calcularComparadorV2()"></div>
-        <div class="fg"><label>% Merma faena</label><input id="cmp2-merma-faena" type="number" value="45" oninput="calcularComparadorV2()" style="color:#FFB74D;font-weight:800;text-align:center"></div>
+
+      <!-- SENASA: fijo por animal -->
+      <div style="background:#1A1A1A;border-radius:9px;padding:10px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#fff">📋 SENASA</div>
+            <div style="font-size:9px;color:#555">Fijo por animal — independiente del peso</div>
+          </div>
+          <div style="font-size:9px;background:#1A1500;color:#C9A84C;padding:3px 7px;border-radius:5px">Por animal</div>
+        </div>
+        <input id="cmp2-senasa" type="number" placeholder="10000" value="10000" oninput="calcularComparadorV2()"
+          style="width:100%;background:#222;border:1px solid #333;border-radius:7px;padding:8px;font-family:Nunito;font-size:16px;font-weight:800;color:#C9A84C;outline:none;text-align:center">
+        <div class="fg-hint" id="cmp2-senasa-kg-hint" style="margin-top:4px;text-align:center"></div>
       </div>
+
+      <!-- Faena: por kg vivo -->
+      <div style="background:#1A1A1A;border-radius:9px;padding:10px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#fff">🔪 Faena</div>
+            <div style="font-size:9px;color:#555">Por kg de peso vivo</div>
+          </div>
+          <div style="font-size:9px;background:#1A1500;color:#C9A84C;padding:3px 7px;border-radius:5px">$/kg vivo</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input id="cmp2-faena-kg" type="number" placeholder="0" value="0" oninput="calcularComparadorV2()"
+            style="flex:1;background:#222;border:1px solid #333;border-radius:7px;padding:8px;font-family:Nunito;font-size:16px;font-weight:800;color:#C9A84C;outline:none;text-align:center">
+          <span style="font-size:12px;color:#555">$/kg vivo</span>
+        </div>
+        <div class="fg-hint" id="cmp2-faena-total-hint" style="margin-top:4px;text-align:center"></div>
+      </div>
+
+      <!-- Frío: por kg carne -->
+      <div style="background:#1A1A1A;border-radius:9px;padding:10px;margin-bottom:6px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#fff">❄️ Frío / cámara</div>
+            <div style="font-size:9px;color:#555">Por kg de carne obtenida</div>
+          </div>
+          <div style="font-size:9px;background:#1A1500;color:#C9A84C;padding:3px 7px;border-radius:5px">$/kg carne</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input id="cmp2-frio-kg" type="number" placeholder="0" value="0" oninput="calcularComparadorV2()"
+            style="flex:1;background:#222;border:1px solid #333;border-radius:7px;padding:8px;font-family:Nunito;font-size:16px;font-weight:800;color:#C9A84C;outline:none;text-align:center">
+          <span style="font-size:12px;color:#555">$/kg carne</span>
+        </div>
+      </div>
+
+      <!-- Otros costos fijos adicionales -->
+      <div id="cmp2-otros-lista"></div>
+      <button onclick="agregarOtroCostoCmp()" style="width:100%;padding:7px;background:#1A1A1A;border:1px dashed #333;border-radius:8px;font-family:Nunito;font-size:11px;color:#555;cursor:pointer;margin-top:4px">+ Otro costo</button>
     </div>
 
     <!-- Opción B: Media res La Morena -->
@@ -7811,31 +7877,104 @@ function cargarPrecioMR() {
   if (sel && inp) { inp.value = sel.value; calcularComparadorV2(); }
 }
 
+let _otrosCostosCmp = [];
+
+function agregarOtroCostoCmp() {
+  mostrarModal('➕ Otro costo',
+    '<input id="oc-nombre" placeholder="Nombre del costo" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px;font-family:Nunito;font-size:13px;color:#fff;outline:none;margin-bottom:10px">' +
+    '<select id="oc-tipo" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px;font-family:Nunito;font-size:13px;color:#fff;outline:none;margin-bottom:10px">' +
+    '<option value="fijo">Monto fijo ($)</option>' +
+    '<option value="por_kg_vivo">Por kg vivo ($/kg)</option>' +
+    '<option value="por_kg_carne">Por kg carne ($/kg)</option>' +
+    '</select>' +
+    '<input id="oc-monto" type="number" placeholder="0" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px;font-family:Nunito;font-size:18px;font-weight:800;color:#C9A84C;outline:none;text-align:center;margin-bottom:16px">' +
+    '<button onclick="confirmarOtroCosto()" style="width:100%;padding:12px;background:#C9A84C;border:none;border-radius:9px;font-family:Nunito;font-size:13px;font-weight:800;color:#0A0A0A;cursor:pointer">✅ Agregar</button>'
+  );
+}
+
+function confirmarOtroCosto() {
+  const nombre = document.getElementById('oc-nombre')?.value?.trim();
+  const tipo   = document.getElementById('oc-tipo')?.value || 'fijo';
+  const monto  = parseFloat(document.getElementById('oc-monto')?.value) || 0;
+  if (!nombre) { toast('⚠️ Ingresá el nombre'); return; }
+  _otrosCostosCmp.push({nombre, tipo, monto});
+  document.getElementById('modal-global')?.remove();
+  renderOtrosCostos();
+  calcularComparadorV2();
+}
+
+function renderOtrosCostos() {
+  const el = $('cmp2-otros-lista'); if (!el) return;
+  el.innerHTML = _otrosCostosCmp.map((c,i) =>
+    '<div style="background:#1A1A1A;border-radius:8px;padding:8px;margin-bottom:6px;display:flex;align-items:center;gap:8px">' +
+      '<div style="flex:1"><div style="font-size:12px;font-weight:700;color:#fff">' + c.nombre + '</div>' +
+        '<div style="font-size:9px;color:#555">' + (c.tipo==='fijo'?'Fijo':c.tipo==='por_kg_vivo'?'$/kg vivo':'$/kg carne') + '</div></div>' +
+      '<div style="font-size:13px;font-weight:800;color:#C9A84C">' + fmtM(c.monto) + '</div>' +
+      '<button onclick="_otrosCostosCmp.splice(' + i + ',1);renderOtrosCostos();calcularComparadorV2()" ' +
+        'style="padding:3px 7px;border-radius:6px;background:#2E1A1A;color:#EF9A9A;border:1px solid #3A2A2A;font-size:11px;cursor:pointer">✕</button>' +
+    '</div>'
+  ).join('');
+}
+
 function calcularComparadorV2() {
-  const precioPie   = parseFloat($('cmp2-precio-pie')?.value) || 0;
-  const pesoAnimal  = parseFloat($('cmp2-peso')?.value) || 250;
-  const fletIda     = parseFloat($('cmp2-flete-ida')?.value) || 0;
-  const faena       = parseFloat($('cmp2-faena')?.value) || 0;
-  const senasa      = parseFloat($('cmp2-senasa')?.value) || 0;
-  const fletVuelta  = parseFloat($('cmp2-flete-vuelta')?.value) || 0;
-  const frio        = parseFloat($('cmp2-frio')?.value) || 0;
-  const mermaFaena  = parseFloat($('cmp2-merma-faena')?.value) || 45;
-  const mermaRom    = parseFloat($('cmp2-merma-rom')?.value) || 18;
-  const precioMR    = parseFloat($('cmp2-precio-mr')?.value) || 0;
-  const fleteMR     = parseFloat($('cmp2-flete-mr')?.value) || 0;
-  const precioCortes= parseFloat($('cmp2-precio-cortes')?.value) || 0;
+  const precioPie  = parseFloat($('cmp2-precio-pie')?.value) || 0;
+  const pesoAnimal = parseFloat($('cmp2-peso')?.value) || 250;
+  const mermaFaena = parseFloat($('cmp2-merma-faena')?.value) || 45;
+  const mermaRom   = parseFloat($('cmp2-merma-rom')?.value) || 18;
+
+  // Costos con tipos distintos
+  const flete      = parseFloat($('cmp2-flete')?.value) || 0;       // fijo por viaje
+  const senasa     = parseFloat($('cmp2-senasa')?.value) || 0;      // fijo por animal
+  const faenaKg    = parseFloat($('cmp2-faena-kg')?.value) || 0;    // $/kg vivo
+  const frioKg     = parseFloat($('cmp2-frio-kg')?.value) || 0;     // $/kg carne
+
+  const precioMR   = parseFloat($('cmp2-precio-mr')?.value) || 0;
+  const fleteMR    = parseFloat($('cmp2-flete-mr')?.value) || 0;
+  const precCortes = parseFloat($('cmp2-precio-cortes')?.value) || 0;
+
+  // Cálculos intermedios para animal en pie
+  const kgCarne    = pesoAnimal * (1 - mermaFaena/100);
+  const kgVendPie  = kgCarne * (1 - mermaRom/100);
+
+  // Mostrar hints de impacto
+  const hints = {
+    'cmp2-flete-kg-hint': flete > 0 && kgVendPie > 0 ? '+' + fmtM(Math.round(flete/kgVendPie)) + '/kg vendible' : '',
+    'cmp2-senasa-kg-hint': senasa > 0 && kgVendPie > 0 ? '+' + fmtM(Math.round(senasa/kgVendPie)) + '/kg vendible' : '',
+    'cmp2-faena-total-hint': faenaKg > 0 ? 'Total: ' + fmtM(faenaKg * pesoAnimal) + ' (' + fmtM(Math.round(faenaKg*pesoAnimal/kgVendPie)) + '/kg vendible)' : '',
+  };
+  Object.entries(hints).forEach(([id, txt]) => { const el = $(id); if(el) el.textContent = txt; });
 
   const resultados = [];
 
   if (precioPie > 0) {
-    const kgCarne = pesoAnimal * (1 - mermaFaena/100);
-    const kgVend  = kgCarne * (1 - mermaRom/100);
-    const costoTotal = pesoAnimal * precioPie + fletIda + faena + senasa + fletVuelta + frio;
-    const costoKg = kgVend > 0 ? costoTotal / kgVend : 0;
+    // Costos extras (otros)
+    let otrosTotal = 0;
+    _otrosCostosCmp.forEach(c => {
+      if (c.tipo === 'fijo') otrosTotal += c.monto;
+      else if (c.tipo === 'por_kg_vivo')  otrosTotal += c.monto * pesoAnimal;
+      else if (c.tipo === 'por_kg_carne') otrosTotal += c.monto * kgCarne;
+    });
+
+    const costoCarne   = pesoAnimal * precioPie;
+    const costoFlete   = flete;                          // fijo por viaje
+    const costoSenasa  = senasa;                         // fijo por animal
+    const costoFaena   = faenaKg * pesoAnimal;           // $/kg vivo × kg vivos
+    const costoFrio    = frioKg * kgCarne;               // $/kg carne × kg carne
+    const costoTotal   = costoCarne + costoFlete + costoSenasa + costoFaena + costoFrio + otrosTotal;
+    const costoKg      = kgVendPie > 0 ? costoTotal / kgVendPie : 0;
+
     resultados.push({
       label: '🐃 Animal en pie', costoKg: Math.round(costoKg),
-      costoTotal: Math.round(costoTotal), kgVend: Math.round(kgVend*10)/10,
-      detalle: 'Merma faena ' + mermaFaena + '% + romaneo ' + mermaRom + '% → ' + Math.round(kgVend*10)/10 + 'kg vendibles',
+      costoTotal: Math.round(costoTotal), kgVend: Math.round(kgVendPie*10)/10,
+      breakdown: [
+        { txt: 'Carne: ' + fmtM(costoCarne) },
+        { txt: 'Flete (fijo): ' + fmtM(costoFlete) },
+        { txt: 'SENASA (x animal): ' + fmtM(costoSenasa) },
+        { txt: 'Faena (' + faenaKg + '$/kg vivo): ' + fmtM(costoFaena) },
+        frioKg > 0 ? { txt: 'Frío (' + frioKg + '$/kg carne): ' + fmtM(costoFrio) } : null,
+        otrosTotal > 0 ? { txt: 'Otros: ' + fmtM(otrosTotal) } : null,
+      ].filter(Boolean),
+      detalle: Math.round(kgVendPie*10)/10 + 'kg vendibles (merma faena ' + mermaFaena + '% + romaneo ' + mermaRom + '%)',
     });
   }
 
@@ -7874,7 +8013,11 @@ function calcularComparadorV2() {
         '<div style="font-size:13px;font-weight:700;color:#fff">' + r.label + (r.costoKg===minKg?' ✅':'') + '</div>' +
         '<div style="font-size:22px;font-weight:900;color:' + (r.costoKg===minKg?'#43A047':'#E53935') + '">' + fmtM(r.costoKg) + '<span style="font-size:11px;color:#555">/kg</span></div>' +
       '</div>' +
-      '<div style="font-size:10px;color:#555">' + r.detalle + (r.costoTotal>0?' · Costo total: '+fmtM(r.costoTotal):'') + '</div>' +
+      '<div style="font-size:10px;color:#555;margin-bottom:6px">' + r.detalle + '</div>' +
+      (r.breakdown ? '<div style="background:#111;border-radius:7px;padding:8px">' +
+        r.breakdown.map(b => '<div style="font-size:10px;color:#555;padding:2px 0">' + b.txt + '</div>').join('') +
+        (r.costoTotal>0?'<div style="font-size:11px;font-weight:800;color:#fff;border-top:1px solid #222;padding-top:5px;margin-top:4px">Total: '+fmtM(r.costoTotal)+'</div>':'') +
+      '</div>' : '') +
     '</div>'
   ).join('');
 
@@ -7897,11 +8040,12 @@ async function guardarComparacionV2() {
   const precioMR   = parseFloat($('cmp2-precio-mr')?.value) || 0;
   const precioPie  = parseFloat($('cmp2-precio-pie')?.value) || 0;
   const pesoAnimal = parseFloat($('cmp2-peso')?.value) || 0;
-  const fletIda    = parseFloat($('cmp2-flete-ida')?.value) || 0;
-  const faena      = parseFloat($('cmp2-faena')?.value) || 0;
-  const senasa     = parseFloat($('cmp2-senasa')?.value) || 0;
-  const fletVuelta = parseFloat($('cmp2-flete-vuelta')?.value) || 0;
-  const frio       = parseFloat($('cmp2-frio')?.value) || 0;
+  const flete     = parseFloat($('cmp2-flete')?.value) || 0;
+  const senasa    = parseFloat($('cmp2-senasa')?.value) || 0;
+  const faenaKg   = parseFloat($('cmp2-faena-kg')?.value) || 0;
+  const frioKg    = parseFloat($('cmp2-frio-kg')?.value) || 0;
+  const faena     = faenaKg * pesoAnimal;
+  const fletIda   = flete; const fletVuelta = 0; const frio = frioKg;
   const mermaFaena = parseFloat($('cmp2-merma-faena')?.value) || 45;
   const mermaRom   = parseFloat($('cmp2-merma-rom')?.value) || 18;
   const fleteMR    = parseFloat($('cmp2-flete-mr')?.value) || 0;
