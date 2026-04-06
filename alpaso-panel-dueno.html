@@ -1786,6 +1786,29 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
     </div>
     <div id="carn-items-lista" style="margin-bottom:12px"></div>
 
+    <!-- Costos adicionales del romaneo -->
+    <div id="carn-costos-section" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:11px;font-weight:800;color:#C9A84C;text-transform:uppercase;letter-spacing:1px">💸 Costos adicionales</div>
+        <button onclick="toggleCostosRomaneo()" style="padding:5px 10px;border-radius:7px;background:#1E1E1E;border:1px solid #2A2A2A;color:#aaa;font-family:'Nunito';font-size:10px;cursor:pointer" id="btn-toggle-costos">▶ Ver costos</button>
+      </div>
+      <div id="carn-costos-wrap" style="display:none">
+        <div class="card" style="padding:12px">
+          <div style="font-size:10px;color:#555;margin-bottom:10px">Estos costos se distribuyen proporcionalmente sobre todos los kg comprados</div>
+          <div id="carn-costos-lista"></div>
+          <button onclick="agregarCostoRomaneoV2()" style="width:100%;padding:8px;background:#1A1A1A;border:1px dashed #333;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:700;color:#555;cursor:pointer;margin-top:6px">+ Agregar costo</button>
+          <div style="display:flex;justify-content:space-between;padding:10px 0 0;border-top:1px solid #222;margin-top:8px">
+            <span style="font-size:12px;color:#555">Total costos adicionales</span>
+            <span style="font-size:14px;font-weight:800;color:#E53935" id="carn-costos-total-v2">$0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0 0">
+            <span style="font-size:12px;color:#555">Impacto en costo /kg</span>
+            <span style="font-size:14px;font-weight:800;color:#FFB74D" id="carn-costo-extra-kg">$0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Cortes obtenidos -->
     <div id="carn-cortes-section" style="display:none">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -6175,6 +6198,8 @@ async function loadItemsCarn(romaneoId) {
   const el = $('carn-items-lista'); if(!el) return;
   const { data } = await db.from('carn_romaneo_items').select('*').eq('romaneo_id', romaneoId).order('orden');
   carnItemsActual = data || [];
+  // Reset costs to recalculate impact
+  actualizarTotalCostos();
   if (!data?.length) {
     el.innerHTML = '<div style="background:#161616;border:1px dashed #333;border-radius:12px;padding:20px;text-align:center">' +
       '<div style="font-size:24px;margin-bottom:8px">🐄</div>' +
@@ -6342,6 +6367,8 @@ async function loadCortesCarn(romaneoId) {
 async function guardarRomaneoSemanal() {
   if (!carnRomaneoActual || !carnCortesActual.length) { toast('⚠️ Sin datos para guardar'); return; }
   // Delete existing and reinsert
+  // Save costs first
+  await guardarCostosRomaneo();
   await db.from('carn_romaneo_cortes').delete().eq('romaneo_id', carnRomaneoActual.id);
   const rows = carnCortesActual.map((c,i) => ({
     romaneo_id: carnRomaneoActual.id,
@@ -7509,6 +7536,134 @@ async function verHistorialRomaneos() {
 
 
 
+
+
+// ── COSTOS ADICIONALES ROMANEO ────────────────────
+let carnCostosRomaneo = []; // costos cargados para el romaneo actual
+
+function toggleCostosRomaneo() {
+  const wrap = $('carn-costos-wrap');
+  const btn  = $('btn-toggle-costos');
+  if (!wrap) return;
+  const visible = wrap.style.display !== 'none';
+  wrap.style.display = visible ? 'none' : 'block';
+  if (btn) btn.textContent = visible ? '▶ Ver costos' : '▼ Ocultar';
+  if (!visible) cargarCostosRomaneoV2();
+}
+
+async function cargarCostosRomaneoV2() {
+  const el = $('carn-costos-lista'); if (!el) return;
+
+  // Load configured costs
+  const { data: cfgCostos } = await db.from('carn_reglas_destino').select('*').limit(1); // just a check
+  const { data: costosCfg } = await db.from('carniceria_costos_config').select('*').eq('activo',true).order('orden');
+
+  // If no costs loaded yet for this romaneo, pre-fill from config
+  if (!carnCostosRomaneo.length && costosCfg?.length) {
+    // Check if romaneo already has saved costs
+    if (carnRomaneoActual?.id) {
+      const { data: saved } = await db.from('carniceria_romaneo_costos')
+        .select('*').eq('romaneo_id', carnRomaneoActual.id);
+      if (saved?.length) {
+        carnCostosRomaneo = saved.map(s => ({id: s.costo_id, nombre: s.nombre, tipo: s.tipo, monto: s.monto}));
+      } else {
+        carnCostosRomaneo = costosCfg.map(c => ({id: c.id, nombre: c.nombre, tipo: c.tipo, monto: c.monto, aplica_a: c.aplica_a}));
+      }
+    }
+  }
+
+  renderCostosRomaneoV2();
+}
+
+function renderCostosRomaneoV2() {
+  const el = $('carn-costos-lista'); if (!el) return;
+
+  if (!carnCostosRomaneo.length) {
+    el.innerHTML = '<div style="color:#333;font-size:12px;text-align:center;padding:10px">Sin costos configurados.<br>Tocá "+ Agregar costo" para añadir.</div>';
+    actualizarTotalCostos();
+    return;
+  }
+
+  // Get total kg for impact calculation
+  const totalKg = carnItemsActual.reduce((s,i) => s + (parseFloat(i.peso_kg)||0), 0);
+
+  el.innerHTML = carnCostosRomaneo.map((c, i) => {
+    const TIPO_LBL = { fijo_por_compra: 'Fijo ($)', por_kg_carne: '$/kg carne', por_kg_vivo: '$/kg vivo' };
+    return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #1A1A1A">' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-size:12px;font-weight:700;color:#fff">' + c.nombre + '</div>' +
+        '<div style="font-size:9px;color:#555">' + (TIPO_LBL[c.tipo] || c.tipo) + '</div>' +
+      '</div>' +
+      '<input type="number" value="' + (c.monto||0) + '" min="0" placeholder="0" ' +
+        'onchange="carnCostosRomaneo[' + i + '].monto=parseFloat(this.value)||0;renderCostosRomaneoV2()" ' +
+        'style="width:100px;background:#1A1A1A;border:1px solid #333;border-radius:7px;padding:6px 8px;font-family:Nunito;font-size:14px;font-weight:800;color:#C9A84C;outline:none;text-align:right">' +
+      '<span style="font-size:10px;color:#555;min-width:20px">' + (c.tipo==='fijo_por_compra'?'$':'/kg') + '</span>' +
+      '<button onclick="carnCostosRomaneo.splice(' + i + ',1);renderCostosRomaneoV2()" ' +
+        'style="padding:4px 7px;border-radius:6px;background:#2E1A1A;color:#EF9A9A;border:1px solid #3A2A2A;font-size:11px;cursor:pointer">✕</button>' +
+    '</div>';
+  }).join('');
+
+  actualizarTotalCostos();
+}
+
+function actualizarTotalCostos() {
+  const totalKg = carnItemsActual.reduce((s,i) => s + (parseFloat(i.peso_kg)||0), 0);
+  let totalCostos = 0;
+  carnCostosRomaneo.forEach(c => {
+    if (c.tipo === 'fijo_por_compra') totalCostos += (c.monto||0);
+    else if (c.tipo === 'por_kg_carne') totalCostos += (c.monto||0) * totalKg;
+    else if (c.tipo === 'por_kg_vivo')  totalCostos += (c.monto||0) * totalKg;
+  });
+  const extraKg = totalKg > 0 ? Math.round(totalCostos / totalKg) : 0;
+
+  if ($('carn-costos-total-v2'))  $('carn-costos-total-v2').textContent  = fmtM(totalCostos);
+  if ($('carn-costo-extra-kg'))   $('carn-costo-extra-kg').textContent   = '+' + fmtM(extraKg) + '/kg';
+}
+
+function agregarCostoRomaneoV2() {
+  mostrarModal('➕ Agregar costo',
+    '<div class="fg"><label style="display:block;font-size:10px;font-weight:800;color:#666;text-transform:uppercase;margin-bottom:5px">Nombre</label>' +
+    '<input id="nc-costo-nombre" placeholder="Ej: Transporte, Faena, SENASA..." ' +
+      'style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px;font-family:Nunito;font-size:13px;color:#fff;outline:none;margin-bottom:10px"></div>' +
+    '<div class="fg"><label style="display:block;font-size:10px;font-weight:800;color:#666;text-transform:uppercase;margin-bottom:5px">Tipo</label>' +
+    '<select id="nc-costo-tipo" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px;font-family:Nunito;font-size:13px;color:#fff;outline:none;margin-bottom:10px">' +
+    '<option value="fijo_por_compra">Monto fijo por compra ($)</option>' +
+    '<option value="por_kg_carne">Por kg de carne ($/kg)</option>' +
+    '</select></div>' +
+    '<div class="fg"><label style="display:block;font-size:10px;font-weight:800;color:#666;text-transform:uppercase;margin-bottom:5px">Monto</label>' +
+    '<input id="nc-costo-monto" type="number" placeholder="0" ' +
+      'style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px;font-family:Nunito;font-size:20px;font-weight:900;color:#C9A84C;outline:none;text-align:center;margin-bottom:16px"></div>' +
+    '<button onclick="confirmarAgregarCostoRomaneo()" style="width:100%;padding:12px;background:#C9A84C;border:none;border-radius:9px;font-family:Nunito;font-size:13px;font-weight:800;color:#0A0A0A;cursor:pointer">✅ Agregar</button>'
+  );
+}
+
+function confirmarAgregarCostoRomaneo() {
+  const nombre = document.getElementById('nc-costo-nombre')?.value?.trim();
+  const tipo   = document.getElementById('nc-costo-tipo')?.value || 'fijo_por_compra';
+  const monto  = parseFloat(document.getElementById('nc-costo-monto')?.value) || 0;
+  if (!nombre) { toast('⚠️ Ingresá el nombre'); return; }
+  carnCostosRomaneo.push({ id: null, nombre, tipo, monto });
+  document.getElementById('modal-global')?.remove();
+  renderCostosRomaneoV2();
+  // Auto-open the costs section
+  const wrap = $('carn-costos-wrap');
+  if (wrap) wrap.style.display = 'block';
+  toast('✅ Costo agregado');
+}
+
+async function guardarCostosRomaneo() {
+  if (!carnRomaneoActual?.id || !carnCostosRomaneo.length) return;
+  // Delete existing and reinsert
+  await db.from('carniceria_romaneo_costos').delete().eq('romaneo_id', carnRomaneoActual.id);
+  const rows = carnCostosRomaneo.filter(c => c.monto > 0).map(c => ({
+    romaneo_id: carnRomaneoActual.id,
+    costo_id: c.id || null,
+    nombre: c.nombre,
+    tipo: c.tipo,
+    monto: c.monto,
+  }));
+  if (rows.length) await db.from('carniceria_romaneo_costos').insert(rows);
+}
 
 </script>
 </body>
