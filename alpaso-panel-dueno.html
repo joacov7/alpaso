@@ -1760,12 +1760,13 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
 
   <!-- Sub-tabs -->
   <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px">
-    <button class="carn-stab on" onclick="carnSubTab(this,'romaneo')"     style="flex:1;min-width:60px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#C9A84C;color:#0A0A0A;border:none">🐄 Romaneo</button>
-    <button class="carn-stab" onclick="carnSubTab(this,'transf')"         style="flex:1;min-width:60px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">🔄 Transform.</button>
-    <button class="carn-stab" onclick="carnSubTab(this,'dashboard')"      style="flex:1;min-width:60px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">📊 Dashboard</button>
-    <button class="carn-stab" onclick="carnSubTab(this,'simulador')"      style="flex:1;min-width:60px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">🎯 Simulador</button>
-    <button class="carn-stab" onclick="carnSubTab(this,'precios-mkt')"    style="flex:1;min-width:60px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">📋 Lista</button>
-    <button class="carn-stab" onclick="carnSubTab(this,'carn-cfg')"       style="flex:1;min-width:60px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">⚙️ Config</button>
+    <button class="carn-stab on" onclick="carnSubTab(this,'romaneo')"     style="flex:1;min-width:55px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#C9A84C;color:#0A0A0A;border:none">🐄 Romaneo</button>
+    <button class="carn-stab" onclick="carnSubTab(this,'comparador-compra')" style="flex:1;min-width:55px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">⚖️ Comparar</button>
+    <button class="carn-stab" onclick="carnSubTab(this,'transf')"         style="flex:1;min-width:55px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">🔄 Transform.</button>
+    <button class="carn-stab" onclick="carnSubTab(this,'dashboard')"      style="flex:1;min-width:55px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">📊 Dashboard</button>
+    <button class="carn-stab" onclick="carnSubTab(this,'simulador')"      style="flex:1;min-width:55px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">🎯 Simulador</button>
+    <button class="carn-stab" onclick="carnSubTab(this,'precios-mkt')"    style="flex:1;min-width:55px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">📋 Lista</button>
+    <button class="carn-stab" onclick="carnSubTab(this,'carn-cfg')"       style="flex:1;min-width:55px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">⚙️ Config</button>
   </div>
 
   <!-- ══ ROMANEO SEMANAL ══════════════════════════ -->
@@ -1817,6 +1818,74 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
       </div>
       <div id="carn-cortes-lista"></div>
       <button onclick="guardarRomaneoSemanal()" class="btn btn-gold btn-full" style="margin-top:10px">💾 Guardar romaneo</button>
+    </div>
+  </div>
+
+  <!-- ══ COMPARADOR DE COMPRA ════════════════════ -->
+  <div id="carn-comparador-compra" style="display:none">
+    <div style="font-size:11px;color:#555;margin-bottom:14px">Calculá el costo real por kg vendible de cada forma de comprar y encontrá la más conveniente</div>
+
+    <!-- Opción A: Animal en pie -->
+    <div class="card" style="margin-bottom:10px">
+      <div class="card-title">🐃 Opción A — Animal en pie</div>
+      <div class="fg-row">
+        <div class="fg"><label>Precio $/kg vivo</label><input id="cmp2-precio-pie" type="number" placeholder="0" oninput="calcularComparadorV2()"></div>
+        <div class="fg"><label>Peso animal (kg)</label><input id="cmp2-peso" type="number" placeholder="250" value="250" oninput="calcularComparadorV2()"></div>
+      </div>
+      <div class="fg-row">
+        <div class="fg"><label>Flete ida ($)</label><input id="cmp2-flete-ida" type="number" placeholder="0" value="0" oninput="calcularComparadorV2()"></div>
+        <div class="fg"><label>Faena ($)</label><input id="cmp2-faena" type="number" placeholder="0" value="0" oninput="calcularComparadorV2()"></div>
+      </div>
+      <div class="fg-row">
+        <div class="fg"><label>SENASA ($)</label><input id="cmp2-senasa" type="number" placeholder="0" value="0" oninput="calcularComparadorV2()"></div>
+        <div class="fg"><label>Flete vuelta ($)</label><input id="cmp2-flete-vuelta" type="number" placeholder="0" value="0" oninput="calcularComparadorV2()"></div>
+      </div>
+      <div class="fg-row">
+        <div class="fg"><label>Frío/cámara ($)</label><input id="cmp2-frio" type="number" placeholder="0" value="0" oninput="calcularComparadorV2()"></div>
+        <div class="fg"><label>% Merma faena</label><input id="cmp2-merma-faena" type="number" value="45" oninput="calcularComparadorV2()" style="color:#FFB74D;font-weight:800;text-align:center"></div>
+      </div>
+    </div>
+
+    <!-- Opción B: Media res La Morena -->
+    <div class="card" style="margin-bottom:10px">
+      <div class="card-title">🐄 Opción B — Media res (La Morena)</div>
+      <div class="fg-row">
+        <div class="fg">
+          <label>Tipo de media res</label>
+          <select id="cmp2-tipo-mr" onchange="cargarPrecioMR()" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:12px;color:#fff;outline:none">
+            <option value="11000">Media res novillito — $11.000/kg</option>
+            <option value="11000">Media res vaquillona — $11.000/kg</option>
+            <option value="9500">Media res vaca — $9.500/kg</option>
+          </select>
+        </div>
+        <div class="fg"><label>Precio $/kg (editable)</label><input id="cmp2-precio-mr" type="number" value="11000" oninput="calcularComparadorV2()" style="font-size:16px;font-weight:800;color:#C9A84C;text-align:center"></div>
+      </div>
+      <div class="fg"><label>Flete / otros ($)</label><input id="cmp2-flete-mr" type="number" placeholder="0" value="0" oninput="calcularComparadorV2()"></div>
+    </div>
+
+    <!-- Opción C: Cortes sueltos -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">📦 Opción C — Cortes sueltos (La Morena)</div>
+      <div class="fg"><label>Precio promedio $/kg</label><input id="cmp2-precio-cortes" type="number" placeholder="0" oninput="calcularComparadorV2()"></div>
+      <div class="fg-hint">Sin merma de romaneo — ya viene limpio y separado</div>
+    </div>
+
+    <!-- % Merma romaneo (común a A y B) -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="fg"><label>% Merma romaneo (hueso, grasa, recortes)</label><input id="cmp2-merma-rom" type="number" value="18" oninput="calcularComparadorV2()" style="font-size:18px;font-weight:800;color:#FFB74D;text-align:center"></div>
+      <div class="fg-hint">Esta merma aplica a A y B — en cortes sueltos ya viene limpio</div>
+    </div>
+
+    <!-- Resultado -->
+    <div id="cmp2-resultado" style="display:none">
+      <div class="card" style="background:linear-gradient(135deg,#0A1A0A,#0A0A0A);border-color:#43A04744;margin-bottom:10px">
+        <div class="card-title">📊 Costo real por kg vendible</div>
+        <div id="cmp2-tabla"></div>
+      </div>
+      <div class="card" style="margin-bottom:10px">
+        <div id="cmp2-conclusion"></div>
+      </div>
+      <button onclick="guardarComparacionV2()" class="btn btn-ghost btn-full" style="font-size:12px">💾 Guardar esta comparación</button>
     </div>
   </div>
 
@@ -6080,14 +6149,15 @@ function carnSubTab(btn, id) {
     b.style.background='#1E1E1E'; b.style.color='#aaa'; b.style.border='1px solid #2A2A2A';
   });
   btn.style.background='#C9A84C'; btn.style.color='#0A0A0A'; btn.style.border='none';
-  ['romaneo','transf','dashboard','simulador','precios-mkt','carn-cfg'].forEach(t => {
+  ['romaneo','comparador-compra','transf','dashboard','simulador','precios-mkt','carn-cfg'].forEach(t => {
     const el = $('carn-' + t); if(el) el.style.display = t===id ? 'block' : 'none';
   });
-  if (id==='dashboard')    loadDashboardCarn();
-  if (id==='transf')       loadTransformaciones();
-  if (id==='simulador')    loadSimuladorCarn();
-  if (id==='precios-mkt')  loadPreciosMercado();
-  if (id==='carn-cfg')     loadCarnCfg();
+  if (id==='dashboard')         loadDashboardCarn();
+  if (id==='transf')            loadTransformaciones();
+  if (id==='simulador')         loadSimuladorCarn();
+  if (id==='precios-mkt')       loadPreciosMercado();
+  if (id==='carn-cfg')          loadCarnCfg();
+  if (id==='comparador-compra') { calcularComparadorV2(); cargarPrecioMR(); }
 }
 
 function carnCfg2Tab(btn, id) {
@@ -6219,33 +6289,71 @@ async function loadItemsCarn(romaneoId) {
   '</div>').join('');
 }
 
+// Precios de mercado en memoria para el modal
+let _preciosMkt = [];
+
 async function agregarItemCarn() {
   if (!carnRomaneoActual) { toast('⚠️ Primero creá una semana'); return; }
-  // Load plantillas and precios
-  const [plRes, precRes] = await Promise.all([
-    db.from('carn_plantillas').select('*').eq('activa',true),
-    db.from('carn_precios_mercado').select('*').eq('activo',true).order('categoria').order('nombre'),
-  ]);
-  const plantillas = plRes.data || [];
-  const precios    = precRes.data || [];
+  const { data: precios } = await db.from('carn_precios_mercado')
+    .select('*').eq('activo',true).order('categoria').order('nombre');
+  _preciosMkt = precios || [];
+  renderModalAgregarItem();
+}
 
-  mostrarModal('➕ Agregar compra',
-    '<div class="fg"><label style="display:block;font-size:10px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase">Tipo</label>' +
-    '<select id="ni-tipo" onchange="actualizarFormItem()" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px;font-family:Nunito;font-size:13px;color:#fff;outline:none;margin-bottom:10px">' +
-    '<option value="media_res">Media res</option><option value="mocho">Mocho</option><option value="corte_suelto">Corte suelto en caja</option>' +
+function renderModalAgregarItem() {
+  const tipo = document.getElementById('ni-tipo')?.value || 'media_res';
+
+  // Filtrar precios según tipo
+  const CAT_TIPO = {
+    media_res:    ['media_res'],
+    mocho:        ['cuartos'],
+    corte_suelto: ['cortes_caja','asados','cerdo'],
+    animal_pie:   [],
+  };
+  const cats = CAT_TIPO[tipo] || [];
+  const preciosFiltrados = cats.length
+    ? _preciosMkt.filter(p => cats.includes(p.categoria))
+    : _preciosMkt;
+
+  // Tipo labels
+  const TIPO_INFO = {
+    media_res:    { label:'🐄 Media res', hint:'Distribuye en todos los cortes según rendimiento' },
+    mocho:        { label:'🔪 Mocho / Cuarto', hint:'Distribuye solo en las pulpas del mocho' },
+    corte_suelto: { label:'📦 Corte suelto en caja', hint:'Precio individual por este corte' },
+    animal_pie:   { label:'🐃 Animal en pie', hint:'Incluye faena y costos adicionales' },
+  };
+  const info = TIPO_INFO[tipo] || TIPO_INFO.media_res;
+
+  const modalContent =
+    '<div style="background:#1A1500;border-radius:8px;padding:8px 10px;margin-bottom:12px;font-size:10px;color:#C9A84C">' + info.hint + '</div>' +
+    '<div class="fg"><label style="display:block;font-size:10px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase">Tipo de compra</label>' +
+    '<select id="ni-tipo" onchange="renderModalAgregarItem()" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px;font-family:Nunito;font-size:13px;color:#fff;outline:none;margin-bottom:10px">' +
+    '<option value="media_res"' + (tipo==='media_res'?' selected':'') + '>🐄 Media res (frigorífico)</option>' +
+    '<option value="mocho"' + (tipo==='mocho'?' selected':'') + '>🔪 Mocho / Pistola / Cuarto</option>' +
+    '<option value="corte_suelto"' + (tipo==='corte_suelto'?' selected':'') + '>📦 Corte suelto en caja</option>' +
+    '<option value="animal_pie"' + (tipo==='animal_pie'?' selected':'') + '>🐃 Animal en pie</option>' +
     '</select></div>' +
-    '<div class="fg"><label style="display:block;font-size:10px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase">Descripción / Producto</label>' +
+    '<div class="fg"><label style="display:block;font-size:10px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase">Producto</label>' +
     '<select id="ni-desc-sel" onchange="cargarPrecioItem(this)" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px;font-family:Nunito;font-size:12px;color:#fff;outline:none;margin-bottom:6px">' +
-    '<option value="">Seleccioná de la lista...</option>' +
-    precios.map(p => '<option value="' + p.nombre + '" data-precio="' + p.precio_kg + '">' + p.nombre + ' — ' + fmtM(p.precio_kg) + '/kg</option>').join('') +
+    '<option value="">Seleccioná de la lista La Morena...</option>' +
+    preciosFiltrados.map(p => '<option value="' + p.nombre + '" data-precio="' + p.precio_kg + '">' + p.nombre + ' — ' + fmtM(p.precio_kg) + '/kg</option>').join('') +
     '</select>' +
-    '<input id="ni-desc" placeholder="O escribí manualmente..." style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px;font-family:Nunito;font-size:13px;color:#fff;outline:none;margin-bottom:10px"></div>' +
+    '<input id="ni-desc" placeholder="O escribí el nombre manualmente..." style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px;font-family:Nunito;font-size:13px;color:#fff;outline:none;margin-bottom:10px"></div>' +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">' +
-    '<div class="fg" style="margin:0"><label style="display:block;font-size:10px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase">Peso (kg)</label><input id="ni-peso" type="number" placeholder="0" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px;font-family:Nunito;font-size:18px;font-weight:900;color:#C9A84C;outline:none;text-align:center"></div>' +
-    '<div class="fg" style="margin:0"><label style="display:block;font-size:10px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase">Precio $/kg</label><input id="ni-precio" type="number" placeholder="0" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px;font-family:Nunito;font-size:18px;font-weight:900;color:#C9A84C;outline:none;text-align:center"></div>' +
+    '<div class="fg" style="margin:0"><label style="display:block;font-size:10px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase">Peso (kg)</label>' +
+    '<input id="ni-peso" type="number" placeholder="0" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px;font-family:Nunito;font-size:18px;font-weight:900;color:#C9A84C;outline:none;text-align:center"></div>' +
+    '<div class="fg" style="margin:0"><label style="display:block;font-size:10px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase">Precio $/kg</label>' +
+    '<input id="ni-precio" type="number" placeholder="0" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px;font-family:Nunito;font-size:18px;font-weight:900;color:#C9A84C;outline:none;text-align:center"></div>' +
     '</div>' +
-    '<button onclick="guardarItemCarn()" style="width:100%;padding:12px;background:#C9A84C;border:none;border-radius:9px;font-family:Nunito;font-size:13px;font-weight:800;color:#0A0A0A;cursor:pointer">✅ Agregar</button>'
-  );
+    '<button onclick="guardarItemCarn()" style="width:100%;padding:12px;background:#C9A84C;border:none;border-radius:9px;font-family:Nunito;font-size:13px;font-weight:800;color:#0A0A0A;cursor:pointer">✅ Agregar</button>';
+
+  // Update modal if already open, or create new
+  const existingBody = document.getElementById('mg-b');
+  if (existingBody) {
+    existingBody.innerHTML = modalContent;
+  } else {
+    mostrarModal('➕ Agregar compra', modalContent);
+  }
 }
 
 function cargarPrecioItem(sel) {
@@ -6285,43 +6393,73 @@ async function guardarItemCarn() {
 
 async function generarCortesCarn() {
   if (!carnRomaneoActual) return;
-  const { data: items } = await db.from('carn_romaneo_items').select('*,carn_plantillas(id,tipo)').eq('romaneo_id', carnRomaneoActual.id);
+  const { data: items } = await db.from('carn_romaneo_items')
+    .select('*').eq('romaneo_id', carnRomaneoActual.id).order('orden');
   if (!items?.length) return;
 
-  let todosCortes = [];
+  // Mapa para agrupar cortes del mismo nombre (evita duplicados entre compras)
+  const cortesMap = {}; // nombre → datos
+
   for (const item of items) {
     if (item.tipo === 'corte_suelto') {
-      todosCortes.push({
-        item_id: item.id, romaneo_id: carnRomaneoActual.id,
-        nombre: item.descripcion,
-        kg_esperado: item.peso_kg, kg_real: item.peso_kg,
-        costo_kg: item.precio_compra_kg,
-        costo_total: item.peso_kg * item.precio_compra_kg,
-        kg_disponible: item.peso_kg,
-        destino: 'mostrador',
-      });
+      // Corte suelto: precio individual, NO usa plantilla
+      const nombre = item.descripcion;
+      if (cortesMap[nombre]) {
+        // Mismo corte comprado en dos ítems → promediar costo ponderado
+        const prev = cortesMap[nombre];
+        const kgTotal = prev.kg_real + item.peso_kg;
+        const costoPromedio = (prev.costo_kg * prev.kg_real + item.precio_compra_kg * item.peso_kg) / kgTotal;
+        cortesMap[nombre] = { ...prev, kg_real: kgTotal, kg_esperado: kgTotal, kg_disponible: kgTotal, costo_kg: Math.round(costoPromedio) };
+      } else {
+        cortesMap[nombre] = {
+          item_id: item.id, romaneo_id: carnRomaneoActual.id,
+          nombre, tipo_origen: 'suelto', origen_desc: item.descripcion,
+          kg_esperado: item.peso_kg, kg_real: item.peso_kg,
+          costo_kg: item.precio_compra_kg,
+          costo_total: item.peso_kg * item.precio_compra_kg,
+          kg_disponible: item.peso_kg, destino: 'mostrador', precio_venta_kg: 0,
+        };
+      }
     } else if (item.plantilla_id) {
+      // Media res / mocho: distribuye según % de plantilla
       const { data: plantCortes } = await db.from('carn_plantilla_cortes')
         .select('*').eq('plantilla_id', item.plantilla_id).order('orden');
       (plantCortes||[]).forEach(pc => {
         const kgEsp = Math.round(item.peso_kg * pc.rendimiento_pct / 100 * 1000) / 1000;
-        todosCortes.push({
-          item_id: item.id, romaneo_id: carnRomaneoActual.id,
-          nombre: pc.nombre,
-          kg_esperado: kgEsp, kg_real: kgEsp,
-          costo_kg: item.precio_compra_kg,
-          costo_total: kgEsp * item.precio_compra_kg,
-          kg_disponible: kgEsp,
-          destino: pc.destino_default || 'mostrador',
-          destino_sugerido: pc.destino_default || 'mostrador',
-          precio_venta_kg: pc.precio_venta || 0,
-        });
+        const nombre = pc.nombre;
+        if (cortesMap[nombre]) {
+          // Mismo corte de dos fuentes (ej: nalga del mocho + nalga de media res)
+          // Mantener separados con sufijo
+          const nombreSufijo = nombre + ' (' + item.descripcion.split(' ')[0] + ')';
+          cortesMap[nombreSufijo] = {
+            item_id: item.id, romaneo_id: carnRomaneoActual.id,
+            nombre: nombreSufijo, tipo_origen: item.tipo, origen_desc: item.descripcion,
+            kg_esperado: kgEsp, kg_real: kgEsp,
+            costo_kg: item.precio_compra_kg,
+            costo_total: kgEsp * item.precio_compra_kg,
+            kg_disponible: kgEsp,
+            destino: pc.destino_default || 'mostrador',
+            precio_venta_kg: pc.precio_venta || 0,
+          };
+        } else {
+          cortesMap[nombre] = {
+            item_id: item.id, romaneo_id: carnRomaneoActual.id,
+            nombre, tipo_origen: item.tipo, origen_desc: item.descripcion,
+            kg_esperado: kgEsp, kg_real: kgEsp,
+            costo_kg: item.precio_compra_kg,
+            costo_total: kgEsp * item.precio_compra_kg,
+            kg_disponible: kgEsp,
+            destino: pc.destino_default || 'mostrador',
+            precio_venta_kg: pc.precio_venta || 0,
+          };
+        }
       });
     }
   }
-  carnCortesActual = todosCortes;
+
+  carnCortesActual = Object.values(cortesMap);
   renderCortesCarn();
-  $('carn-cortes-section').style.display = todosCortes.length ? 'block' : 'none';
+  $('carn-cortes-section').style.display = carnCortesActual.length ? 'block' : 'none';
 }
 
 function renderCortesCarn() {
@@ -7663,6 +7801,131 @@ async function guardarCostosRomaneo() {
     monto: c.monto,
   }));
   if (rows.length) await db.from('carniceria_romaneo_costos').insert(rows);
+}
+
+
+// ── COMPARADOR V2 ─────────────────────────────────
+function cargarPrecioMR() {
+  const sel = $('cmp2-tipo-mr');
+  const inp = $('cmp2-precio-mr');
+  if (sel && inp) { inp.value = sel.value; calcularComparadorV2(); }
+}
+
+function calcularComparadorV2() {
+  const precioPie   = parseFloat($('cmp2-precio-pie')?.value) || 0;
+  const pesoAnimal  = parseFloat($('cmp2-peso')?.value) || 250;
+  const fletIda     = parseFloat($('cmp2-flete-ida')?.value) || 0;
+  const faena       = parseFloat($('cmp2-faena')?.value) || 0;
+  const senasa      = parseFloat($('cmp2-senasa')?.value) || 0;
+  const fletVuelta  = parseFloat($('cmp2-flete-vuelta')?.value) || 0;
+  const frio        = parseFloat($('cmp2-frio')?.value) || 0;
+  const mermaFaena  = parseFloat($('cmp2-merma-faena')?.value) || 45;
+  const mermaRom    = parseFloat($('cmp2-merma-rom')?.value) || 18;
+  const precioMR    = parseFloat($('cmp2-precio-mr')?.value) || 0;
+  const fleteMR     = parseFloat($('cmp2-flete-mr')?.value) || 0;
+  const precioCortes= parseFloat($('cmp2-precio-cortes')?.value) || 0;
+
+  const resultados = [];
+
+  if (precioPie > 0) {
+    const kgCarne = pesoAnimal * (1 - mermaFaena/100);
+    const kgVend  = kgCarne * (1 - mermaRom/100);
+    const costoTotal = pesoAnimal * precioPie + fletIda + faena + senasa + fletVuelta + frio;
+    const costoKg = kgVend > 0 ? costoTotal / kgVend : 0;
+    resultados.push({
+      label: '🐃 Animal en pie', costoKg: Math.round(costoKg),
+      costoTotal: Math.round(costoTotal), kgVend: Math.round(kgVend*10)/10,
+      detalle: 'Merma faena ' + mermaFaena + '% + romaneo ' + mermaRom + '% → ' + Math.round(kgVend*10)/10 + 'kg vendibles',
+    });
+  }
+
+  if (precioMR > 0) {
+    const kgVend = pesoAnimal * (1 - mermaRom/100);
+    const costoTotal = pesoAnimal * precioMR + fleteMR;
+    const costoKg = kgVend > 0 ? costoTotal / kgVend : 0;
+    resultados.push({
+      label: '🐄 Media res La Morena', costoKg: Math.round(costoKg),
+      costoTotal: Math.round(costoTotal), kgVend: Math.round(kgVend*10)/10,
+      detalle: 'Solo merma romaneo ' + mermaRom + '% → ' + Math.round(kgVend*10)/10 + 'kg vendibles',
+    });
+  }
+
+  if (precioCortes > 0) {
+    resultados.push({
+      label: '📦 Cortes sueltos La Morena', costoKg: Math.round(precioCortes),
+      costoTotal: 0, kgVend: pesoAnimal,
+      detalle: 'Sin merma — ya viene limpio y separado por corte',
+    });
+  }
+
+  const tablaEl = $('cmp2-tabla');
+  const concEl  = $('cmp2-conclusion');
+  const resEl   = $('cmp2-resultado');
+  if (!resultados.length || !tablaEl) { if(resEl) resEl.style.display='none'; return; }
+
+  const minKg = Math.min(...resultados.map(r => r.costoKg));
+  const maxKg = Math.max(...resultados.map(r => r.costoKg));
+  const mejor = resultados.find(r => r.costoKg === minKg);
+
+  tablaEl.innerHTML = resultados.map(r =>
+    '<div style="background:#1A1A1A;border-radius:10px;padding:12px;margin-bottom:8px;' +
+    (r.costoKg === minKg ? 'border:1px solid #43A04766;' : '') + '">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
+        '<div style="font-size:13px;font-weight:700;color:#fff">' + r.label + (r.costoKg===minKg?' ✅':'') + '</div>' +
+        '<div style="font-size:22px;font-weight:900;color:' + (r.costoKg===minKg?'#43A047':'#E53935') + '">' + fmtM(r.costoKg) + '<span style="font-size:11px;color:#555">/kg</span></div>' +
+      '</div>' +
+      '<div style="font-size:10px;color:#555">' + r.detalle + (r.costoTotal>0?' · Costo total: '+fmtM(r.costoTotal):'') + '</div>' +
+    '</div>'
+  ).join('');
+
+  if (concEl && mejor) {
+    const ahorro = maxKg - minKg;
+    const kgRef = parseFloat($('cmp2-peso')?.value) || 250;
+    const ahorroTotal = Math.round(ahorro * kgRef * (1 - mermaRom/100));
+    concEl.innerHTML =
+      '<div style="background:#1A2E1A;border-radius:10px;padding:14px;margin-bottom:10px">' +
+        '<div style="font-size:13px;font-weight:800;color:#43A047;margin-bottom:6px">✅ ' + mejor.label + ' es la opción más conveniente</div>' +
+        '<div style="font-size:12px;color:#aaa;margin-bottom:4px">Ahorrás <strong style="color:#43A047">' + fmtM(ahorro) + '/kg</strong> vs la más cara</div>' +
+        '<div style="font-size:12px;color:#aaa">En una compra de ' + kgRef + 'kg eso son <strong style="color:#43A047">' + fmtM(ahorroTotal) + '</strong> de diferencia</div>' +
+      '</div>';
+  }
+
+  if (resEl) resEl.style.display = 'block';
+}
+
+async function guardarComparacionV2() {
+  const precioMR   = parseFloat($('cmp2-precio-mr')?.value) || 0;
+  const precioPie  = parseFloat($('cmp2-precio-pie')?.value) || 0;
+  const pesoAnimal = parseFloat($('cmp2-peso')?.value) || 0;
+  const fletIda    = parseFloat($('cmp2-flete-ida')?.value) || 0;
+  const faena      = parseFloat($('cmp2-faena')?.value) || 0;
+  const senasa     = parseFloat($('cmp2-senasa')?.value) || 0;
+  const fletVuelta = parseFloat($('cmp2-flete-vuelta')?.value) || 0;
+  const frio       = parseFloat($('cmp2-frio')?.value) || 0;
+  const mermaFaena = parseFloat($('cmp2-merma-faena')?.value) || 45;
+  const mermaRom   = parseFloat($('cmp2-merma-rom')?.value) || 18;
+  const fleteMR    = parseFloat($('cmp2-flete-mr')?.value) || 0;
+  const precCortes = parseFloat($('cmp2-precio-cortes')?.value) || 0;
+
+  const kgCarne = pesoAnimal * (1 - mermaFaena/100);
+  const kgVend  = kgCarne * (1 - mermaRom/100);
+  const costoPie = precioPie > 0 ? Math.round((pesoAnimal*precioPie+fletIda+faena+senasa+fletVuelta+frio)/kgVend) : 0;
+  const costoMR  = precioMR > 0 ? Math.round((pesoAnimal*precioMR+fleteMR)/(pesoAnimal*(1-mermaRom/100))) : 0;
+
+  const { error } = await db.from('carniceria_comparador_compras').insert({
+    fecha: new Date().toISOString().split('T')[0],
+    precio_kg_vivo: precioPie, peso_animal_kg: pesoAnimal,
+    merma_faena_pct: mermaFaena, costo_flete_ida: fletIda,
+    costo_faena: faena, costo_senasa_pie: senasa,
+    costo_flete_vuelta: fletVuelta, costo_frio: frio,
+    precio_kg_media_res: precioMR, costo_flete_media_res: fleteMR,
+    precio_kg_cortes: precCortes,
+    costo_real_kg_pie: costoPie, costo_real_kg_media_res: costoMR,
+    costo_real_kg_cortes: precCortes,
+    mejor_opcion: costoPie > 0 && costoPie < costoMR ? 'animal_pie' : 'media_res',
+  });
+  if (error) { toast('⚠️ Error: ' + error.message); return; }
+  toast('✅ Comparación guardada');
 }
 
 </script>
