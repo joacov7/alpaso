@@ -6223,7 +6223,7 @@ function carnSubTab(btn, id) {
   if (id==='simulador')         loadSimuladorCarn();
   if (id==='precios-mkt')       loadPreciosMercado();
   if (id==='carn-cfg')          loadCarnCfg();
-  if (id==='comparador-compra') { calcularComparadorV2(); cargarPrecioMR(); }
+  if (id==='comparador-compra') { cargarPrecioMR(); }
 }
 
 function carnCfg2Tab(btn, id) {
@@ -6346,13 +6346,22 @@ async function loadItemsCarn(romaneoId) {
     $('carn-cortes-section').style.display = 'none';
     return;
   }
-  el.innerHTML = data.map(item => '<div style="background:#161616;border:1px solid #222;border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px">' +
-    '<div style="flex:1">' +
-      '<div style="font-size:13px;font-weight:700;color:#fff">' + item.descripcion + '</div>' +
-      '<div style="font-size:10px;color:#555">' + item.peso_kg + 'kg · ' + fmtM(item.precio_compra_kg) + '/kg · Total: ' + fmtM(item.costo_total) + '</div>' +
-    '</div>' +
-    '<button data-iid="' + item.id + '" class="carn-del-item-btn" style="padding:5px 8px;border-radius:7px;background:#2E1A1A;color:#EF9A9A;border:1px solid #3A2A2A;font-size:11px;cursor:pointer">🗑</button>' +
-  '</div>').join('');
+  const TIPO_ICON = {media_res:'🐄',mocho:'🔪',corte_suelto:'📦',animal_pie:'🐃'};
+  el.innerHTML = data.map(item => {
+    const icon = TIPO_ICON[item.tipo] || '📦';
+    const kgVend = item.tipo === 'animal_pie'
+      ? Math.round(item.peso_kg * 0.55 * 0.82 * 10) / 10
+      : Math.round(item.peso_kg * 0.82 * 10) / 10;
+    return '<div style="background:#161616;border:1px solid #222;border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px">' +
+      '<div style="font-size:20px">' + icon + '</div>' +
+      '<div style="flex:1">' +
+        '<div style="font-size:13px;font-weight:700;color:#fff">' + item.descripcion + '</div>' +
+        '<div style="font-size:10px;color:#555">' + item.peso_kg + 'kg · ' + fmtM(item.precio_compra_kg) + '/kg lista · ~' + kgVend + 'kg vendibles</div>' +
+        '<div style="font-size:10px;color:#C9A84C;font-weight:700">Total: ' + fmtM(item.costo_total) + '</div>' +
+      '</div>' +
+      '<button data-iid="' + item.id + '" class="carn-del-item-btn" style="padding:5px 8px;border-radius:7px;background:#2E1A1A;color:#EF9A9A;border:1px solid #3A2A2A;font-size:11px;cursor:pointer">🗑</button>' +
+    '</div>';
+  }).join('');
 }
 
 // Precios de mercado en memoria para el modal
@@ -6363,6 +6372,7 @@ async function agregarItemCarn() {
   const { data: precios } = await db.from('carn_precios_mercado')
     .select('*').eq('activo',true).order('categoria').order('nombre');
   _preciosMkt = precios || [];
+  _costosItemModal = []; // reset costs for new item
   renderModalAgregarItem();
 }
 
@@ -6411,7 +6421,22 @@ function renderModalAgregarItem() {
     '<div class="fg" style="margin:0"><label style="display:block;font-size:10px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase">Precio $/kg</label>' +
     '<input id="ni-precio" type="number" placeholder="0" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px;font-family:Nunito;font-size:18px;font-weight:900;color:#C9A84C;outline:none;text-align:center"></div>' +
     '</div>' +
-    '<button onclick="guardarItemCarn()" style="width:100%;padding:12px;background:#C9A84C;border:none;border-radius:9px;font-family:Nunito;font-size:13px;font-weight:800;color:#0A0A0A;cursor:pointer">✅ Agregar</button>';
+    // Costos adicionales — auto-carga para animal_pie, opcional para el resto
+    '<div style="margin-top:10px">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
+      '<div style="font-size:10px;font-weight:800;color:' + (tipo==='animal_pie'?'#C9A84C':'#555') + ';text-transform:uppercase;letter-spacing:1px">💸 Costos adicionales ' + (tipo==='animal_pie'?'(requerido)':'(opcional)') + '</div>' +
+      (tipo !== 'animal_pie' ? '<button onclick="toggleCostosModal()" style="padding:3px 8px;border-radius:6px;background:#1A1A1A;border:1px solid #2A2A2A;color:#555;font-family:Nunito;font-size:10px;cursor:pointer" id="btn-toggle-costos-modal">▶ Ver</button>' : '') +
+    '</div>' +
+    '<div id="ni-costos-wrap" style="display:' + (tipo==='animal_pie'?'block':'none') + '">' +
+      '<div id="ni-costos-lista"></div>' +
+      '<button onclick="agregarCostoItemModal()" style="width:100%;padding:7px;background:#1A1A1A;border:1px dashed #333;border-radius:8px;font-family:Nunito;font-size:11px;color:#555;cursor:pointer;margin-top:4px">+ Agregar costo</button>' +
+      '<div style="display:flex;justify-content:space-between;padding:8px 0 0;font-size:11px">' +
+        '<span style="color:#555">Costo real estimado /kg vendible</span>' +
+        '<span style="font-weight:800;color:#43A047" id="ni-costo-real-kg">—</span>' +
+      '</div>' +
+    '</div>' +
+    '</div>' +
+    '<button onclick="guardarItemCarn()" style="width:100%;padding:12px;background:#C9A84C;border:none;border-radius:9px;font-family:Nunito;font-size:13px;font-weight:800;color:#0A0A0A;cursor:pointer;margin-top:12px">✅ Agregar</button>';
 
   // Update modal if already open, or create new
   const existingBody = document.getElementById('mg-b');
@@ -6420,6 +6445,20 @@ function renderModalAgregarItem() {
   } else {
     mostrarModal('➕ Agregar compra', modalContent);
   }
+  // Auto-load costs if animal en pie
+  if (tipo === 'animal_pie') {
+    setTimeout(cargarCostosDefaultAnimalPie, 50);
+  } else {
+    // Render empty costs list
+    setTimeout(() => renderCostosItemModal(), 50);
+  }
+  // Wire up price inputs to recalculate
+  setTimeout(() => {
+    const pesoEl   = document.getElementById('ni-peso');
+    const precioEl = document.getElementById('ni-precio');
+    if (pesoEl)   pesoEl.addEventListener('input', recalcularCostoRealItem);
+    if (precioEl) precioEl.addEventListener('input', recalcularCostoRealItem);
+  }, 100);
 }
 
 function cargarPrecioItem(sel) {
@@ -6445,13 +6484,39 @@ async function guardarItemCarn() {
     if (pl?.length) plantillaId = pl[0].id;
   }
 
-  const { error } = await db.from('carn_romaneo_items').insert({
+  // Calculate real cost per kg including additional costs
+  const mermaFaena = tipo === 'animal_pie' ? 45 : 0;
+  const kgCarne    = tipo === 'animal_pie' ? peso * (1 - mermaFaena/100) : peso;
+  const kgVendible = kgCarne * (1 - 18/100);
+  let costoExtra   = 0;
+  _costosItemModal.forEach(c => {
+    if (c.tipo === 'fijo_por_compra') costoExtra += c.monto;
+    else if (c.tipo === 'por_kg_vivo')  costoExtra += c.monto * peso;
+    else if (c.tipo === 'por_kg_carne') costoExtra += c.monto * kgCarne;
+  });
+  const costoTotal    = peso * precio + costoExtra;
+  const costoRealKgSave = kgVendible > 0 ? Math.round(costoTotal / kgVendible) : precio;
+
+  const { data: newItem, error } = await db.from('carn_romaneo_items').insert({
     romaneo_id: carnRomaneoActual.id, plantilla_id: plantillaId,
     tipo, descripcion: desc, peso_kg: peso, precio_compra_kg: precio,
     orden: carnItemsActual.length + 1,
-  });
+  }).select().single();
+
+  // Save costs if any
+  if (!error && newItem && _costosItemModal.length > 0) {
+    const costoRows = _costosItemModal.filter(c => c.monto > 0).map(c => ({
+      romaneo_id: carnRomaneoActual.id,
+      costo_id:   c.id || null,
+      nombre:     c.nombre,
+      tipo:       c.tipo,
+      monto:      c.monto,
+    }));
+    if (costoRows.length) await db.from('carniceria_romaneo_costos').insert(costoRows);
+  }
   if (error) { toast('⚠️ Error: ' + error.message); return; }
   document.getElementById('modal-global')?.remove();
+  _costosItemModal = []; // reset
   toast('✅ Compra agregada');
   await loadItemsCarn(carnRomaneoActual.id);
   await generarCortesCarn();
@@ -7066,13 +7131,7 @@ function carnCfgTab(btn, id) {
   if (id === 'vacio-cfg')  loadVacioCfg();
 }
 
-async function loadCarniceria() {
-  // Set fecha default
-  const fechaEl = $('rom-fecha');
-  if (fechaEl && !fechaEl.value) fechaEl.value = new Date().toISOString().split('T')[0];
-  // Cargar costos por defecto al romaneo
-  await cargarCostosDefaultRomaneo();
-}
+async // loadCarniceria V1 removed
 
 // ── ROMANEO ───────────────────────────────────────
 async function cargarCostosDefaultRomaneo() {
@@ -7874,7 +7933,11 @@ async function guardarCostosRomaneo() {
 function cargarPrecioMR() {
   const sel = $('cmp2-tipo-mr');
   const inp = $('cmp2-precio-mr');
-  if (sel && inp) { inp.value = sel.value; calcularComparadorV2(); }
+  if (sel && inp) {
+    inp.value = sel.value || '11000';
+    // Trigger calculation now that MR price is set
+    setTimeout(calcularComparadorV2, 50);
+  }
 }
 
 let _otrosCostosCmp = [];
@@ -8070,6 +8133,117 @@ async function guardarComparacionV2() {
   });
   if (error) { toast('⚠️ Error: ' + error.message); return; }
   toast('✅ Comparación guardada');
+}
+
+
+// ── COSTOS POR ÍTEM DE COMPRA ─────────────────────
+let _costosItemModal = []; // costos del ítem que se está cargando
+
+function toggleCostosModal() {
+  const wrap = document.getElementById('ni-costos-wrap');
+  const btn  = document.getElementById('btn-toggle-costos-modal');
+  if (!wrap) return;
+  const visible = wrap.style.display !== 'none';
+  wrap.style.display = visible ? 'none' : 'block';
+  if (btn) btn.textContent = visible ? '▶ Ver' : '▼ Ocultar';
+  if (!visible) renderCostosItemModal();
+}
+
+async function cargarCostosDefaultAnimalPie() {
+  // Pre-cargar costos configurados para animal en pie
+  const { data } = await db.from('carniceria_costos_config')
+    .select('*').eq('activo', true).eq('aplica_a', 'animal_pie').order('orden');
+  // También traer los que aplican a todos
+  const { data: todos } = await db.from('carniceria_costos_config')
+    .select('*').eq('activo', true).eq('aplica_a', 'todos').order('orden');
+  _costosItemModal = [...(data||[]), ...(todos||[])].map(c => ({
+    id: c.id, nombre: c.nombre, tipo: c.tipo, monto: c.monto
+  }));
+  renderCostosItemModal();
+  recalcularCostoRealItem();
+}
+
+function renderCostosItemModal() {
+  const el = document.getElementById('ni-costos-lista');
+  if (!el) return;
+
+  if (!_costosItemModal.length) {
+    el.innerHTML = '<div style="color:#333;font-size:11px;text-align:center;padding:8px">Sin costos — tocá "+ Agregar costo"</div>';
+    return;
+  }
+
+  const TIPO_LBL = { fijo_por_compra:'Fijo $', por_kg_carne:'$/kg carne', por_kg_vivo:'$/kg vivo' };
+  el.innerHTML = _costosItemModal.map((c,i) =>
+    '<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid #1A1A1A">' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-size:11px;font-weight:700;color:#fff">' + c.nombre + '</div>' +
+        '<div style="font-size:9px;color:#555">' + (TIPO_LBL[c.tipo]||c.tipo) + '</div>' +
+      '</div>' +
+      '<input type="number" value="' + (c.monto||0) + '" min="0" ' +
+        'oninput="_costosItemModal[' + i + '].monto=parseFloat(this.value)||0;recalcularCostoRealItem()" ' +
+        'style="width:90px;background:#1A1A1A;border:1px solid #333;border-radius:7px;padding:5px 7px;font-family:Nunito;font-size:13px;font-weight:800;color:#C9A84C;outline:none;text-align:right">' +
+      '<button onclick="_costosItemModal.splice(' + i + ',1);renderCostosItemModal();recalcularCostoRealItem()" ' +
+        'style="padding:3px 6px;border-radius:5px;background:#2E1A1A;color:#EF9A9A;border:none;font-size:10px;cursor:pointer">✕</button>' +
+    '</div>'
+  ).join('');
+
+  recalcularCostoRealItem();
+}
+
+function recalcularCostoRealItem() {
+  const peso       = parseFloat(document.getElementById('ni-peso')?.value) || 0;
+  const precioKg   = parseFloat(document.getElementById('ni-precio')?.value) || 0;
+  const tipo       = document.getElementById('ni-tipo')?.value || 'media_res';
+  const mermaFaena = tipo === 'animal_pie' ? 45 : 0;
+  const mermaRom   = 18;
+  const el         = document.getElementById('ni-costo-real-kg');
+  if (!el || !peso || !precioKg) return;
+
+  const kgCarne   = tipo === 'animal_pie' ? peso * (1 - mermaFaena/100) : peso;
+  const kgVendible = kgCarne * (1 - mermaRom/100);
+  const costoCarne = peso * precioKg;
+
+  let costoExtra = 0;
+  _costosItemModal.forEach(c => {
+    if (c.tipo === 'fijo_por_compra') costoExtra += c.monto;
+    else if (c.tipo === 'por_kg_vivo')  costoExtra += c.monto * peso;
+    else if (c.tipo === 'por_kg_carne') costoExtra += c.monto * kgCarne;
+  });
+
+  const costoTotal = costoCarne + costoExtra;
+  const costoRealKg = kgVendible > 0 ? Math.round(costoTotal / kgVendible) : 0;
+  el.textContent = fmtM(costoRealKg) + '/kg';
+  el.style.color = costoRealKg > precioKg * 1.25 ? '#E53935' : '#43A047';
+}
+
+function agregarCostoItemModal() {
+  mostrarModal('➕ Agregar costo',
+    '<input id="ac-nombre" placeholder="Ej: Flete, SENASA, Frigorífico..." ' +
+      'style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px;font-family:Nunito;font-size:13px;color:#fff;outline:none;margin-bottom:10px">' +
+    '<select id="ac-tipo" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px;font-family:Nunito;font-size:13px;color:#fff;outline:none;margin-bottom:10px">' +
+      '<option value="fijo_por_compra">Monto fijo por compra ($) — ej: flete</option>' +
+      '<option value="por_kg_vivo">Por kg vivo ($/kg) — ej: faena</option>' +
+      '<option value="por_kg_carne">Por kg de carne ($/kg) — ej: frío, Héctor</option>' +
+    '</select>' +
+    '<input id="ac-monto" type="number" placeholder="0" ' +
+      'style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px;font-family:Nunito;font-size:20px;font-weight:900;color:#C9A84C;outline:none;text-align:center;margin-bottom:16px">' +
+    '<button onclick="confirmarCostoItemModal()" ' +
+      'style="width:100%;padding:12px;background:#C9A84C;border:none;border-radius:9px;font-family:Nunito;font-size:13px;font-weight:800;color:#0A0A0A;cursor:pointer">✅ Agregar</button>'
+  );
+}
+
+function confirmarCostoItemModal() {
+  const nombre = document.getElementById('ac-nombre')?.value?.trim();
+  const tipo   = document.getElementById('ac-tipo')?.value || 'fijo_por_compra';
+  const monto  = parseFloat(document.getElementById('ac-monto')?.value) || 0;
+  if (!nombre) { toast('⚠️ Ingresá el nombre'); return; }
+  _costosItemModal.push({ id: null, nombre, tipo, monto });
+  document.getElementById('modal-global')?.remove();
+  // Re-open main modal state is lost, just show costs in current form
+  renderCostosItemModal();
+  const wrap = document.getElementById('ni-costos-wrap');
+  if (wrap) wrap.style.display = 'block';
+  toast('✅ Costo agregado');
 }
 
 </script>
