@@ -108,7 +108,26 @@ body{background:#111}
   <div class="login-logo">AL PASO</div>
   <div class="login-sub">Sistema de tareas</div>
   <h2>¿Quién sos?</h2>
-  <p>Seleccioná tu nombre para continuar</p>
+  <p>Tocá tu nombre o escaneá tu código</p>
+
+  <!-- Scanner -->
+  <div style="width:100%;margin-bottom:14px">
+    <button onclick="toggleScanner()" id="btn-scanner"
+      style="width:100%;padding:11px;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:11px;font-family:'Nunito';font-size:13px;font-weight:800;color:#C9A84C;cursor:pointer">
+      📷 Escanear código
+    </button>
+    <div id="scanner-wrap" style="display:none;margin-top:10px;position:relative">
+      <video id="scanner-video" autoplay playsinline
+        style="width:100%;border-radius:12px;border:2px solid #C9A84C;max-height:220px;object-fit:cover;background:#000"></video>
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:180px;height:50px;border:2px solid #C9A84C;border-radius:4px;pointer-events:none"></div>
+      <button onclick="cerrarScanner()"
+        style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.7);border:none;color:#fff;border-radius:50%;width:28px;height:28px;font-size:14px;cursor:pointer">✕</button>
+    </div>
+    <input id="cod-manual" type="text" placeholder="O ingresá el código manualmente..."
+      style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:10px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none;margin-top:8px"
+      oninput="buscarPorCodEmp(this.value)">
+  </div>
+
   <div class="empleado-list" id="empleado-list">
     <div style="color:#555;font-size:12px;text-align:center;padding:20px">Cargando empleados...</div>
   </div>
@@ -449,6 +468,8 @@ body{background:#111}
 
 
 
+
+
 const SB_URL = 'https://tlsyakbhceolczjzadpc.supabase.co';
 const SB_KEY = 'sb_publishable_pdCPXmVa47gh3rSURJsgaQ_axezH12Z';
 const db = supabase.createClient(SB_URL, SB_KEY);
@@ -487,14 +508,21 @@ async function init() {
     el.innerHTML = '<div style="color:#555;font-size:12px;text-align:center;padding:20px">No hay empleados registrados.<br>Pedile al dueño que te agregue en el panel.</div>';
     return;
   }
-  el.innerHTML = data.map(e => `
-    <div class="emp-btn" onclick="seleccionarEmpleado(${e.id},'${e.nombre.replace(/'/g,"\\'")}','${e.pin}')">
-      <div class="emp-av">${e.nombre.charAt(0).toUpperCase()}</div>
-      <div>
-        <div class="emp-name">${e.nombre}</div>
-      </div>
-      <span style="margin-left:auto;font-size:18px;color:#333">→</span>
-    </div>`).join('');
+    el.innerHTML = data.map(e =>
+    '<div class="emp-btn" data-eid="' + e.id + '" data-enombre="' + e.nombre.replace(/"/g,'&quot;') + '" data-epin="' + e.pin + '">' +
+      '<div class="emp-av">' + e.nombre.charAt(0).toUpperCase() + '</div>' +
+      '<div class="emp-info">' +
+        '<div class="emp-nombre">' + e.nombre + '</div>' +
+        '<div class="emp-sector">' + (e.sector||'Empleado') + '</div>' +
+      '</div>' +
+    '</div>'
+  ).join('');
+  // Event delegation for employee buttons
+  el.querySelectorAll('.emp-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      seleccionarEmpleado(parseInt(this.dataset.eid), this.dataset.enombre, this.dataset.epin);
+    });
+  });;
 }
 
 function seleccionarEmpleado(id, nombre, pin) {
@@ -1369,6 +1397,70 @@ setInterval(async () => {
 init();
 
 
+
+
+
+// ── ESCÁNER DE CÓDIGO ─────────────────────────────
+let _scannerStream = null;
+let _scannerInterval = null;
+
+async function toggleScanner() {
+  const wrap = $('scanner-wrap');
+  if (!wrap) return;
+  if (wrap.style.display !== 'none') { cerrarScanner(); return; }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    _scannerStream = stream;
+    const video = $('scanner-video');
+    video.srcObject = stream;
+    wrap.style.display = 'block';
+    const btn = $('btn-scanner'); if (btn) btn.textContent = '⏹ Detener';
+    if ('BarcodeDetector' in window) {
+      const detector = new BarcodeDetector({ formats: ['code_128','ean_13','ean_8','qr_code','code_39'] });
+      _scannerInterval = setInterval(async function() {
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+          try {
+            const codes = await detector.detect(video);
+            if (codes.length > 0) { cerrarScanner(); await buscarPorCodEmp(codes[0].rawValue); }
+          } catch(e) {}
+        }
+      }, 400);
+    } else {
+      cerrarScanner();
+      const inp = $('cod-manual'); if (inp) { inp.focus(); inp.placeholder = 'Ingresá el código manualmente'; }
+    }
+  } catch(e) {
+    const inp = $('cod-manual'); if (inp) inp.focus();
+  }
+}
+
+function cerrarScanner() {
+  if (_scannerStream) { _scannerStream.getTracks().forEach(t => t.stop()); _scannerStream = null; }
+  if (_scannerInterval) { clearInterval(_scannerInterval); _scannerInterval = null; }
+  const wrap = $('scanner-wrap'); if (wrap) wrap.style.display = 'none';
+  const btn = $('btn-scanner'); if (btn) btn.textContent = '📷 Escanear código';
+}
+
+async function buscarPorCodEmp(cod) {
+  if (!cod || cod.length < 3) return;
+  const inp = $('cod-manual'); if (inp) inp.value = cod;
+  const { data } = await db.from('empleados').select('*').eq('activo', true)
+    .or('pin.eq.' + cod.trim() + ',cod_barras.ilike.%' + cod.trim() + '%').limit(1);
+  if (data?.length) {
+    const e = data[0];
+    document.querySelectorAll('.emp-btn').forEach(c => {
+      c.style.border = (parseInt(c.dataset.eid) === e.id) ? '2px solid #C9A84C' : '';
+    });
+    setTimeout(() => seleccionarEmpleado(e.id, e.nombre, e.pin), 500);
+  } else {
+    const el = $('empleado-list');
+    if (el) {
+      const orig = el.innerHTML;
+      el.innerHTML = '<div style="color:#E53935;font-size:12px;text-align:center;padding:12px">⚠️ Código no encontrado</div>';
+      setTimeout(() => { el.innerHTML = orig; }, 2000);
+    }
+  }
+}
 
 </script>
 </body>

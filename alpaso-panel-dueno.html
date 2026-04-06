@@ -6,6 +6,7 @@
 <title>Al Paso — Panel del Dueño</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Bebas+Neue&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:100vh}
@@ -384,6 +385,7 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
   <div style="display:flex;gap:6px;margin-bottom:16px">
     <button class="prod-stab on" onclick="prodSubTab(this,'lista')" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:12px;font-weight:800;cursor:pointer;border:none;background:#C9A84C;color:#0A0A0A">📋 Lista</button>
     <button class="prod-stab" onclick="prodSubTab(this,'scanner')" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:12px;font-weight:800;cursor:pointer;border:1px solid #2A2A2A;background:#1E1E1E;color:#aaa">📷 Cargar producto</button>
+    <button class="prod-stab" onclick="prodSubTab(this,'importar')" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:12px;font-weight:800;cursor:pointer;border:1px solid #2A2A2A;background:#1E1E1E;color:#aaa">📥 Importar</button>
   </div>
 
   <!-- LISTA -->
@@ -521,6 +523,92 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
     </div>
   </div>
 </div>
+
+  <!-- IMPORTAR PRODUCTOS -->
+  <div id="prod-importar" style="display:none">
+
+    <!-- Instrucciones -->
+    <div style="background:#1A1500;border:1px solid #C9A84C33;border-radius:12px;padding:14px;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:800;color:#C9A84C;margin-bottom:8px">📋 Formato del Excel</div>
+      <div style="font-size:11px;color:#aaa;line-height:1.8">
+        La primera fila debe tener los encabezados. Columnas reconocidas:<br>
+        <strong style="color:#fff">nombre</strong> (requerido) · <strong style="color:#fff">codigo</strong> o <strong style="color:#fff">cod_barras</strong> · 
+        <strong style="color:#fff">precio</strong> o <strong style="color:#fff">precio_venta</strong> · 
+        <strong style="color:#fff">costo</strong> o <strong style="color:#fff">precio_costo</strong> · 
+        <strong style="color:#fff">stock</strong> · <strong style="color:#fff">categoria</strong> o <strong style="color:#fff">cat</strong>
+      </div>
+      <button onclick="descargarPlantilla()" style="margin-top:10px;padding:7px 14px;border-radius:8px;background:#1E1E1E;border:1px solid #2A2A2A;color:#C9A84C;font-family:'Nunito';font-size:11px;font-weight:700;cursor:pointer">
+        ⬇️ Descargar plantilla de ejemplo
+      </button>
+    </div>
+
+    <!-- Upload -->
+    <div id="import-drop-zone"
+      style="border:2px dashed #333;border-radius:14px;padding:32px 20px;text-align:center;cursor:pointer;margin-bottom:14px;transition:border-color .2s"
+      onclick="$('import-file-input').click()"
+      ondragover="event.preventDefault();this.style.borderColor='#C9A84C'"
+      ondragleave="this.style.borderColor='#333'"
+      ondrop="handleImportDrop(event)">
+      <div style="font-size:32px;margin-bottom:8px">📊</div>
+      <div style="font-size:14px;font-weight:800;color:#fff;margin-bottom:4px">Subí tu Excel</div>
+      <div style="font-size:11px;color:#555">Tocá acá o arrastrá el archivo .xlsx</div>
+      <input type="file" id="import-file-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleImportFile(this.files[0])">
+    </div>
+
+    <!-- Preview -->
+    <div id="import-preview" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:13px;font-weight:800;color:#fff" id="import-preview-titulo">Preview</div>
+        <div style="display:flex;gap:6px">
+          <button onclick="cancelarImport()" class="btn btn-ghost" style="padding:7px 12px;font-size:12px">Cancelar</button>
+          <button onclick="ejecutarImport()" class="btn btn-gold" style="padding:7px 14px;font-size:12px" id="btn-ejecutar-import">✅ Importar</button>
+        </div>
+      </div>
+
+      <!-- Resumen -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+        <div class="kpi" style="padding:10px"><div class="kpi-val" style="font-size:20px;color:#43A047" id="import-count-nuevos">0</div><div class="kpi-lbl">Nuevos</div></div>
+        <div class="kpi" style="padding:10px"><div class="kpi-val" style="font-size:20px;color:#C9A84C" id="import-count-actualizar">0</div><div class="kpi-lbl">Actualizar</div></div>
+        <div class="kpi" style="padding:10px"><div class="kpi-val" style="font-size:20px;color:#E53935" id="import-count-errores">0</div><div class="kpi-lbl">Errores</div></div>
+      </div>
+
+      <!-- Mapeo de columnas -->
+      <div class="card" style="margin-bottom:12px" id="import-mapeo-wrap">
+        <div class="card-title">🗺️ Mapeo de columnas</div>
+        <div id="import-mapeo-lista"></div>
+      </div>
+
+      <!-- Tabla preview -->
+      <div class="card" style="padding:0">
+        <div style="overflow-x:auto">
+          <table id="import-tabla" style="width:100%;border-collapse:collapse;font-size:11px"></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div id="import-progress" style="display:none">
+      <div style="text-align:center;padding:30px">
+        <div style="font-size:28px;margin-bottom:12px">⏳</div>
+        <div style="font-size:14px;font-weight:800;color:#fff;margin-bottom:8px" id="import-progress-txt">Importando...</div>
+        <div style="background:#1A1A1A;border-radius:6px;height:8px;overflow:hidden;margin-bottom:8px">
+          <div id="import-progress-bar" style="height:100%;background:#C9A84C;width:0%;border-radius:6px;transition:width .3s"></div>
+        </div>
+        <div style="font-size:12px;color:#555" id="import-progress-sub">0 / 0</div>
+      </div>
+    </div>
+
+    <!-- Resultado -->
+    <div id="import-resultado" style="display:none">
+      <div class="card" style="text-align:center">
+        <div style="font-size:32px;margin-bottom:8px">✅</div>
+        <div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:4px" id="import-resultado-txt">Importación completada</div>
+        <div style="font-size:12px;color:#555" id="import-resultado-sub"></div>
+        <button onclick="resetImport()" class="btn btn-gold btn-full" style="margin-top:14px">📥 Importar otro archivo</button>
+      </div>
+    </div>
+
+  </div>
 
 <!-- ═══ FIDELIDAD ══════════════════════════════════ -->
 <div id="tab-fidelidad" class="sec" style="display:none">
@@ -2157,6 +2245,8 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
 
 
 
+
+
 // ══════════════════════════════════════════════════
 // SUPABASE
 // ══════════════════════════════════════════════════
@@ -2957,9 +3047,11 @@ function prodSubTab(btn, id) {
   btn.style.background = '#C9A84C';
   btn.style.color = '#0A0A0A';
   btn.style.border = 'none';
-  $('prod-panel-lista').style.display    = id === 'lista'   ? 'block' : 'none';
-  $('prod-panel-scanner').style.display  = id === 'scanner' ? 'block' : 'none';
-  if (id === 'lista') loadProductos();
+  $('prod-panel-lista').style.display    = id === 'lista'    ? 'block' : 'none';
+  $('prod-panel-scanner').style.display  = id === 'scanner'  ? 'block' : 'none';
+  $('prod-importar').style.display       = id === 'importar' ? 'block' : 'none';
+  if (id === 'lista')    loadProductos();
+  if (id === 'importar') resetImport();
 }
 
 // ══════════════════════════════════════════════════
@@ -7070,12 +7162,17 @@ async function loadSimuladorCarn() {
   $('sim-cortes-lista').innerHTML=cortes.filter(function(c){return c.precio_venta_kg>0;}).map(function(c,i){
     var margen=Math.round(c.margen_pct||0);
     return '<div style="background:#161616;border:1px solid #222;border-radius:10px;padding:11px;margin-bottom:6px">'+
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'+
         '<div style="font-size:12px;font-weight:700;color:#fff">'+c.nombre+' <span style="color:#555;font-size:10px">('+c.kg_real+'kg)</span></div>'+
-        '<div style="font-size:11px;color:#555">Costo: '+fmtM(c.costo_kg)+'/kg</div>'+
+        '<div style="font-size:10px;color:#555">Costo: '+fmtM(c.costo_kg)+'/kg · equilibrio: '+fmtM(Math.round(c.costo_kg*1.01))+'</div>'+
+      '</div>'+
+      '<div style="background:#1A1A1A;border-radius:4px;height:2px;margin-bottom:6px;position:relative">'+
+        '<div style="position:absolute;left:0;top:-1px;width:2px;height:4px;background:#E53935"></div>'+
+        '<div style="position:absolute;left:33%;top:-1px;width:2px;height:4px;background:#555"></div>'+
+        '<div style="position:absolute;left:66%;top:-1px;width:2px;height:4px;background:#555"></div>'+
       '</div>'+
       '<div style="display:flex;align-items:center;gap:8px">'+
-        '<input type="range" min="'+Math.round(c.costo_kg*1.05)+'" max="'+Math.round(c.costo_kg*2.5)+'" value="'+c.precio_venta_kg+'" step="100" '+
+        '<input type="range" min="0" max="'+Math.round(c.costo_kg*3)+'" value="'+c.precio_venta_kg+'" step="100" '+
           'data-kg="'+c.kg_real+'" data-costo="'+c.costo_kg+'" data-base="'+c.ganancia_total+'" data-idx="'+i+'" '+
           'class="sim-rng" oninput="handleSimRange(this)" style="flex:1;accent-color:#C9A84C">'+
         '<span class="sim-val" style="font-size:14px;font-weight:800;color:#43A047;min-width:80px;text-align:right">'+fmtM(c.precio_venta_kg)+'</span>'+
@@ -7087,8 +7184,40 @@ async function loadSimuladorCarn() {
 }
 
 function handleSimRange(el) {
-  var n=parseFloat(el.value),kg=parseFloat(el.dataset.kg)||0,costo=parseFloat(el.dataset.costo)||0,base=parseFloat(el.dataset.base)||0;
-  var span=el.nextElementSibling; if(span) span.textContent=fmtM(n);
+  var n     = parseFloat(el.value) || 0;
+  var kg    = parseFloat(el.dataset.kg)    || 0;
+  var costo = parseFloat(el.dataset.costo) || 0;
+  var base  = parseFloat(el.dataset.base)  || 0;
+
+  // Update price display
+  var spanVal = el.nextElementSibling;
+  if (spanVal) spanVal.textContent = fmtM(n);
+
+  // Update margin display — red if below cost
+  var spanPct = el.nextElementSibling?.nextElementSibling;
+  if (spanPct) {
+    var margenSim = costo > 0 ? Math.round((n - costo) / costo * 100) : 0;
+    spanPct.textContent = margenSim + '%';
+    spanPct.style.color = n < costo ? '#E53935' : n < costo * 1.1 ? '#FFB74D' : '#555';
+  }
+
+  // Show/hide perdida warning
+  var card = el.closest('div[style*="border-radius:10px"]');
+  if (card) {
+    var warn = card.querySelector('.sim-perdida-warn');
+    if (n < costo) {
+      if (!warn) {
+        warn = document.createElement('div');
+        warn.className = 'sim-perdida-warn';
+        warn.style.cssText = 'font-size:10px;color:#EF9A9A;background:rgba(229,57,53,.1);border-radius:6px;padding:4px 8px;margin-top:4px';
+        card.appendChild(warn);
+      }
+      warn.textContent = '🔴 Vendés a pérdida — perdés ' + fmtM(Math.round((costo - n) * kg)) + ' en este corte';
+    } else {
+      if (warn) warn.remove();
+    }
+  }
+
   calcularSimulacion(0, n, kg, costo, base);
 }
 
@@ -7294,6 +7423,291 @@ document.addEventListener('click', async function(e) {
   }
 
 });
+
+
+
+// ══════════════════════════════════════════════════
+// IMPORTADOR DE PRODUCTOS
+// ══════════════════════════════════════════════════
+let importDatos    = [];  // rows parsed from file
+let importMapeo    = {};  // col header → field
+let importExistentes = {}; // cod_barras|nombre → id (loaded from DB)
+
+const IMPORT_CAMPOS = {
+  nombre:       ['nombre','name','producto','descripcion','description'],
+  cod_barras:   ['codigo','cod','cod_barras','codigo_barras','barcode','ean','gtin','cod barras'],
+  precio_venta: ['precio','precio_venta','pventa','price','venta','precio venta'],
+  precio_costo: ['costo','precio_costo','pcosto','cost','costo_unitario','precio costo'],
+  stock:        ['stock','cantidad','qty','quantity','inventario','existencia'],
+  cat:          ['categoria','cat','category','rubro','seccion','categoría'],
+};
+
+function resetImport() {
+  importDatos = []; importMapeo = {}; importExistentes = {};
+  $('import-preview').style.display   = 'none';
+  $('import-progress').style.display  = 'none';
+  $('import-resultado').style.display = 'none';
+  $('import-drop-zone').style.display = 'block';
+  const inp = $('import-file-input'); if (inp) inp.value = '';
+}
+
+function handleImportDrop(e) {
+  e.preventDefault();
+  $('import-drop-zone').style.borderColor = '#333';
+  const file = e.dataTransfer.files[0];
+  if (file) handleImportFile(file);
+}
+
+async function handleImportFile(file) {
+  if (!file) return;
+  $('import-drop-zone').style.display = 'none';
+  $('import-preview').style.display   = 'block';
+  $('import-preview-titulo').textContent = 'Procesando ' + file.name + '...';
+
+  try {
+    // Read file
+    const buf = await file.arrayBuffer();
+    const wb  = XLSX.read(buf, { type: 'array' });
+    const ws  = wb.Sheets[wb.SheetNames[0]];
+    const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+    if (!raw.length) { toast('⚠️ El archivo está vacío'); resetImport(); return; }
+
+    // Detect headers (first row)
+    const headers = raw[0].map(h => String(h||'').toLowerCase().trim());
+    const dataRows = raw.slice(1).filter(r => r.some(c => c !== ''));
+
+    // Auto-map columns
+    importMapeo = {};
+    headers.forEach((h, i) => {
+      for (const [campo, aliases] of Object.entries(IMPORT_CAMPOS)) {
+        if (aliases.some(a => h.includes(a) || a.includes(h))) {
+          if (!importMapeo[campo]) importMapeo[campo] = i;
+        }
+      }
+    });
+
+    // Parse rows
+    importDatos = dataRows.map((row, idx) => {
+      const get = (campo) => {
+        const col = importMapeo[campo];
+        return col !== undefined ? String(row[col]||'').trim() : '';
+      };
+      return {
+        _row:       idx + 2,
+        nombre:     get('nombre'),
+        cod_barras: get('cod_barras'),
+        precio_venta: parseFloat(get('precio_venta').replace(/[^0-9.]/g,'')) || 0,
+        precio_costo: parseFloat(get('precio_costo').replace(/[^0-9.]/g,'')) || 0,
+        stock:        parseFloat(get('stock').replace(/[^0-9.]/g,''))        || 0,
+        cat:          get('cat') || 'Sin categoría',
+        _error:       !get('nombre') ? 'Sin nombre' : '',
+      };
+    }).filter(r => r.nombre); // skip empty rows
+
+    if (!importDatos.length) { toast('⚠️ No se encontraron filas válidas'); resetImport(); return; }
+
+    // Load existing products to detect updates vs new
+    await cargarExistentes();
+
+    // Render mapeo
+    renderMapeo(headers);
+    // Render preview
+    renderPreviewTabla();
+    actualizarContadores();
+
+    $('import-preview-titulo').textContent = file.name + ' — ' + importDatos.length + ' filas';
+
+  } catch(e) {
+    toast('⚠️ Error al leer el archivo: ' + e.message);
+    resetImport();
+  }
+}
+
+async function cargarExistentes() {
+  importExistentes = {};
+  // Load all products - get cod_barras and nombre as keys
+  let offset = 0;
+  while (true) {
+    const { data } = await db.from('productos').select('id,nombre,cod_barras,cod')
+      .range(offset, offset + 999);
+    if (!data?.length) break;
+    data.forEach(p => {
+      if (p.cod_barras) importExistentes[p.cod_barras.toLowerCase()] = p.id;
+      if (p.cod)        importExistentes[p.cod.toLowerCase()]        = p.id;
+      importExistentes[p.nombre.toLowerCase().trim()]                = p.id;
+    });
+    if (data.length < 1000) break;
+    offset += 1000;
+  }
+}
+
+function getExistente(row) {
+  if (row.cod_barras) {
+    const id = importExistentes[row.cod_barras.toLowerCase()];
+    if (id) return id;
+  }
+  return importExistentes[row.nombre.toLowerCase().trim()] || null;
+}
+
+function renderMapeo(headers) {
+  const el = $('import-mapeo-lista'); if (!el) return;
+  const CAMPO_LBL = {
+    nombre:'Nombre', cod_barras:'Código de barras', precio_venta:'Precio venta',
+    precio_costo:'Precio costo', stock:'Stock', cat:'Categoría'
+  };
+  el.innerHTML = Object.entries(CAMPO_LBL).map(([campo, lbl]) => {
+    const colIdx = importMapeo[campo];
+    const colName = colIdx !== undefined ? headers[colIdx] : null;
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #1A1A1A">' +
+      '<div style="font-size:12px;font-weight:700;color:#fff">' + lbl + (campo==='nombre'?' *':'') + '</div>' +
+      '<div style="font-size:11px;color:' + (colName?'#43A047':'#555') + '">' +
+        (colName ? '✅ columna "' + colName + '"' : '— no detectada') +
+      '</div>' +
+    '</div>';
+  }).join('') + '<div style="font-size:10px;color:#555;margin-top:6px">* requerido</div>';
+}
+
+function renderPreviewTabla() {
+  const tabla = $('import-tabla'); if (!tabla) return;
+  const campos = ['nombre','cod_barras','precio_venta','precio_costo','stock','cat'];
+  const headers = ['Nombre','Código','Precio venta','Precio costo','Stock','Categoría','Estado'];
+
+  const thead = '<thead><tr>' + headers.map(h =>
+    '<th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:800;color:#555;text-transform:uppercase;border-bottom:1px solid #222;background:#111;white-space:nowrap">' + h + '</th>'
+  ).join('') + '</tr></thead>';
+
+  const preview = importDatos.slice(0, 20);
+  const tbody = '<tbody>' + preview.map(row => {
+    const existeId = getExistente(row);
+    const estado   = row._error
+      ? '<span style="color:#E53935;font-size:10px">⚠️ ' + row._error + '</span>'
+      : existeId
+        ? '<span style="color:#C9A84C;font-size:10px">🔄 Actualizar</span>'
+        : '<span style="color:#43A047;font-size:10px">✅ Nuevo</span>';
+    return '<tr style="border-bottom:1px solid #1A1A1A">' +
+      campos.map(c => '<td style="padding:7px 10px;font-size:11px;color:#aaa;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis">' +
+        (row[c] || '—') + '</td>').join('') +
+      '<td style="padding:7px 10px">' + estado + '</td>' +
+    '</tr>';
+  }).join('') + '</tbody>';
+
+  tabla.innerHTML = thead + tbody;
+  if (importDatos.length > 20) {
+    tabla.insertAdjacentHTML('afterend', '<div style="font-size:11px;color:#555;text-align:center;padding:8px">... y ' + (importDatos.length-20) + ' filas más</div>');
+  }
+}
+
+function actualizarContadores() {
+  let nuevos = 0, actualizar = 0, errores = 0;
+  importDatos.forEach(row => {
+    if (row._error) { errores++; return; }
+    if (getExistente(row)) actualizar++;
+    else nuevos++;
+  });
+  if ($('import-count-nuevos'))    $('import-count-nuevos').textContent    = nuevos;
+  if ($('import-count-actualizar'))$('import-count-actualizar').textContent = actualizar;
+  if ($('import-count-errores'))   $('import-count-errores').textContent   = errores;
+  const btn = $('btn-ejecutar-import');
+  if (btn) btn.textContent = '✅ Importar ' + (nuevos + actualizar) + ' productos';
+}
+
+function cancelarImport() { resetImport(); }
+
+async function ejecutarImport() {
+  if (!importDatos.length) return;
+
+  $('import-preview').style.display  = 'none';
+  $('import-progress').style.display = 'block';
+
+  const validos = importDatos.filter(r => !r._error);
+  let procesados = 0, creados = 0, actualizados = 0, errores = 0;
+
+  // Process in batches of 50
+  const BATCH = 50;
+  for (let i = 0; i < validos.length; i += BATCH) {
+    const batch = validos.slice(i, i + BATCH);
+
+    for (const row of batch) {
+      try {
+        const existeId = getExistente(row);
+        const payload = {
+          nombre:       row.nombre,
+          cod_barras:   row.cod_barras || null,
+          precio_venta: row.precio_venta || 0,
+          precio_costo: row.precio_costo || null,
+          cat:          row.cat || 'Sin categoría',
+          activo:       true,
+          updated_at:   new Date().toISOString(),
+        };
+        if (row.stock > 0) {
+          payload.stock_gondola  = row.stock;
+          payload.stock_deposito = 0;
+        }
+        if (row.precio_costo > 0 && row.precio_venta > 0) {
+          payload.margen = Math.round((row.precio_venta - row.precio_costo) / row.precio_costo * 100);
+        }
+
+        if (existeId) {
+          // Update — only precio_venta, precio_costo, stock (keep rest)
+          const updatePayload = {
+            precio_venta: payload.precio_venta,
+            updated_at:   payload.updated_at,
+          };
+          if (row.precio_costo > 0) updatePayload.precio_costo = row.precio_costo;
+          if (row.stock > 0)        updatePayload.stock_gondola = row.stock;
+          if (row.cat && row.cat !== 'Sin categoría') updatePayload.cat = row.cat;
+          if (payload.margen)       updatePayload.margen = payload.margen;
+          await db.from('productos').update(updatePayload).eq('id', existeId);
+          actualizados++;
+        } else {
+          // Insert new
+          await db.from('productos').insert(payload);
+          creados++;
+        }
+      } catch(e) {
+        errores++;
+      }
+      procesados++;
+    }
+
+    // Update progress
+    const pct = Math.round(procesados / validos.length * 100);
+    const bar = $('import-progress-bar'); if (bar) bar.style.width = pct + '%';
+    const txt = $('import-progress-txt'); if (txt) txt.textContent = 'Importando... ' + pct + '%';
+    const sub = $('import-progress-sub'); if (sub) sub.textContent = procesados + ' / ' + validos.length;
+
+    // Small delay to not block UI
+    await new Promise(r => setTimeout(r, 10));
+  }
+
+  // Show result
+  $('import-progress').style.display  = 'none';
+  $('import-resultado').style.display = 'block';
+  $('import-resultado-txt').textContent = '¡Importación completada!';
+  $('import-resultado-sub').textContent =
+    creados + ' productos nuevos · ' +
+    actualizados + ' actualizados' +
+    (errores > 0 ? ' · ' + errores + ' errores' : '');
+
+  toast('✅ ' + creados + ' creados, ' + actualizados + ' actualizados');
+}
+
+function descargarPlantilla() {
+  // Create example workbook
+  const ws_data = [
+    ['nombre','cod_barras','precio_venta','precio_costo','stock','categoria'],
+    ['Coca Cola 2.25L','7790895000782',2500,1800,24,'Bebidas'],
+    ['Leche La Serenísima 1L','7790040001004',1200,900,12,'Lácteos'],
+    ['Yerba Playadito 500g','7791765000016',1800,1300,8,'Almacén'],
+  ];
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(ws_data);
+  // Column widths
+  ws['!cols'] = [{wch:30},{wch:16},{wch:14},{wch:14},{wch:8},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, ws, 'Productos');
+  XLSX.writeFile(wb, 'plantilla_productos_alpaso.xlsx');
+}
 
 </script>
 </body>
