@@ -917,8 +917,10 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
 
   <!-- Sub-tabs -->
   <div style="display:flex;gap:6px;margin-bottom:14px">
-    <button class="compras-stab on" onclick="comprasSubTab(this,'faltantes')" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#C9A84C;color:#0A0A0A;border:none">📦 Faltantes</button>
-    <button class="compras-stab" onclick="comprasSubTab(this,'pedido')" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">📋 Armar pedido</button>
+    <button class="compras-stab on" onclick="comprasSubTab(this,'faltantes')" style="flex:1;min-width:60px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#C9A84C;color:#0A0A0A;border:none">📦 Faltantes</button>
+    <button class="compras-stab" onclick="comprasSubTab(this,'pedido-auto')" style="flex:1;min-width:60px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">🤖 Auto pedido</button>
+    <button class="compras-stab" onclick="comprasSubTab(this,'pedido')" style="flex:1;min-width:60px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">📋 Pedido</button>
+    <button class="compras-stab" onclick="comprasSubTab(this,'config-stock')" style="flex:1;min-width:60px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">⚙️ Config</button>
     <button class="compras-stab" onclick="comprasSubTab(this,'proveedores')" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">🏢 Proveedores</button>
   </div>
 
@@ -1016,6 +1018,46 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
         </div>
       </div>
     </div>
+  </div>
+
+</div>
+
+  <!-- AUTO PEDIDO -->
+  <div id="compras-pedido-auto" style="display:none">
+    <div style="font-size:11px;color:#555;margin-bottom:12px">El sistema detecta qué productos están bajo stock mínimo y arma el pedido por proveedor automáticamente</div>
+
+    <!-- Botón analizar -->
+    <button onclick="analizarStockParaPedido()" class="btn btn-gold btn-full" style="margin-bottom:14px">
+      🔍 Analizar stock y generar pedidos
+    </button>
+
+    <!-- Resultado por proveedor -->
+    <div id="auto-pedido-resultado"></div>
+  </div>
+
+  <!-- CONFIG STOCK MÍNIMO Y PROVEEDORES -->
+  <div id="compras-config-stock" style="display:none">
+
+    <!-- Sub-tabs config -->
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <button class="cfg-stock-tab on" onclick="cfgStockTab(this,'minimos')" style="flex:1;padding:7px;border-radius:8px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#C9A84C;color:#0A0A0A;border:none">📊 Stock mínimo</button>
+      <button class="cfg-stock-tab" onclick="cfgStockTab(this,'asignar-prov')" style="flex:1;padding:7px;border-radius:8px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">🏭 Asignar prov.</button>
+    </div>
+
+    <!-- STOCK MÍNIMO POR CATEGORÍA -->
+    <div id="cfg-minimos">
+      <div style="font-size:11px;color:#555;margin-bottom:12px">Configurá el stock mínimo por categoría. Se aplica a todos los productos de esa categoría que tengan stock en 0.</div>
+      <div id="cfg-minimos-lista"><div class="loading-panel">⏳</div></div>
+      <button onclick="aplicarMinimosCat()" class="btn btn-gold btn-full" style="margin-top:12px">✅ Aplicar a todos los productos</button>
+    </div>
+
+    <!-- ASIGNAR PROVEEDOR POR CATEGORÍA -->
+    <div id="cfg-asignar-prov" style="display:none">
+      <div style="font-size:11px;color:#555;margin-bottom:12px">Asignás un proveedor por defecto a cada categoría. Los productos sin proveedor lo heredan.</div>
+      <div id="cfg-prov-lista"><div class="loading-panel">⏳</div></div>
+      <button onclick="aplicarProvCat()" class="btn btn-gold btn-full" style="margin-top:12px">✅ Aplicar a todos los productos</button>
+    </div>
+
   </div>
 
 </div>
@@ -1868,6 +1910,31 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
       <button onclick="nuevaSemanaCarn()" style="padding:10px 14px;border-radius:9px;background:#C9A84C;border:none;color:#0A0A0A;font-family:'Nunito';font-size:12px;font-weight:800;cursor:pointer">+ Semana</button>
     </div>
 
+    <!-- Config margen + Héctor -->
+    <div style="background:#161616;border:1px solid #222;border-radius:10px;padding:10px 12px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="flex:1">
+          <div style="font-size:10px;font-weight:800;color:#555;text-transform:uppercase;margin-bottom:4px">Margen objetivo</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <input id="carn-margen-obj" type="number" value="40" min="0" max="200" step="1"
+              oninput="if(carnCortesActual.length) _renderCortes()"
+              style="width:60px;background:#1A1A1A;border:1px solid #333;border-radius:7px;padding:5px;font-family:'Nunito';font-size:18px;font-weight:900;color:#C9A84C;outline:none;text-align:center">
+            <span style="font-size:14px;color:#555">%</span>
+          </div>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:10px;font-weight:800;color:#555;text-transform:uppercase;margin-bottom:4px">Costo Héctor ($/kg)</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <input id="carn-costo-hector" type="number" value="0" min="0" step="50"
+              oninput="if(carnCortesActual.length) _renderCortes()"
+              style="width:80px;background:#1A1A1A;border:1px solid #333;border-radius:7px;padding:5px;font-family:'Nunito';font-size:14px;font-weight:900;color:#FFB74D;outline:none;text-align:center">
+            <span style="font-size:10px;color:#555">/kg</span>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:9px;color:#444;margin-top:6px">Héctor cobra mensual → dividí su sueldo por los kg que trabaja por mes para obtener el costo por kg</div>
+    </div>
+
     <!-- Compras de la semana -->
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
       <div style="font-size:11px;font-weight:800;color:#C9A84C;text-transform:uppercase;letter-spacing:1px">Compras de la semana</div>
@@ -1875,41 +1942,47 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
     </div>
     <div id="carn-items-lista" style="margin-bottom:12px"></div>
 
-    <!-- Costos adicionales del romaneo -->
-    <div id="carn-costos-section" style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <div style="font-size:11px;font-weight:800;color:#C9A84C;text-transform:uppercase;letter-spacing:1px">💸 Costos adicionales</div>
-        <button onclick="toggleCostosRomaneo()" style="padding:5px 10px;border-radius:7px;background:#1E1E1E;border:1px solid #2A2A2A;color:#aaa;font-family:'Nunito';font-size:10px;cursor:pointer" id="btn-toggle-costos">▶ Ver costos</button>
-      </div>
-      <div id="carn-costos-wrap" style="display:none">
-        <div class="card" style="padding:12px">
-          <div style="font-size:10px;color:#555;margin-bottom:10px">Estos costos se distribuyen proporcionalmente sobre todos los kg comprados</div>
-          <div id="carn-costos-lista"></div>
-          <button onclick="agregarCostoRomaneoV2()" style="width:100%;padding:8px;background:#1A1A1A;border:1px dashed #333;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:700;color:#555;cursor:pointer;margin-top:6px">+ Agregar costo</button>
-          <div style="display:flex;justify-content:space-between;padding:10px 0 0;border-top:1px solid #222;margin-top:8px">
-            <span style="font-size:12px;color:#555">Total costos adicionales</span>
-            <span style="font-size:14px;font-weight:800;color:#E53935" id="carn-costos-total-v2">$0</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;padding:6px 0 0">
-            <span style="font-size:12px;color:#555">Impacto en costo /kg</span>
-            <span style="font-size:14px;font-weight:800;color:#FFB74D" id="carn-costo-extra-kg">$0</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Cortes obtenidos -->
     <div id="carn-cortes-section" style="display:none">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <div style="font-size:11px;font-weight:800;color:#C9A84C;text-transform:uppercase;letter-spacing:1px">Cortes obtenidos</div>
+        <div>
+          <div style="font-size:11px;font-weight:800;color:#C9A84C;text-transform:uppercase;letter-spacing:1px">Cortes obtenidos</div>
+          <div style="font-size:9px;color:#555" id="carn-cortes-resumen"></div>
+        </div>
         <button onclick="sugerirDestinosIA()" style="padding:6px 10px;border-radius:8px;background:#1A1500;border:1px solid #C9A84C44;color:#C9A84C;font-family:'Nunito';font-size:10px;font-weight:700;cursor:pointer">🤖 Sugerir destinos</button>
       </div>
       <div id="carn-cortes-lista"></div>
+
+      <!-- Resumen ganancia -->
+      <div id="carn-ganancia-preview" style="display:none;background:#161616;border:1px solid #222;border-radius:10px;padding:12px;margin-top:10px">
+        <div style="font-size:11px;font-weight:800;color:#C9A84C;text-transform:uppercase;margin-bottom:10px">📊 Resultado estimado del romaneo</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="background:#1A1A1A;border-radius:8px;padding:10px;text-align:center">
+            <div style="font-size:10px;color:#555;margin-bottom:3px">Costo total compra</div>
+            <div style="font-size:16px;font-weight:800;color:#E53935" id="carn-res-costo">$0</div>
+          </div>
+          <div style="background:#1A1A1A;border-radius:8px;padding:10px;text-align:center">
+            <div style="font-size:10px;color:#555;margin-bottom:3px">Venta estimada</div>
+            <div style="font-size:16px;font-weight:800;color:#43A047" id="carn-res-venta">$0</div>
+          </div>
+          <div style="background:#1A2E1A;border-radius:8px;padding:10px;text-align:center">
+            <div style="font-size:10px;color:#555;margin-bottom:3px">Ganancia bruta</div>
+            <div style="font-size:18px;font-weight:900;color:#43A047" id="carn-res-ganancia">$0</div>
+          </div>
+          <div style="background:#1A1A1A;border-radius:8px;padding:10px;text-align:center">
+            <div style="font-size:10px;color:#555;margin-bottom:3px">Margen real</div>
+            <div style="font-size:18px;font-weight:900" id="carn-res-margen">0%</div>
+          </div>
+        </div>
+        <div style="margin-top:10px;font-size:10px;color:#555" id="carn-res-alerta"></div>
+      </div>
+
       <button onclick="guardarRomaneoSemanal()" class="btn btn-gold btn-full" style="margin-top:10px">💾 Guardar romaneo</button>
     </div>
   </div>
 
-  <!-- ══ COMPARADOR DE COMPRA ════════════════════ -->
+  
+<!-- ══ COMPARADOR DE COMPRA ════════════════════ -->
   <div id="carn-comparador-compra" style="display:none">
     <div style="font-size:11px;color:#555;margin-bottom:14px">Calculá el costo real por kg vendible de cada forma de comprar y encontrá la más conveniente</div>
 
@@ -2226,6 +2299,16 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
 <div class="toast" id="toast"></div>
 
 <script>
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3483,12 +3566,14 @@ function comprasSubTab(btn, id) {
     b.style.background = '#1E1E1E'; b.style.color = '#aaa'; b.style.border = '1px solid #2A2A2A';
   });
   btn.style.background = '#C9A84C'; btn.style.color = '#0A0A0A'; btn.style.border = 'none';
-  ['faltantes','pedido','proveedores'].forEach(t => {
+  ['faltantes','pedido-auto','pedido','config-stock','proveedores'].forEach(t => {
     const el = $('compras-'+t); if (el) el.style.display = t === id ? 'block' : 'none';
   });
-  if (id === 'faltantes')   loadFaltantesPanel();
-  if (id === 'pedido')      initPedido();
-  if (id === 'proveedores') loadProveedores();
+  if (id === 'faltantes')    loadFaltantesPanel();
+  if (id === 'pedido')       initPedido();
+  if (id === 'proveedores')  loadProveedores();
+  if (id === 'pedido-auto')  initAutoPedido();
+  if (id === 'config-stock') initConfigStock();
 }
 
 async function loadCompras() {
@@ -6530,50 +6615,170 @@ async function _generarCortesDesdePlantillas() {
   if (cs) cs.style.display = carnCortesActual.length ? 'block' : 'none';
 }
 
-// Render cortes table
+// Precios de referencia de mercado (base para sugerencias)
+var PRECIOS_REF = {
+  'Costilla':14000,'Costeleta':14000,'Aguja':13000,'Osobuco':11000,
+  'Vacío':17500,'Nalga':17500,'Cuadrada':15500,'Bola de lomo':15500,
+  'Cuadril':16000,'Paleta':14500,'Lomo':31000,'Peceto':18000,
+  'Matambre':14500,'Tapa de asado':13500,'Tapa de nalga':15000,
+  'Colita cuadril':18500,'Tortuguita':13000,'Marucha':11000,
+  'Degolladero':10000,'Entraña':22000,'Falda':11000,
+  'Grasa':3000,'Recortes':12000
+};
+
+function _getMargenObj() {
+  return parseFloat(document.getElementById('carn-margen-obj')?.value) || 40;
+}
+
+function _getCostoHector() {
+  return parseFloat(document.getElementById('carn-costo-hector')?.value) || 0;
+}
+
+// Render cortes table — with correct cost, suggested price and real margin
 function _renderCortes() {
   var el = $('carn-cortes-lista'); if (!el) return;
-  if (!carnCortesActual.length) { el.innerHTML = '<div style="color:#333;font-size:12px;text-align:center;padding:12px">Sin cortes</div>'; return; }
-  var DEST_COL = {mostrador:'#43A047',milanesa:'#C9A84C',picada:'#FFB74D',chorizo:'#FF7043',vacio:'#64B5F6',elaborado:'#BA68C8'};
-  var DEST_LBL = {mostrador:'🏪 Mostrador',milanesa:'🍖 Milanesa',picada:'🥩 Picada',chorizo:'🌭 Chorizo',vacio:'🫙 Vacío',elaborado:'⚗️ Elaborado'};
-  var ORIG_LBL = {media_res:'🐄',mocho:'🔪',corte_suelto:'📦',animal_pie:'🐃',suelto:'📦'};
-  el.innerHTML = carnCortesActual.map(function(c, i) {
-    var margen = (c.precio_venta_kg > 0 && c.costo_kg > 0)
-      ? Math.round((c.precio_venta_kg - c.costo_kg) / c.costo_kg * 100) : 0;
-    var color = DEST_COL[c.destino] || '#555';
-    var origIcon = ORIG_LBL[c.tipo_origen] || '';
-    var origTxt = c.origen_desc ? origIcon + ' ' + c.origen_desc.split(' ').slice(0,3).join(' ') : '';
+  if (!carnCortesActual.length) {
+    el.innerHTML = '<div style="color:#333;font-size:12px;text-align:center;padding:12px">Sin cortes</div>';
+    return;
+  }
+
+  var margenObj  = _getMargenObj();
+  var costoHect  = _getCostoHector();
+  var DEST_COL   = {mostrador:'#43A047',milanesa:'#C9A84C',picada:'#FFB74D',chorizo:'#FF7043',vacio:'#64B5F6',elaborado:'#BA68C8'};
+  var DEST_LBL   = {mostrador:'🏪 Mostrador',milanesa:'🍖 Milanesa',picada:'🥩 Picada',chorizo:'🌭 Chorizo',vacio:'🫙 Vacío',elaborado:'⚗️ Elaborado'};
+  var ORIG_ICON  = {media_res:'🐄',mocho:'🔪',corte_suelto:'📦',animal_pie:'🐃',suelto:'📦'};
+
+  var totalCosto = 0, totalVenta = 0, cortesConPrecio = 0;
+
+  var html = carnCortesActual.map(function(c, i) {
+    // Costo real = costo_kg de origen + costo Héctor
+    var costoReal    = (c.costo_kg || 0) + costoHect;
+    var precioVenta  = c.precio_venta_kg || 0;
+    var precioSug    = costoReal > 0 ? Math.round(costoReal * (1 + margenObj/100) / 100) * 100 : 0;
+    var precioRef    = PRECIOS_REF[c.nombre] || 0;
+    var margenReal   = (precioVenta > 0 && costoReal > 0)
+      ? Math.round((precioVenta - costoReal) / costoReal * 100) : null;
+    var color        = DEST_COL[c.destino] || '#555';
+    var origIcon     = ORIG_ICON[c.tipo_origen] || '';
+    var kgReal       = c.kg_real || 0;
+
+    // Accumulate totals
+    totalCosto += costoReal * kgReal;
+    if (precioVenta > 0) { totalVenta += precioVenta * kgReal; cortesConPrecio++; }
+
+    // Price status indicator
+    var priceBadge = '';
+    if (precioVenta <= 0) {
+      priceBadge = '<div style="font-size:9px;color:#555;margin-top:2px">Sin precio → sugerido: <span style="color:#C9A84C;font-weight:700">' + fmtM(precioSug) + '</span></div>';
+    } else if (precioVenta < costoReal) {
+      priceBadge = '<div style="font-size:9px;color:#E53935;margin-top:2px">🔴 Pérdida: vendés por debajo del costo</div>';
+    } else if (margenReal < margenObj * 0.8) {
+      priceBadge = '<div style="font-size:9px;color:#FFB74D;margin-top:2px">⚠️ Margen bajo — sugerido: ' + fmtM(precioSug) + '</div>';
+    } else if (precioRef > 0 && precioVenta > precioRef * 1.15) {
+      priceBadge = '<div style="font-size:9px;color:#FFB74D;margin-top:2px">⚠️ Precio alto vs mercado (' + fmtM(precioRef) + ')</div>';
+    }
+
+    var margenColor = margenReal === null ? '#555' : margenReal >= margenObj ? '#43A047' : margenReal >= 0 ? '#FFB74D' : '#E53935';
+
     return '<div style="background:#161616;border:1px solid #222;border-left:3px solid ' + color + ';border-radius:10px;padding:11px;margin-bottom:6px">' +
-      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">' +
+
+      // Header: nombre + origen + destino
+      '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px">' +
         '<div style="flex:1">' +
           '<div style="font-size:13px;font-weight:700;color:#fff">' + c.nombre + '</div>' +
-          (origTxt ? '<div style="font-size:9px;color:#555">' + origTxt + '</div>' : '') +
+          (c.origen_desc ? '<div style="font-size:9px;color:#444">' + origIcon + ' ' + c.origen_desc.split(' ').slice(0,3).join(' ') + ' · Costo compra: ' + fmtM(c.costo_kg) + '/kg' + (costoHect > 0 ? ' + ' + fmtM(costoHect) + ' Héctor' : '') + '</div>' : '') +
         '</div>' +
-        '<div style="font-size:10px;font-weight:700;color:' + color + '">' + (DEST_LBL[c.destino]||c.destino) + '</div>' +
+        '<div style="font-size:10px;font-weight:700;color:' + color + ';white-space:nowrap">' + (DEST_LBL[c.destino]||c.destino) + '</div>' +
       '</div>' +
+
+      // Grid: kg, costo real, precio venta, margen
       '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:5px;margin-bottom:8px">' +
-        '<div><div style="font-size:9px;color:#555">Kg esp.</div>' +
-          '<div style="font-size:12px;font-weight:700;color:#555">' + (c.kg_esperado||c.kg_real||0).toFixed(2) + '</div></div>' +
-        '<div><div style="font-size:9px;color:#555">Kg real</div>' +
-          '<input type="number" value="' + (c.kg_real||0) + '" step="0.1" min="0" ' +
+        '<div style="background:#1A1A1A;border-radius:6px;padding:5px">' +
+          '<div style="font-size:9px;color:#555;margin-bottom:2px">Kg real</div>' +
+          '<input type="number" value="' + kgReal + '" step="0.1" min="0" ' +
             'onchange="carnCortesActual[' + i + '].kg_real=parseFloat(this.value)||0;carnCortesActual[' + i + '].kg_disponible=parseFloat(this.value)||0;_renderCortes()" ' +
-            'style="width:100%;background:#1A1A1A;border:1px solid #333;border-radius:6px;padding:4px;font-family:Nunito;font-size:12px;font-weight:800;color:#C9A84C;outline:none;text-align:center"></div>' +
-        '<div><div style="font-size:9px;color:#555">Precio vta</div>' +
-          '<input type="number" value="' + (c.precio_venta_kg||0) + '" step="100" ' +
+            'style="width:100%;background:#111;border:1px solid #333;border-radius:5px;padding:3px;font-family:Nunito;font-size:12px;font-weight:800;color:#C9A84C;outline:none;text-align:center">' +
+        '</div>' +
+        '<div style="background:#1A1A1A;border-radius:6px;padding:5px;text-align:center">' +
+          '<div style="font-size:9px;color:#555;margin-bottom:2px">Costo real/kg</div>' +
+          '<div style="font-size:12px;font-weight:800;color:#E53935">' + fmtM(costoReal) + '</div>' +
+        '</div>' +
+        '<div style="background:#1A1A1A;border-radius:6px;padding:5px">' +
+          '<div style="font-size:9px;color:#555;margin-bottom:2px">Precio vta</div>' +
+          '<input type="number" value="' + (precioVenta||precioSug) + '" step="100" ' +
             'onchange="carnCortesActual[' + i + '].precio_venta_kg=parseFloat(this.value)||0;_renderCortes()" ' +
-            'style="width:100%;background:#1A1A1A;border:1px solid #333;border-radius:6px;padding:4px;font-family:Nunito;font-size:12px;font-weight:800;color:#43A047;outline:none;text-align:center"></div>' +
-        '<div style="background:#1A1A1A;border-radius:6px;padding:4px;text-align:center">' +
-          '<div style="font-size:11px;font-weight:900;color:' + (margen>=35?'#43A047':margen>=25?'#C9A84C':'#E53935') + '">' + margen + '%</div>' +
-          '<div style="font-size:9px;color:#555">margen</div>' +
+            'style="width:100%;background:#111;border:1px solid #333;border-radius:5px;padding:3px;font-family:Nunito;font-size:12px;font-weight:800;color:#43A047;outline:none;text-align:center">' +
+        '</div>' +
+        '<div style="background:#1A1A1A;border-radius:6px;padding:5px;text-align:center">' +
+          '<div style="font-size:9px;color:#555;margin-bottom:2px">Margen</div>' +
+          '<div style="font-size:13px;font-weight:900;color:' + margenColor + '">' + (margenReal !== null ? margenReal + '%' : '—') + '</div>' +
         '</div>' +
       '</div>' +
+
+      // Price badge / alert
+      (priceBadge ? '<div style="margin-bottom:8px">' + priceBadge + '</div>' : '') +
+
+      // Ref price hint
+      (precioRef > 0 ? '<div style="font-size:9px;color:#333;margin-bottom:6px">Referencia mercado: ' + fmtM(precioRef) + '/kg</div>' : '') +
+
+      // Destino selector
       '<select onchange="carnCortesActual[' + i + '].destino=this.value;_renderCortes()" ' +
         'style="width:100%;background:#1A1A1A;border:1px solid #333;border-radius:7px;padding:5px 8px;font-family:Nunito;font-size:11px;font-weight:700;color:' + color + ';outline:none">' +
         Object.entries(DEST_LBL).map(function(e){ return '<option value="' + e[0] + '"' + (c.destino===e[0]?' selected':'') + '>' + e[1] + '</option>'; }).join('') +
       '</select>' +
+
     '</div>';
   }).join('');
+
+  el.innerHTML = html;
+
+  // Update summary
+  _actualizarResumenRomaneo(totalCosto, totalVenta, cortesConPrecio);
 }
+
+function _actualizarResumenRomaneo(totalCosto, totalVenta, cortesConPrecio) {
+  var ganancia = totalVenta - totalCosto;
+  var margenReal = totalCosto > 0 ? Math.round(ganancia / totalCosto * 100) : 0;
+  var margenObj = _getMargenObj();
+  var totalCortes = carnCortesActual.length;
+
+  // Resumen debajo del selector de semana
+  var resEl = $('carn-cortes-resumen');
+  if (resEl) {
+    resEl.textContent = totalCortes + ' cortes · ' + cortesConPrecio + ' con precio cargado';
+  }
+
+  // Show/hide ganancia preview
+  var prev = $('carn-ganancia-preview');
+  if (!prev) return;
+
+  if (cortesConPrecio === 0) { prev.style.display = 'none'; return; }
+  prev.style.display = 'block';
+
+  if ($('carn-res-costo'))   $('carn-res-costo').textContent   = fmtM(Math.round(totalCosto));
+  if ($('carn-res-venta'))   $('carn-res-venta').textContent   = fmtM(Math.round(totalVenta));
+  if ($('carn-res-ganancia'))  {
+    $('carn-res-ganancia').textContent = fmtM(Math.round(ganancia));
+    $('carn-res-ganancia').style.color = ganancia >= 0 ? '#43A047' : '#E53935';
+  }
+  if ($('carn-res-margen')) {
+    $('carn-res-margen').textContent = margenReal + '%';
+    $('carn-res-margen').style.color = margenReal >= margenObj ? '#43A047' : margenReal >= margenObj * 0.8 ? '#FFB74D' : '#E53935';
+  }
+
+  // Alert
+  var alertEl = $('carn-res-alerta');
+  if (alertEl) {
+    var sinPrecio = totalCortes - cortesConPrecio;
+    var alerts = [];
+    if (sinPrecio > 0) alerts.push('⚠️ ' + sinPrecio + ' cortes sin precio — el resultado es parcial');
+    if (margenReal < margenObj && cortesConPrecio > 0) alerts.push('📉 Margen ' + margenReal + '% está por debajo del objetivo (' + margenObj + '%)');
+    alertEl.innerHTML = alerts.map(function(a) {
+      return '<div style="color:#FFB74D;margin-bottom:3px">' + a + '</div>';
+    }).join('');
+  }
+}
+
 
 // Aliases for backward compatibility
 var renderCortesCarn = _renderCortes;
@@ -6948,6 +7153,7 @@ function cargarPrecioMR() {
   calcularComparadorV2();
 }
 
+
 function agregarOtroCostoCmp() {
   mostrarModal('➕ Otro costo',
     '<input id="oc-nombre" placeholder="Nombre del costo" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px;font-family:Nunito;font-size:13px;color:#fff;outline:none;margin-bottom:10px">' +
@@ -7162,17 +7368,12 @@ async function loadSimuladorCarn() {
   $('sim-cortes-lista').innerHTML=cortes.filter(function(c){return c.precio_venta_kg>0;}).map(function(c,i){
     var margen=Math.round(c.margen_pct||0);
     return '<div style="background:#161616;border:1px solid #222;border-radius:10px;padding:11px;margin-bottom:6px">'+
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'+
         '<div style="font-size:12px;font-weight:700;color:#fff">'+c.nombre+' <span style="color:#555;font-size:10px">('+c.kg_real+'kg)</span></div>'+
-        '<div style="font-size:10px;color:#555">Costo: '+fmtM(c.costo_kg)+'/kg · equilibrio: '+fmtM(Math.round(c.costo_kg*1.01))+'</div>'+
-      '</div>'+
-      '<div style="background:#1A1A1A;border-radius:4px;height:2px;margin-bottom:6px;position:relative">'+
-        '<div style="position:absolute;left:0;top:-1px;width:2px;height:4px;background:#E53935"></div>'+
-        '<div style="position:absolute;left:33%;top:-1px;width:2px;height:4px;background:#555"></div>'+
-        '<div style="position:absolute;left:66%;top:-1px;width:2px;height:4px;background:#555"></div>'+
+        '<div style="font-size:11px;color:#555">Costo: '+fmtM(c.costo_kg)+'/kg</div>'+
       '</div>'+
       '<div style="display:flex;align-items:center;gap:8px">'+
-        '<input type="range" min="0" max="'+Math.round(c.costo_kg*3)+'" value="'+c.precio_venta_kg+'" step="100" '+
+        '<input type="range" min="'+Math.round(c.costo_kg*1.05)+'" max="'+Math.round(c.costo_kg*2.5)+'" value="'+c.precio_venta_kg+'" step="100" '+
           'data-kg="'+c.kg_real+'" data-costo="'+c.costo_kg+'" data-base="'+c.ganancia_total+'" data-idx="'+i+'" '+
           'class="sim-rng" oninput="handleSimRange(this)" style="flex:1;accent-color:#C9A84C">'+
         '<span class="sim-val" style="font-size:14px;font-weight:800;color:#43A047;min-width:80px;text-align:right">'+fmtM(c.precio_venta_kg)+'</span>'+
@@ -7184,40 +7385,8 @@ async function loadSimuladorCarn() {
 }
 
 function handleSimRange(el) {
-  var n     = parseFloat(el.value) || 0;
-  var kg    = parseFloat(el.dataset.kg)    || 0;
-  var costo = parseFloat(el.dataset.costo) || 0;
-  var base  = parseFloat(el.dataset.base)  || 0;
-
-  // Update price display
-  var spanVal = el.nextElementSibling;
-  if (spanVal) spanVal.textContent = fmtM(n);
-
-  // Update margin display — red if below cost
-  var spanPct = el.nextElementSibling?.nextElementSibling;
-  if (spanPct) {
-    var margenSim = costo > 0 ? Math.round((n - costo) / costo * 100) : 0;
-    spanPct.textContent = margenSim + '%';
-    spanPct.style.color = n < costo ? '#E53935' : n < costo * 1.1 ? '#FFB74D' : '#555';
-  }
-
-  // Show/hide perdida warning
-  var card = el.closest('div[style*="border-radius:10px"]');
-  if (card) {
-    var warn = card.querySelector('.sim-perdida-warn');
-    if (n < costo) {
-      if (!warn) {
-        warn = document.createElement('div');
-        warn.className = 'sim-perdida-warn';
-        warn.style.cssText = 'font-size:10px;color:#EF9A9A;background:rgba(229,57,53,.1);border-radius:6px;padding:4px 8px;margin-top:4px';
-        card.appendChild(warn);
-      }
-      warn.textContent = '🔴 Vendés a pérdida — perdés ' + fmtM(Math.round((costo - n) * kg)) + ' en este corte';
-    } else {
-      if (warn) warn.remove();
-    }
-  }
-
+  var n=parseFloat(el.value),kg=parseFloat(el.dataset.kg)||0,costo=parseFloat(el.dataset.costo)||0,base=parseFloat(el.dataset.base)||0;
+  var span=el.nextElementSibling; if(span) span.textContent=fmtM(n);
   calcularSimulacion(0, n, kg, costo, base);
 }
 
@@ -7319,7 +7488,6 @@ async function verHistorialRomaneos() {
     '</div>';
   }).join(''));
 }
-
 
 
 // ══════════════════════════════════════════════════
@@ -7708,6 +7876,369 @@ function descargarPlantilla() {
   XLSX.utils.book_append_sheet(wb, ws, 'Productos');
   XLSX.writeFile(wb, 'plantilla_productos_alpaso.xlsx');
 }
+
+
+// ══════════════════════════════════════════════════
+// AUTO PEDIDO Y CONFIG STOCK
+// ══════════════════════════════════════════════════
+
+// ── CONFIG STOCK SUB-TABS ─────────────────────────
+function cfgStockTab(btn, id) {
+  document.querySelectorAll('.cfg-stock-tab').forEach(b => {
+    b.style.background='#1E1E1E'; b.style.color='#aaa'; b.style.border='1px solid #2A2A2A';
+  });
+  btn.style.background='#C9A84C'; btn.style.color='#0A0A0A'; btn.style.border='none';
+  var m=$('cfg-minimos'); if(m) m.style.display=id==='minimos'?'block':'none';
+  var p=$('cfg-asignar-prov'); if(p) p.style.display=id==='asignar-prov'?'block':'none';
+  if(id==='minimos')      loadMinimosCat();
+  if(id==='asignar-prov') loadProvCat();
+}
+
+async function initConfigStock() {
+  loadMinimosCat();
+}
+
+// ── STOCK MÍNIMO POR CATEGORÍA ────────────────────
+let _minimosCat = {}; // cat → minimo
+
+async function loadMinimosCat() {
+  const el = $('cfg-minimos-lista'); if (!el) return;
+  el.innerHTML = '<div class="loading-panel">⏳</div>';
+
+  // Get categories and their current avg minimum
+  const { data } = await db.from('productos')
+    .select('cat,stock_minimo_gondola')
+    .eq('activo', true)
+    .order('cat');
+
+  if (!data?.length) { el.innerHTML = '<div style="color:#555;font-size:12px;text-align:center;padding:12px">Sin productos</div>'; return; }
+
+  // Group by category
+  const cats = {};
+  data.forEach(p => {
+    const c = p.cat || 'Sin categoría';
+    if (!cats[c]) cats[c] = { total: 0, conMinimo: 0, sumMinimo: 0 };
+    cats[c].total++;
+    if (p.stock_minimo_gondola > 0) { cats[c].conMinimo++; cats[c].sumMinimo += p.stock_minimo_gondola; }
+  });
+
+  // Suggest defaults based on category
+  const DEFAULTS = {
+    'Bebidas':6, 'Lácteos':4, 'Almacén':3, 'Kiosco':5,
+    'Limpieza':3, 'Fiambres':2, 'Verdulería':2, 'Panadería':2,
+    'Congelados':2, 'Sin categoría':2
+  };
+
+  el.innerHTML = Object.entries(cats).map(([cat, info]) => {
+    const avgMin = info.conMinimo > 0 ? Math.round(info.sumMinimo / info.conMinimo) : 0;
+    const sugerido = DEFAULTS[cat] || 3;
+    const valor = _minimosCat[cat] !== undefined ? _minimosCat[cat] : (avgMin || sugerido);
+    _minimosCat[cat] = valor;
+    return '<div style="background:#161616;border:1px solid #222;border-radius:10px;padding:12px;margin-bottom:8px">' +
+      '<div style="display:flex;align-items:center;gap:10px">' +
+        '<div style="flex:1">' +
+          '<div style="font-size:13px;font-weight:700;color:#fff">' + cat + '</div>' +
+          '<div style="font-size:10px;color:#555">' + info.total + ' productos · ' +
+            (info.conMinimo > 0 ? info.conMinimo + ' ya tienen mínimo' : 'sin mínimo configurado') + '</div>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:6px">' +
+          '<input type="number" value="' + valor + '" min="0" step="1" ' +
+            'data-cat="' + encodeURIComponent(cat) + '" onchange="_minimosCat[decodeURIComponent(this.dataset.cat)]=parseInt(this.value)||0" ' +
+            'style="width:60px;background:#1A1A1A;border:1px solid #333;border-radius:7px;padding:6px;font-family:Nunito;font-size:16px;font-weight:800;color:#C9A84C;outline:none;text-align:center">' +
+          '<span style="font-size:11px;color:#555">unid.</span>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+async function aplicarMinimosCat() {
+  const cats = Object.keys(_minimosCat);
+  if (!cats.length) { toast('⚠️ Sin categorías configuradas'); return; }
+  const ok = await confirmar('¿Aplicar estos mínimos a todos los productos de cada categoría? Solo se actualizan los que tienen stock mínimo en 0.');
+  if (!ok) return;
+
+  let total = 0;
+  for (const cat of cats) {
+    const minimo = _minimosCat[cat];
+    if (minimo <= 0) continue;
+    const { data: count } = await db.from('productos')
+      .update({ stock_minimo_gondola: minimo })
+      .eq('cat', cat)
+      .eq('activo', true)
+      .lte('stock_minimo_gondola', 0)
+      .select('id');
+    total += count?.length || 0;
+  }
+  toast('✅ Stock mínimo aplicado a ' + total + ' productos');
+}
+
+// ── ASIGNAR PROVEEDOR POR CATEGORÍA ──────────────
+let _provCat = {}; // cat → proveedor_id
+
+async function loadProvCat() {
+  const el = $('cfg-prov-lista'); if (!el) return;
+  el.innerHTML = '<div class="loading-panel">⏳</div>';
+
+  const [prodsRes, provsRes] = await Promise.all([
+    db.from('productos').select('cat,prov').eq('activo',true).order('cat'),
+    db.from('proveedores').select('id,nombre').eq('activo',true).order('nombre'),
+  ]);
+
+  const proveedores = provsRes.data || [];
+  if (!proveedores.length) {
+    el.innerHTML = '<div style="color:#555;font-size:12px;text-align:center;padding:12px">No hay proveedores cargados. Agregá proveedores primero en la sub-tab Proveedores.</div>';
+    return;
+  }
+
+  // Group products by category, count how many have prov
+  const cats = {};
+  (prodsRes.data||[]).forEach(p => {
+    const c = p.cat || 'Sin categoría';
+    if (!cats[c]) cats[c] = { total: 0, conProv: 0 };
+    cats[c].total++;
+    if (p.prov) cats[c].conProv++;
+  });
+
+  const optsProv = '<option value="">Sin proveedor</option>' +
+    proveedores.map(p => '<option value="' + p.id + '">' + p.nombre + '</option>').join('');
+
+  el.innerHTML = Object.entries(cats).map(([cat, info]) => {
+    const selVal = _provCat[cat] || '';
+    return '<div style="background:#161616;border:1px solid #222;border-radius:10px;padding:12px;margin-bottom:8px">' +
+      '<div style="display:flex;align-items:center;gap:10px">' +
+        '<div style="flex:1">' +
+          '<div style="font-size:13px;font-weight:700;color:#fff">' + cat + '</div>' +
+          '<div style="font-size:10px;color:#555">' + info.total + ' productos · ' +
+            info.conProv + ' ya tienen proveedor</div>' +
+        '</div>' +
+        '<select data-cat="' + encodeURIComponent(cat) + '" onchange="_provCat[decodeURIComponent(this.dataset.cat)]=this.value" ' +
+          'style="background:#1A1A1A;border:1px solid #333;border-radius:8px;padding:6px 8px;font-family:Nunito;font-size:12px;color:#fff;outline:none">' +
+          optsProv.replace('value="' + selVal + '"', 'value="' + selVal + '" selected') +
+        '</select>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+async function aplicarProvCat() {
+  const cats = Object.keys(_provCat).filter(c => _provCat[c]);
+  if (!cats.length) { toast('⚠️ Seleccioná al menos un proveedor'); return; }
+  const ok = await confirmar('Asignar estos proveedores a todos los productos sin proveedor de cada categoria?');
+  if (!ok) return;
+
+  let total = 0;
+  for (const cat of cats) {
+    const provId = _provCat[cat];
+    if (!provId) continue;
+    // Get proveedor name
+    const { data: prov } = await db.from('proveedores').select('nombre').eq('id', provId).single();
+    const { data: updated } = await db.from('productos')
+      .update({ prov: provId })
+      .eq('cat', cat).eq('activo', true).is('prov', null)
+      .select('id');
+    total += updated?.length || 0;
+  }
+  toast('✅ Proveedor asignado a ' + total + ' productos');
+}
+
+// ── AUTO PEDIDO ───────────────────────────────────
+async function initAutoPedido() {
+  const el = $('auto-pedido-resultado');
+  if (el && el.innerHTML === '') {
+    el.innerHTML = '<div style="color:#555;font-size:12px;text-align:center;padding:20px">Tocá "Analizar stock" para ver qué hace falta pedir</div>';
+  }
+}
+
+async function analizarStockParaPedido() {
+  const el = $('auto-pedido-resultado');
+  if (!el) return;
+  el.innerHTML = '<div class="loading-panel">🔍 Analizando stock...</div>';
+
+  // Get all products below minimum with proveedor
+  const { data: bajos } = await db.from('productos')
+    .select('id,nombre,cat,prov,precio_costo,stock_gondola,stock_deposito,stock_minimo_gondola')
+    .eq('activo', true)
+    .gt('stock_minimo_gondola', 0)
+    .order('cat');
+
+  if (!bajos?.length) {
+    el.innerHTML = '<div style="color:#555;font-size:12px;text-align:center;padding:20px">Sin stock mínimo configurado.<br>Configurá los mínimos en ⚙️ Config primero.</div>';
+    return;
+  }
+
+  // Filter products actually below minimum
+  const necesitan = bajos.filter(p => {
+    const stockTotal = (p.stock_gondola||0) + (p.stock_deposito||0);
+    return stockTotal <= (p.stock_minimo_gondola||0);
+  });
+
+  if (!necesitan.length) {
+    el.innerHTML = '<div style="background:#1A2E1A;border-radius:12px;padding:20px;text-align:center">' +
+      '<div style="font-size:24px;margin-bottom:8px">✅</div>' +
+      '<div style="font-size:14px;font-weight:800;color:#43A047">Todo el stock está OK</div>' +
+      '<div style="font-size:12px;color:#555;margin-top:4px">Ningún producto está por debajo del mínimo</div>' +
+    '</div>';
+    return;
+  }
+
+  // Group by proveedor
+  const grupos = {}; // prov_id|null → { prov_nombre, productos[] }
+  const provIds = [...new Set(necesitan.map(p => p.prov).filter(Boolean))];
+
+  // Load proveedor names
+  const provNombres = {};
+  if (provIds.length) {
+    const { data: provs } = await db.from('proveedores').select('id,nombre,telefono').in('id', provIds);
+    (provs||[]).forEach(p => { provNombres[p.id] = p; });
+  }
+
+  necesitan.forEach(p => {
+    const key = p.prov || 'sin_proveedor';
+    const provInfo = p.prov ? (provNombres[p.prov] || {nombre:'Proveedor #'+p.prov}) : {nombre:'Sin proveedor asignado'};
+    if (!grupos[key]) grupos[key] = { prov: provInfo, productos: [] };
+    const stockTotal = (p.stock_gondola||0) + (p.stock_deposito||0);
+    const cantSugerida = Math.max(1, (p.stock_minimo_gondola||0) * 2 - stockTotal); // reponer al doble del mínimo
+    grupos[key].productos.push({ ...p, stockTotal, cantSugerida });
+  });
+
+  // Render grouped by proveedor
+  el.innerHTML = '<div style="font-size:11px;color:#555;margin-bottom:12px">' +
+    necesitan.length + ' productos bajo stock mínimo · ' + Object.keys(grupos).length + ' proveedores</div>' +
+    Object.entries(grupos).map(([key, grupo]) => renderGrupoPedido(key, grupo)).join('');
+}
+
+function renderGrupoPedido(key, grupo) {
+  const esSinProv = key === 'sin_proveedor';
+  const color = esSinProv ? '#555' : '#C9A84C';
+  const productos = grupo.productos;
+  const totalCosto = productos.reduce((s,p) => s + (p.precio_costo||0)*p.cantSugerida, 0);
+
+  return '<div style="background:#161616;border:1px solid #222;border-radius:14px;margin-bottom:12px;overflow:hidden">' +
+    // Header
+    '<div style="padding:14px;border-bottom:1px solid #1A1A1A">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">' +
+        '<div style="font-size:14px;font-weight:800;color:#fff">🏭 ' + grupo.prov.nombre + '</div>' +
+        '<div style="font-size:11px;color:' + color + ';font-weight:700">' + productos.length + ' productos</div>' +
+      '</div>' +
+      (totalCosto > 0 ? '<div style="font-size:11px;color:#555">Costo estimado del pedido: <strong style="color:#C9A84C">' + fmtM(totalCosto) + '</strong></div>' : '') +
+    '</div>' +
+    // Products list
+    '<div style="padding:0 14px">' +
+    productos.map((p,i) => '<div style="padding:10px 0;border-bottom:1px solid #1A1A1A;display:flex;align-items:center;gap:8px">' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-size:12px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p.nombre + '</div>' +
+        '<div style="font-size:10px;color:#555">Stock: ' + p.stockTotal + ' · Mínimo: ' + p.stock_minimo_gondola + '</div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:4px;flex-shrink:0">' +
+        '<input type="number" value="' + p.cantSugerida + '" min="1" ' +
+          'id="cant-' + key + '-' + i + '" ' +
+          'style="width:55px;background:#1A1A1A;border:1px solid #333;border-radius:7px;padding:5px;font-family:Nunito;font-size:14px;font-weight:800;color:#C9A84C;outline:none;text-align:center">' +
+        '<span style="font-size:10px;color:#555">' + (p.unit||'u') + '</span>' +
+      '</div>' +
+    '</div>').join('') +
+    '</div>' +
+    // Footer buttons
+    '<div style="padding:12px 14px;display:flex;gap:8px">' +
+      (!esSinProv ?
+        '<button onclick="enviarPedidoWsp(&quot;' + key + '&quot;)" class="btn btn-gold" style="flex:1;justify-content:center;padding:10px;font-size:12px">💬 Enviar por WhatsApp</button>' : '') +
+      '<button onclick="copiarPedido(&quot;' + key + '&quot;)" class="btn btn-ghost" style="flex:1;justify-content:center;padding:10px;font-size:12px">📋 Copiar pedido</button>' +
+      (!esSinProv ? '' : '<div style="font-size:10px;color:#E53935;align-self:center">⚠️ Asigná proveedor en ⚙️ Config</div>') +
+    '</div>' +
+  '</div>';
+}
+
+// Store grupos globally for WhatsApp sending
+let _autoPedidoGrupos = {};
+
+function _getPedidoTexto(key) {
+  // Re-read quantities from inputs
+  const rows = document.querySelectorAll('[id^="cant-' + key + '-"]');
+  const grupo = _autoPedidoGrupos[key];
+  if (!rows.length) return '';
+  let txt = '🛒 *PEDIDO AL PASO*\n';
+  txt += '📅 ' + new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'}) + '\n';
+  rows.forEach((inp, i) => {
+    const prod = grupo?.productos[i];
+    if (!prod) return;
+    const cant = parseInt(inp.value) || prod.cantSugerida;
+    txt += '• ' + prod.nombre + ': *' + cant + ' ' + (prod.unit||'u') + '*\n';
+  });
+  txt += '\nGracias! 🙏';
+  return txt;
+}
+
+
+async function copiarPedido(key) {
+  const txt = _getPedidoTexto(key);
+  try {
+    await navigator.clipboard.writeText(txt);
+    toast('📋 Pedido copiado al portapapeles');
+  } catch(e) {
+    mostrarModal('📋 Pedido', '<pre style="font-size:11px;color:#aaa;white-space:pre-wrap">' + txt + '</pre>');
+  }
+}
+
+async function guardarPedidoDB(key, grupo) {
+  if (!grupo) return;
+  const { data: pedido } = await db.from('pedidos_compra').insert({
+    proveedor_id: parseInt(key) || null,
+    proveedor_nombre: grupo.prov.nombre,
+    estado: 'enviado',
+    fecha_pedido: new Date().toISOString().split('T')[0],
+  }).select().single();
+  if (!pedido) return;
+  const rows = document.querySelectorAll('[id^="cant-' + key + '-"]');
+  const items = [];
+  rows.forEach((inp, i) => {
+    const prod = grupo.productos[i];
+    if (!prod) return;
+    items.push({
+      pedido_id: pedido.id,
+      producto_id: prod.id,
+      producto_nombre: prod.nombre,
+      cantidad: parseInt(inp.value) || prod.cantSugerida,
+      precio_unitario: prod.precio_costo || 0,
+    });
+  });
+  if (items.length) await db.from('pedidos_compra_items').insert(items);
+}
+
+// Override analizarStockParaPedido to also store grupos
+const _origAnalizar = analizarStockParaPedido;
+analizarStockParaPedido = async function() {
+  _autoPedidoGrupos = {};
+  await _origAnalizar();
+  // After render, rebuild grupos map for WhatsApp
+  // We need to re-fetch and store
+  const { data: bajos } = await db.from('productos')
+    .select('id,nombre,cat,prov,precio_costo,unit,stock_gondola,stock_deposito,stock_minimo_gondola')
+    .eq('activo', true).gt('stock_minimo_gondola', 0).order('cat');
+  const necesitan = (bajos||[]).filter(p => ((p.stock_gondola||0)+(p.stock_deposito||0)) <= (p.stock_minimo_gondola||0));
+  const provIds = [...new Set(necesitan.map(p=>p.prov).filter(Boolean))];
+  const provNombres = {};
+  if (provIds.length) {
+    const { data: provs } = await db.from('proveedores').select('id,nombre,telefono').in('id', provIds);
+    (provs||[]).forEach(p => { provNombres[p.id] = p; });
+  }
+  necesitan.forEach(p => {
+    const key = p.prov || 'sin_proveedor';
+    const provInfo = p.prov ? (provNombres[p.prov]||{nombre:'Proveedor #'+p.prov}) : {nombre:'Sin proveedor'};
+    if (!_autoPedidoGrupos[key]) _autoPedidoGrupos[key] = { prov: provInfo, productos: [] };
+    const stockTotal = (p.stock_gondola||0)+(p.stock_deposito||0);
+    const cantSugerida = Math.max(1,(p.stock_minimo_gondola||0)*2-stockTotal);
+    _autoPedidoGrupos[key].productos.push({...p,stockTotal,cantSugerida});
+  });
+};
+
+
+
+
+
+
+
+
+
 
 </script>
 </body>
