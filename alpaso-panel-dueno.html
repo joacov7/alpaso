@@ -166,57 +166,9 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
   <button class="tab"     onclick="tab(this,'ia')">🤖 IA</button>
   <button class="tab"     onclick="tab(this,'finanzas')">📈 Finanzas</button>
   <button class="tab"     onclick="tab(this,'carniceria')">🥩 Carnicería</button>
-  <button class="tab"     onclick="tab(this,'carniceriapro')">🥩 Carniceria Pro</button>
   <button class="tab"     onclick="tab(this,'ayuda')">❓ Ayuda</button>
 </div>
 
- <!-- ═══ CARNICERÍA PRO ═══════════════════════════ -->
-<div id="tab-carniceriapro" class="sec" style="display:none">
-
-  <div class="sec-title">Simulador de rentabilidad</div>
-
-  <div class="card">
-    <div class="card-title">📥 Compra</div>
-
-    <div class="fg">
-      <label>Tipo de compra</label>
-      <select id="carne-tipo" onchange="carne.cargarCortes()">
-        <option value="mocho">Mocho</option>
-        <option value="media">Media res</option>
-        <option value="pistola">Pistola</option>
-      </select>
-    </div>
-
-    <div class="fg-row">
-      <div class="fg">
-        <label>Kg comprados</label>
-        <input id="carne-kg" type="number" oninput="carne.calcular()">
-      </div>
-      <div class="fg">
-        <label>Precio compra/kg</label>
-        <input id="carne-precio" type="number" oninput="carne.calcular()">
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">🥩 Cortes</div>
-    <div id="carne-cortes"></div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">📊 Resultado</div>
-
-    <div style="font-size:22px;font-weight:900;color:#C9A84C" id="carne-ganancia">$0</div>
-    <div style="font-size:12px;color:#555">Ganancia</div>
-
-    <div style="margin-top:8px;font-size:18px" id="carne-margen">0%</div>
-    <div style="font-size:12px;color:#555">Margen</div>
-
-    <div id="carne-sugerencia" style="margin-top:10px;font-size:12px;color:#aaa"></div>
-  </div>
-
-</div> 
 <!-- ═══ PEDIDOS ════════════════════════════════════ -->
 <div id="tab-pedidos" class="sec">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
@@ -1945,6 +1897,7 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
     <button class="carn-stab" onclick="carnSubTab(this,'simulador')"      style="flex:1;min-width:55px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">🎯 Simulador</button>
     <button class="carn-stab" onclick="carnSubTab(this,'precios-mkt')"    style="flex:1;min-width:55px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">📋 Lista</button>
     <button class="carn-stab" onclick="carnSubTab(this,'carn-cfg')"       style="flex:1;min-width:55px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">⚙️ Config</button>
+    <button class="carn-stab" onclick="carnSubTab(this,'sim-avanzado')"   style="flex:1;min-width:55px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">💡 Simulador</button>
   </div>
 
   <!-- ══ ROMANEO SEMANAL ══════════════════════════ -->
@@ -2340,6 +2293,10 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
     </div>
   </div>
 
+  <!-- ══ SIMULADOR AVANZADO ══════════════════════ -->
+  <div id="carn-sim-avanzado" style="display:none;padding:4px 0"></div>
+
+
 </div>
 
 </div><!-- /wrap -->
@@ -2347,6 +2304,7 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
 <div class="toast" id="toast"></div>
 
 <script>
+
 
 
 
@@ -6450,7 +6408,7 @@ function carnSubTab(btn, id) {
     b.style.background='#1E1E1E'; b.style.color='#aaa'; b.style.border='1px solid #2A2A2A';
   });
   btn.style.background='#C9A84C'; btn.style.color='#0A0A0A'; btn.style.border='none';
-  ['romaneo','comparador-compra','transf','dashboard','simulador','precios-mkt','carn-cfg'].forEach(t => {
+  ['romaneo','comparador-compra','transf','dashboard','simulador','precios-mkt','carn-cfg','sim-avanzado'].forEach(t => {
     const el = $('carn-' + t); if (el) el.style.display = t===id ? 'block' : 'none';
   });
   if (id==='dashboard')         loadDashboardCarn();
@@ -6459,6 +6417,7 @@ function carnSubTab(btn, id) {
   if (id==='precios-mkt')       loadPreciosMercado();
   if (id==='carn-cfg')          loadCarnCfg();
   if (id==='comparador-compra') { setTimeout(function(){ cargarPrecioMR(); }, 100); }
+  if (id==='sim-avanzado') { if (typeof CarnSim !== 'undefined') CarnSim.init(); }
 }
 
 function carnCfg2Tab(btn, id) {
@@ -8284,107 +8243,887 @@ analizarStockParaPedido = async function() {
 
 
 
-// ═══ MÓDULO CARNICERÍA PRO ═══════════════════════
-const carne = (() => {
 
-  const cortesDB = {
-    mocho: [
-      { nombre: "nalga", r: 0.18 },
-      { nombre: "cuadrada", r: 0.15 },
-      { nombre: "bola de lomo", r: 0.12 },
-      { nombre: "peceto", r: 0.08 }
+
+
+
+
+
+// ══════════════════════════════════════════════════════════════════
+// SIMULADOR AVANZADO DE RENTABILIDAD — CARNICERÍA AL PASO
+// Módulo completamente aislado (IIFE) — no toca nada existente
+// ══════════════════════════════════════════════════════════════════
+var CarnSim = (function() {
+
+  // ── BASE DE DATOS DE CORTES ──────────────────────────────────────
+  var DB = {
+    media_res: [
+      {nombre:'Costilla',      rend:10.33, destino:'mostrador', grasa:false},
+      {nombre:'Costeleta',     rend:9.61,  destino:'mostrador', grasa:false},
+      {nombre:'Aguja',         rend:8.59,  destino:'mostrador', grasa:false},
+      {nombre:'Osobuco',       rend:5.34,  destino:'mostrador', grasa:false},
+      {nombre:'Vacío',         rend:5.43,  destino:'mostrador', grasa:false},
+      {nombre:'Nalga',         rend:4.03,  destino:'mostrador', grasa:false},
+      {nombre:'Cuadrada',      rend:3.46,  destino:'mostrador', grasa:false},
+      {nombre:'Bola de lomo',  rend:3.72,  destino:'mostrador', grasa:false},
+      {nombre:'Cuadril',       rend:3.63,  destino:'mostrador', grasa:false},
+      {nombre:'Paleta',        rend:3.13,  destino:'mostrador', grasa:false},
+      {nombre:'Lomo',          rend:1.66,  destino:'mostrador', grasa:false},
+      {nombre:'Peceto',        rend:1.45,  destino:'mostrador', grasa:false},
+      {nombre:'Matambre',      rend:1.45,  destino:'mostrador', grasa:false},
+      {nombre:'Tapa de asado', rend:2.17,  destino:'mostrador', grasa:false},
+      {nombre:'Tapa de nalga', rend:1.52,  destino:'mostrador', grasa:false},
+      {nombre:'Colita cuadril',rend:0.79,  destino:'mostrador', grasa:false},
+      {nombre:'Tortuguita',    rend:1.48,  destino:'mostrador', grasa:false},
+      {nombre:'Marucha',       rend:3.16,  destino:'picada',    grasa:false},
+      {nombre:'Degolladero',   rend:5.12,  destino:'picada',    grasa:false},
+      {nombre:'Entraña',       rend:0.55,  destino:'mostrador', grasa:false},
+      {nombre:'Recortes',      rend:4.00,  destino:'picada',    grasa:false},
+      {nombre:'Grasa',         rend:7.52,  destino:'chorizo',   grasa:true},
+      {nombre:'Hueso',         rend:12.60, destino:'descarte',  grasa:true},
     ],
-    media: [
-      { nombre: "asado", r: 0.22 },
-      { nombre: "vacío", r: 0.08 },
-      { nombre: "matambre", r: 0.03 },
-      { nombre: "hueso", r: 0.15 },
-      { nombre: "grasa", r: 0.10 }
+    mocho: [
+      {nombre:'Tapa de nalga', rend:6.84,  destino:'mostrador', grasa:false},
+      {nombre:'Nalga',         rend:17.60, destino:'mostrador', grasa:false},
+      {nombre:'Cuadrada',      rend:14.12, destino:'mostrador', grasa:false},
+      {nombre:'Picaña',        rend:3.85,  destino:'mostrador', grasa:false},
+      {nombre:'Peceto',        rend:6.41,  destino:'mostrador', grasa:false},
+      {nombre:'Bola de lomo',  rend:16.67, destino:'mostrador', grasa:false},
+      {nombre:'Colita cuadril',rend:3.25,  destino:'mostrador', grasa:false},
+      {nombre:'Cuadril',       rend:8.76,  destino:'mostrador', grasa:false},
+      {nombre:'Tortuguita',    rend:5.81,  destino:'mostrador', grasa:false},
+      {nombre:'Osobuco',       rend:8.55,  destino:'mostrador', grasa:false},
+      {nombre:'Recortes',      rend:4.62,  destino:'picada',    grasa:false},
+      {nombre:'Recortes común',rend:3.42,  destino:'picada',    grasa:false},
+      {nombre:'Grasa',         rend:13.30, destino:'chorizo',   grasa:true},
+      {nombre:'Hueso',         rend:22.44, destino:'descarte',  grasa:true},
     ],
     pistola: [
-      { nombre: "nalga", r: 0.20 },
-      { nombre: "cuadrada", r: 0.16 },
-      { nombre: "lomo", r: 0.05 }
-    ]
+      {nombre:'Lomo',          rend:12.0,  destino:'mostrador', grasa:false},
+      {nombre:'Bife angosto',  rend:18.0,  destino:'mostrador', grasa:false},
+      {nombre:'Bife ancho',    rend:15.0,  destino:'mostrador', grasa:false},
+      {nombre:'Asado',         rend:25.0,  destino:'mostrador', grasa:false},
+      {nombre:'Vacío',         rend:10.0,  destino:'mostrador', grasa:false},
+      {nombre:'Recortes',      rend:8.0,   destino:'picada',    grasa:false},
+      {nombre:'Grasa',         rend:7.0,   destino:'chorizo',   grasa:true},
+      {nombre:'Hueso',         rend:5.0,   destino:'descarte',  grasa:true},
+    ],
+    animal_pie: [
+      {nombre:'Costilla',      rend:8.5,   destino:'mostrador', grasa:false},
+      {nombre:'Asado',         rend:7.0,   destino:'mostrador', grasa:false},
+      {nombre:'Vacío',         rend:4.5,   destino:'mostrador', grasa:false},
+      {nombre:'Nalga',         rend:3.5,   destino:'mostrador', grasa:false},
+      {nombre:'Cuadrada',      rend:3.0,   destino:'mostrador', grasa:false},
+      {nombre:'Lomo',          rend:1.4,   destino:'mostrador', grasa:false},
+      {nombre:'Peceto',        rend:1.2,   destino:'mostrador', grasa:false},
+      {nombre:'Matambre',      rend:1.2,   destino:'mostrador', grasa:false},
+      {nombre:'Paleta',        rend:2.5,   destino:'mostrador', grasa:false},
+      {nombre:'Aguja',         rend:7.0,   destino:'mostrador', grasa:false},
+      {nombre:'Marucha',       rend:2.5,   destino:'picada',    grasa:false},
+      {nombre:'Recortes',      rend:3.5,   destino:'picada',    grasa:false},
+      {nombre:'Grasa',         rend:6.0,   destino:'chorizo',   grasa:true},
+      {nombre:'Hueso',         rend:18.0,  destino:'descarte',  grasa:true},
+      {nombre:'Mengua/sangre', rend:10.0,  destino:'descarte',  grasa:true},
+    ],
   };
 
-  function cargarCortes() {
-    const tipo = document.getElementById("carne-tipo").value;
-    const cont = document.getElementById("carne-cortes");
+  // Precios de referencia mercado
+  var REFS = {
+    'Costilla':14000,'Costeleta':14000,'Aguja':13000,'Osobuco':11500,
+    'Vacío':17500,'Nalga':17500,'Cuadrada':15500,'Bola de lomo':15500,
+    'Cuadril':16000,'Paleta':14500,'Lomo':31000,'Peceto':18000,
+    'Matambre':14500,'Tapa de asado':13500,'Tapa de nalga':15000,
+    'Colita cuadril':18500,'Tortuguita':13000,'Marucha':11000,
+    'Degolladero':10000,'Entraña':22000,'Recortes':12000,'Recortes común':10000,
+    'Picaña':18500,'Bife angosto':22000,'Bife ancho':20000,'Asado':14000,
+    'Grasa':3000,'Hueso':0,'Mengua/sangre':0,
+  };
 
-    if (!cont) return;
+  // ── STATE ────────────────────────────────────────────────────────
+  var state = {
+    tipo: 'mocho',
+    kgCompra: 0,
+    precioCompra: 0,
+    costoExtra: 0,      // faena, flete, etc para animal en pie
+    costoHector: 0,
+    margenObj: 40,
+    cortes: [],         // runtime cortes with user edits
+    escenarios: [],     // saved scenarios
+    activeEscenario: null,
+  };
 
-    cont.innerHTML = "";
-
-    cortesDB[tipo].forEach((c, i) => {
-      cont.innerHTML += `
-        <div class="fg-row">
-          <div class="fg">
-            <label>${c.nombre} (%)</label>
-            <input type="number" value="${c.r * 100}" id="r-${i}" oninput="carne.calcular()">
-          </div>
-          <div class="fg">
-            <label>Precio venta</label>
-            <input type="number" id="p-${i}" oninput="carne.calcular()">
-          </div>
-        </div>
-      `;
-    });
+  // ── STORAGE ──────────────────────────────────────────────────────
+  function save() {
+    try {
+      localStorage.setItem('carn_sim_escenarios', JSON.stringify(state.escenarios));
+      localStorage.setItem('carn_sim_config', JSON.stringify({
+        margenObj: state.margenObj,
+        costoHector: state.costoHector,
+      }));
+    } catch(e) {}
   }
 
+  function load() {
+    try {
+      var esc = localStorage.getItem('carn_sim_escenarios');
+      if (esc) state.escenarios = JSON.parse(esc);
+      var cfg = localStorage.getItem('carn_sim_config');
+      if (cfg) {
+        var c = JSON.parse(cfg);
+        state.margenObj   = c.margenObj   || 40;
+        state.costoHector = c.costoHector || 0;
+      }
+    } catch(e) {}
+  }
+
+  // ── CALCULATIONS ─────────────────────────────────────────────────
   function calcular() {
-    const kg = parseFloat(document.getElementById("carne-kg")?.value) || 0;
-    const precio = parseFloat(document.getElementById("carne-precio")?.value) || 0;
-    const tipo = document.getElementById("carne-tipo")?.value;
+    var kg    = state.kgCompra;
+    var price = state.precioCompra;
+    if (!kg || !price) return null;
 
-    if (!tipo) return;
+    var costoBase  = kg * price;
+    var costoExtra = state.costoExtra || 0;
+    var costoTotal = costoBase + costoExtra;
 
-    let total = 0;
+    // kg vendibles (exclude descarte)
+    var kgVend = 0;
+    state.cortes.forEach(function(c) {
+      if (c.destino !== 'descarte') kgVend += c.kgReal;
+    });
+    var kgDescarte = kg - kgVend;
+    var merma_pct  = kgDescarte / kg * 100;
 
-    cortesDB[tipo].forEach((c, i) => {
-      const r = (parseFloat(document.getElementById(`r-${i}`)?.value) || 0) / 100;
-      const p = parseFloat(document.getElementById(`p-${i}`)?.value) || 0;
+    // Costo real por kg vendible
+    var costoRealKg = kgVend > 0 ? costoTotal / kgVend : 0;
+    var costoConHect = costoRealKg + (state.costoHector || 0);
 
-      total += (kg * r) * p;
+    var ingresoTotal = 0;
+    var corteResults = state.cortes.map(function(c) {
+      var ingreso = c.destino !== 'descarte' ? c.kgReal * (c.precioVenta || 0) : 0;
+      ingresoTotal += ingreso;
+      var costoCorte = costoConHect * c.kgReal;
+      var ganancia   = ingreso - costoCorte;
+      var margen     = costoCorte > 0 ? ganancia / costoCorte * 100 : null;
+      return Object.assign({}, c, {
+        ingreso: ingreso,
+        costoCorte: costoCorte,
+        ganancia: ganancia,
+        margen: margen !== null ? Math.round(margen * 10) / 10 : null,
+        precioSug: Math.round(costoConHect * (1 + state.margenObj/100) / 100) * 100,
+        precioRef: REFS[c.nombre] || 0,
+      });
     });
 
-    const costo = kg * precio;
-    const ganancia = total - costo;
-    const margen = costo > 0 ? (ganancia / costo) * 100 : 0;
+    var gananciaTotal = ingresoTotal - costoTotal - ((state.costoHector||0) * kgVend);
+    var margenTotal   = costoTotal > 0 ? gananciaTotal / costoTotal * 100 : 0;
+    var conPrecio     = state.cortes.filter(function(c){ return c.precioVenta > 0 && c.destino !== 'descarte'; }).length;
 
-    const g = document.getElementById("carne-ganancia");
-    const m = document.getElementById("carne-margen");
-
-    if (g) g.innerText = "$" + ganancia.toFixed(0);
-    if (m) m.innerText = margen.toFixed(1) + "%";
-
-    sugerencia(margen);
+    return {
+      costoBase, costoExtra, costoTotal, kgVend, kgDescarte,
+      merma_pct: Math.round(merma_pct * 10) / 10,
+      costoRealKg: Math.round(costoRealKg),
+      costoConHect: Math.round(costoConHect),
+      ingresoTotal, gananciaTotal,
+      margenTotal: Math.round(margenTotal * 10) / 10,
+      corteResults, conPrecio,
+      totalCortes: state.cortes.filter(function(c){ return c.destino !== 'descarte'; }).length,
+    };
   }
 
-  function sugerencia(margen) {
-    const el = document.getElementById("carne-sugerencia");
-    if (!el) return;
+  function recomendar(res) {
+    if (!res) return [];
+    var recs = [];
+    var margenObj = state.margenObj;
 
-    if (margen > 35) el.innerText = "🔥 Excelente margen. Podés bajar precios y rotar más";
-    else if (margen < 20) el.innerText = "⚠️ Margen bajo. Revisar compra o precios";
-    else el.innerText = "👍 Margen aceptable";
+    // Check each corte
+    var byMargen = res.corteResults
+      .filter(function(c){ return c.margen !== null && c.destino !== 'descarte'; })
+      .sort(function(a,b){ return a.margen - b.margen; });
+
+    // Low margin cortes
+    byMargen.slice(0,3).forEach(function(c) {
+      if (c.margen < 0) {
+        recs.push({tipo:'danger', txt:'🔴 <strong>' + c.nombre + '</strong>: perdés plata a $' + fmt(c.precioVenta) + '/kg. Mínimo para no perder: <strong>' + fmt(c.precioSug) + '</strong>'});
+      } else if (c.margen < margenObj * 0.7) {
+        recs.push({tipo:'warn', txt:'⚠️ <strong>' + c.nombre + '</strong>: margen ' + c.margen + '% muy bajo. Sugerido: <strong>' + fmt(c.precioSug) + '</strong>/kg'});
+      }
+    });
+
+    // Dependence on one corte
+    var top = res.corteResults
+      .filter(function(c){ return c.ingreso > 0; })
+      .sort(function(a,b){ return b.ingreso - a.ingreso; })[0];
+    if (top && res.ingresoTotal > 0) {
+      var dep = top.ingreso / res.ingresoTotal * 100;
+      if (dep > 40) {
+        recs.push({tipo:'warn', txt:'⚠️ Dependencia alta: <strong>' + top.nombre + '</strong> representa el ' + Math.round(dep) + '% del ingreso. Diversificá precios.'});
+      }
+    }
+
+    // High waste
+    if (res.merma_pct > 35) {
+      recs.push({tipo:'warn', txt:'⚠️ Merma alta (' + res.merma_pct + '%). Considerá destinar grasa/recortes a chorizo para recuperar algo.'});
+    }
+
+    // Overall margin vs objective
+    if (res.conPrecio > 0 && res.margenTotal < margenObj) {
+      var diff = Math.round(margenObj - res.margenTotal);
+      recs.push({tipo:'info', txt:'📉 Margen total ' + res.margenTotal + '% está ' + diff + 'pp por debajo del objetivo. Subí precios o renegociá la compra.'});
+    }
+
+    // Market price alerts
+    res.corteResults.forEach(function(c) {
+      if (c.precioVenta > 0 && c.precioRef > 0 && c.precioVenta > c.precioRef * 1.2) {
+        recs.push({tipo:'info', txt:'📊 <strong>' + c.nombre + '</strong> a ' + fmt(c.precioVenta) + ' está un ' + Math.round((c.precioVenta/c.precioRef-1)*100) + '% por encima del mercado (' + fmt(c.precioRef) + '). Puede frenar la rotación.'});
+      }
+    });
+
+    if (recs.length === 0 && res.conPrecio === res.totalCortes) {
+      recs.push({tipo:'ok', txt:'✅ Todo en orden. Margen ' + res.margenTotal + '% — por encima del objetivo.'});
+    }
+
+    return recs;
   }
 
+  function maximizar(res) {
+    if (!res) return [];
+    var sugerencias = [];
+    res.corteResults.forEach(function(c) {
+      if (c.destino === 'descarte') return;
+      var precioOpt = c.precioSug;
+      var precioRef = c.precioRef;
+      // If ref is higher than suggested, aim for ref
+      if (precioRef > precioOpt) precioOpt = precioRef;
+      if (precioOpt !== c.precioVenta) {
+        var ganActual  = (c.precioVenta||0) * c.kgReal - c.costoCorte;
+        var ganOpt     = precioOpt * c.kgReal - c.costoCorte;
+        sugerencias.push({
+          nombre: c.nombre,
+          precioActual: c.precioVenta || 0,
+          precioOpt: precioOpt,
+          delta: ganOpt - ganActual,
+          kgReal: c.kgReal,
+        });
+      }
+    });
+    sugerencias.sort(function(a,b){ return b.delta - a.delta; });
+    return sugerencias;
+  }
+
+  // ── UTILS ────────────────────────────────────────────────────────
+  function fmt(n) {
+    if (!n && n !== 0) return '—';
+    return '$' + Math.round(n).toLocaleString('es-AR');
+  }
+  function fmtPct(n) { return n !== null ? n + '%' : '—'; }
+  function el(id) { return document.getElementById('cs-' + id); }
+  function colorMargen(m, obj) {
+    if (m === null) return '#555';
+    if (m < 0)        return '#EF5350';
+    if (m < obj*0.7)  return '#FF7043';
+    if (m < obj)      return '#FFB74D';
+    return '#66BB6A';
+  }
+
+  // ── RENDER ───────────────────────────────────────────────────────
+  function renderMain() {
+    var container = document.getElementById('carn-sim-avanzado');
+    if (!container) return;
+    container.innerHTML = html();
+    bindEvents();
+    loadCortes();
+    recalcular();
+    renderEscenarios();
+  }
+
+  function html() {
+    return '<div class="cs-wrap">' +
+
+    // ── TOP CONFIG ─────────────────────────────────
+    '<div class="cs-card">' +
+      '<div class="cs-row">' +
+        '<div class="cs-field" style="flex:2">' +
+          '<label class="cs-lbl">Tipo de compra</label>' +
+          '<select id="cs-tipo" class="cs-select" onchange="CarnSim.onTipo()">' +
+            '<option value="mocho">🔪 Mocho</option>' +
+            '<option value="media_res">🐄 Media res</option>' +
+            '<option value="pistola">🎯 Pistola</option>' +
+            '<option value="animal_pie">🐃 Animal en pie</option>' +
+          '</select>' +
+        '</div>' +
+        '<div class="cs-field">' +
+          '<label class="cs-lbl">Margen obj. %</label>' +
+          '<input id="cs-margen-obj" type="number" class="cs-input cs-input-sm" value="' + state.margenObj + '" min="0" max="200" oninput="CarnSim.onConfig()">' +
+        '</div>' +
+      '</div>' +
+      '<div class="cs-row">' +
+        '<div class="cs-field">' +
+          '<label class="cs-lbl">Kg comprados</label>' +
+          '<input id="cs-kg" type="number" class="cs-input cs-big" placeholder="0" oninput="CarnSim.recalcular()">' +
+        '</div>' +
+        '<div class="cs-field">' +
+          '<label class="cs-lbl">Precio $/kg</label>' +
+          '<input id="cs-precio-compra" type="number" class="cs-input cs-big" placeholder="0" oninput="CarnSim.recalcular()">' +
+        '</div>' +
+        '<div class="cs-field">' +
+          '<label class="cs-lbl">Héctor $/kg</label>' +
+          '<input id="cs-hector" type="number" class="cs-input cs-input-sm" value="' + state.costoHector + '" placeholder="0" oninput="CarnSim.onConfig()">' +
+        '</div>' +
+      '</div>' +
+      // Animal en pie extra costs
+      '<div id="cs-pie-extra" style="display:none">' +
+        '<div class="cs-row">' +
+          '<div class="cs-field"><label class="cs-lbl">Flete $</label><input id="cs-flete" type="number" class="cs-input" placeholder="0" oninput="CarnSim.recalcular()"></div>' +
+          '<div class="cs-field"><label class="cs-lbl">Faena $/kg</label><input id="cs-faena" type="number" class="cs-input" placeholder="0" oninput="CarnSim.recalcular()"></div>' +
+          '<div class="cs-field"><label class="cs-lbl">SENASA $</label><input id="cs-senasa" type="number" class="cs-input" placeholder="0" oninput="CarnSim.recalcular()"></div>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+
+    // ── RESULTADO GLOBAL ────────────────────────────
+    '<div id="cs-resultado-global" class="cs-card cs-resultado" style="display:none">' +
+      '<div class="cs-res-grid">' +
+        '<div class="cs-res-item">' +
+          '<div class="cs-res-lbl">Costo real /kg</div>' +
+          '<div class="cs-res-val" id="cs-r-costo-kg"></div>' +
+        '</div>' +
+        '<div class="cs-res-item">' +
+          '<div class="cs-res-lbl">Kg vendibles</div>' +
+          '<div class="cs-res-val" id="cs-r-kg-vend"></div>' +
+        '</div>' +
+        '<div class="cs-res-item">' +
+          '<div class="cs-res-lbl">Merma</div>' +
+          '<div class="cs-res-val" id="cs-r-merma"></div>' +
+        '</div>' +
+        '<div class="cs-res-item">' +
+          '<div class="cs-res-lbl">Venta estimada</div>' +
+          '<div class="cs-res-val" id="cs-r-venta" style="color:#66BB6A"></div>' +
+        '</div>' +
+        '<div class="cs-res-item cs-res-big">' +
+          '<div class="cs-res-lbl">Ganancia bruta</div>' +
+          '<div class="cs-res-val cs-res-huge" id="cs-r-ganancia"></div>' +
+        '</div>' +
+        '<div class="cs-res-item cs-res-big">' +
+          '<div class="cs-res-lbl">Margen total</div>' +
+          '<div class="cs-res-val cs-res-huge" id="cs-r-margen"></div>' +
+        '</div>' +
+      '</div>' +
+      '<div id="cs-parcial-warn" class="cs-warn" style="display:none"></div>' +
+    '</div>' +
+
+    // ── CORTES ─────────────────────────────────────
+    '<div class="cs-card">' +
+      '<div class="cs-card-header">' +
+        '<div class="cs-card-title">Cortes</div>' +
+        '<div style="display:flex;gap:6px">' +
+          '<button class="cs-btn cs-btn-sm" onclick="CarnSim.aplicarSugeridos()">⚡ Aplicar sugeridos</button>' +
+          '<button class="cs-btn cs-btn-sm" onclick="CarnSim.verPrecios()">📊 Ver mercado</button>' +
+        '</div>' +
+      '</div>' +
+      '<div id="cs-cortes-lista"></div>' +
+    '</div>' +
+
+    // ── RECOMENDACIONES ─────────────────────────────
+    '<div id="cs-recomendaciones" class="cs-card" style="display:none">' +
+      '<div class="cs-card-title">💡 Análisis y recomendaciones</div>' +
+      '<div id="cs-recs-lista"></div>' +
+    '</div>' +
+
+    // ── MODO ESTRATEGIA ─────────────────────────────
+    '<div class="cs-card">' +
+      '<div class="cs-row" style="gap:8px">' +
+        '<button class="cs-btn cs-btn-gold" style="flex:1" onclick="CarnSim.modoMaximizar()">🚀 Maximizar ganancia</button>' +
+        '<button class="cs-btn cs-btn-ghost" style="flex:1" onclick="CarnSim.guardarEscenario()">💾 Guardar escenario</button>' +
+      '</div>' +
+    '</div>' +
+
+    // ── ESTRATEGIA PANEL ────────────────────────────
+    '<div id="cs-estrategia" class="cs-card" style="display:none">' +
+      '<div class="cs-card-title">🚀 Estrategia de precios óptima</div>' +
+      '<div id="cs-estrategia-lista"></div>' +
+      '<button class="cs-btn cs-btn-gold cs-btn-full" onclick="CarnSim.aplicarOptimos()" style="margin-top:10px">✅ Aplicar todos</button>' +
+    '</div>' +
+
+    // ── COMPARADOR DE ESCENARIOS ─────────────────────
+    '<div id="cs-escenarios-wrap" class="cs-card" style="display:none">' +
+      '<div class="cs-card-header">' +
+        '<div class="cs-card-title">📋 Escenarios guardados</div>' +
+        '<button class="cs-btn cs-btn-sm cs-btn-ghost" onclick="CarnSim.limpiarEscenarios()">🗑 Borrar todos</button>' +
+      '</div>' +
+      '<div id="cs-escenarios-tabla"></div>' +
+      '<div class="cs-mejor" id="cs-mejor-escenario" style="display:none"></div>' +
+    '</div>' +
+
+    '</div>'; // cs-wrap
+  }
+
+  function bindEvents() {
+    // Set initial tipo
+    var tipSel = document.getElementById('cs-tipo');
+    if (tipSel) tipSel.value = state.tipo;
+  }
+
+  // ── CORTES RENDER ─────────────────────────────────────────────────
+  function loadCortes() {
+    var base = DB[state.tipo] || [];
+    // Preserve user edits if same tipo
+    state.cortes = base.map(function(c) {
+      var existing = state.cortes.find(function(x){ return x.nombre === c.nombre && x.tipo === state.tipo; });
+      return {
+        nombre: c.nombre,
+        rendBase: c.rend,
+        rend: existing ? existing.rend : c.rend,
+        destino: existing ? existing.destino : c.destino,
+        precioVenta: existing ? existing.precioVenta : 0,
+        grasa: c.grasa,
+        tipo: state.tipo,
+        kgReal: 0,
+      };
+    });
+    recalcular();
+  }
+
+  function renderCortes(res) {
+    var lista = document.getElementById('cs-cortes-lista');
+    if (!lista) return;
+    var kg = state.kgCompra;
+    var costoKg = res ? res.costoConHect : 0;
+    var margenObj = state.margenObj;
+
+    lista.innerHTML = state.cortes.map(function(c, i) {
+      var kgR    = kg > 0 ? Math.round(kg * c.rend / 100 * 1000) / 1000 : 0;
+      state.cortes[i].kgReal = kgR;
+      var precSug = costoKg > 0 ? Math.round(costoKg * (1 + margenObj/100) / 100) * 100 : 0;
+      var precRef = REFS[c.nombre] || 0;
+      var precio  = c.precioVenta || 0;
+      var margen  = (precio > 0 && costoKg > 0) ? Math.round((precio - costoKg) / costoKg * 100 * 10) / 10 : null;
+      var col     = colorMargen(margen, margenObj);
+      var isDesc  = c.destino === 'descarte';
+
+      // Status indicator
+      var status = '';
+      if (!isDesc) {
+        if (precio <= 0)     status = '<span class="cs-badge cs-badge-grey">Sin precio</span>';
+        else if (precio < costoKg) status = '<span class="cs-badge cs-badge-red">Pérdida</span>';
+        else if (margen < margenObj * 0.8) status = '<span class="cs-badge cs-badge-orange">Margen bajo</span>';
+        else status = '<span class="cs-badge cs-badge-green">✓</span>';
+      }
+
+      return '<div class="cs-corte' + (isDesc ? ' cs-corte-merma' : '') + '" data-idx="' + i + '">' +
+        '<div class="cs-corte-top">' +
+          '<div class="cs-corte-nombre">' + c.nombre + (isDesc ? ' <span style="color:#555;font-size:9px">merma</span>' : '') + '</div>' +
+          status +
+        '</div>' +
+        '<div class="cs-corte-row">' +
+          // Rendimiento
+          '<div class="cs-corte-field">' +
+            '<div class="cs-corte-lbl">Rend %</div>' +
+            '<input type="number" class="cs-corte-inp cs-corte-inp-sm" value="' + c.rend + '" step="0.1" min="0" max="100" ' +
+              'onchange="CarnSim.setRend(' + i + ',this.value)">' +
+          '</div>' +
+          // Kg
+          '<div class="cs-corte-field">' +
+            '<div class="cs-corte-lbl">Kg</div>' +
+            '<div class="cs-corte-val">' + (kgR > 0 ? kgR.toFixed(2) : '—') + '</div>' +
+          '</div>' +
+          // Precio venta (solo si no es descarte)
+          (!isDesc ? '<div class="cs-corte-field cs-corte-field-wide">' +
+            '<div class="cs-corte-lbl">$/kg venta ' + (precSug > 0 ? '· sug: <span style="color:#C9A84C">' + fmt(precSug) + '</span>' : '') + '</div>' +
+            '<input type="number" class="cs-corte-inp" value="' + (precio||'') + '" placeholder="' + (precSug||'') + '" step="100" ' +
+              'oninput="CarnSim.setPrecio(' + i + ',this.value)">' +
+          '</div>' : '<div class="cs-corte-field cs-corte-field-wide" style="justify-content:center"><div class="cs-corte-lbl" style="color:#333">No se vende</div></div>') +
+          // Margen
+          (!isDesc ? '<div class="cs-corte-field" style="text-align:center">' +
+            '<div class="cs-corte-lbl">Margen</div>' +
+            '<div class="cs-corte-val" style="color:' + col + ';font-size:14px;font-weight:900">' + (margen !== null ? margen + '%' : '—') + '</div>' +
+          '</div>' : '') +
+        '</div>' +
+        // Ingreso por corte
+        (!isDesc && precio > 0 && kgR > 0 ?
+          '<div class="cs-corte-ingreso">Ingreso: <strong>' + fmt(precio * kgR) + '</strong> · Ganancia: <strong style="color:' + (precio > costoKg ? '#66BB6A':'#EF5350') + '">' + fmt((precio - costoKg) * kgR) + '</strong></div>' : '') +
+      '</div>';
+    }).join('');
+  }
+
+  // ── RECALCULATE ──────────────────────────────────────────────────
+  function recalcular() {
+    state.kgCompra     = parseFloat(document.getElementById('cs-kg')?.value) || 0;
+    state.precioCompra = parseFloat(document.getElementById('cs-precio-compra')?.value) || 0;
+
+    // Animal en pie extra
+    if (state.tipo === 'animal_pie') {
+      var flete  = parseFloat(document.getElementById('cs-flete')?.value) || 0;
+      var faena  = (parseFloat(document.getElementById('cs-faena')?.value) || 0) * state.kgCompra;
+      var senasa = parseFloat(document.getElementById('cs-senasa')?.value) || 0;
+      state.costoExtra = flete + faena + senasa;
+    } else {
+      state.costoExtra = 0;
+    }
+
+    var res = calcular();
+
+    // Update kg real in cortes
+    state.cortes.forEach(function(c) {
+      c.kgReal = state.kgCompra > 0 ? Math.round(state.kgCompra * c.rend / 100 * 1000) / 1000 : 0;
+    });
+
+    renderCortes(res);
+    renderResultado(res);
+    renderRecs(res);
+  }
+
+  function renderResultado(res) {
+    var wrap = document.getElementById('cs-resultado-global');
+    if (!wrap) return;
+    if (!res || !state.kgCompra || !state.precioCompra) { wrap.style.display='none'; return; }
+    wrap.style.display = 'block';
+
+    var margenColor = colorMargen(res.margenTotal, state.margenObj);
+    var ganColor    = res.gananciaTotal >= 0 ? '#66BB6A' : '#EF5350';
+
+    var elCostoKg = document.getElementById('cs-r-costo-kg');
+    var elKgVend  = document.getElementById('cs-r-kg-vend');
+    var elMerma   = document.getElementById('cs-r-merma');
+    var elVenta   = document.getElementById('cs-r-venta');
+    var elGan     = document.getElementById('cs-r-ganancia');
+    var elMargen  = document.getElementById('cs-r-margen');
+
+    if (elCostoKg) elCostoKg.textContent = fmt(res.costoConHect);
+    if (elKgVend)  elKgVend.textContent  = res.kgVend.toFixed(2) + ' kg';
+    if (elMerma)   elMerma.textContent   = res.merma_pct + '%';
+    if (elVenta)   elVenta.textContent   = res.conPrecio > 0 ? fmt(res.ingresoTotal) : '—';
+    if (elGan)     { elGan.textContent   = res.conPrecio > 0 ? fmt(res.gananciaTotal) : '—'; elGan.style.color = ganColor; }
+    if (elMargen)  { elMargen.textContent = res.conPrecio > 0 ? res.margenTotal + '%' : '—'; elMargen.style.color = margenColor; }
+
+    var warn = document.getElementById('cs-parcial-warn');
+    if (warn) {
+      if (res.conPrecio < res.totalCortes) {
+        warn.style.display = 'block';
+        warn.textContent = '⚠️ ' + (res.totalCortes - res.conPrecio) + ' cortes sin precio — resultado parcial';
+      } else {
+        warn.style.display = 'none';
+      }
+    }
+  }
+
+  function renderRecs(res) {
+    var wrap = document.getElementById('cs-recomendaciones');
+    var lista = document.getElementById('cs-recs-lista');
+    if (!wrap || !lista) return;
+    if (!res || res.conPrecio === 0) { wrap.style.display='none'; return; }
+    var recs = recomendar(res);
+    if (!recs.length) { wrap.style.display='none'; return; }
+    wrap.style.display = 'block';
+    var COLOR = {danger:'rgba(239,83,80,.12)',warn:'rgba(255,183,77,.1)',info:'rgba(100,181,246,.1)',ok:'rgba(102,187,106,.1)'};
+    var TEXT  = {danger:'#EF9A9A',warn:'#FFD54F',info:'#90CAF9',ok:'#A5D6A7'};
+    lista.innerHTML = recs.map(function(r) {
+      return '<div class="cs-rec" style="background:' + (COLOR[r.tipo]||COLOR.info) + ';color:' + (TEXT[r.tipo]||TEXT.info) + '">' + r.txt + '</div>';
+    }).join('');
+  }
+
+  // ── ESTRATEGIA ───────────────────────────────────────────────────
+  function modoMaximizar() {
+    var res = calcular();
+    var panel = document.getElementById('cs-estrategia');
+    var lista = document.getElementById('cs-estrategia-lista');
+    if (!panel || !lista) return;
+
+    if (!res) { panel.style.display='none'; return; }
+    panel.style.display = 'block';
+    panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+
+    var sugs = maximizar(res);
+    if (!sugs.length) {
+      lista.innerHTML = '<div style="color:#66BB6A;text-align:center;padding:12px">✅ Todos los precios ya están optimizados</div>';
+      return;
+    }
+
+    var ganExtra = sugs.reduce(function(s,x){ return s + x.delta; }, 0);
+
+    lista.innerHTML = '<div style="background:#1A1500;border-radius:8px;padding:10px;margin-bottom:10px;text-align:center">' +
+      '<div style="font-size:11px;color:#555;margin-bottom:3px">Ganancia extra posible</div>' +
+      '<div style="font-size:22px;font-weight:900;color:#C9A84C">' + fmt(ganExtra) + '</div>' +
+    '</div>' +
+    sugs.map(function(s, i) {
+      var impacto = s.precioOpt > s.precioActual ? '+' : '';
+      return '<div class="cs-sug-row" data-idx="' + i + '">' +
+        '<div style="flex:1">' +
+          '<div style="font-size:12px;font-weight:700;color:#fff">' + s.nombre + '</div>' +
+          '<div style="font-size:10px;color:#555">' +
+            (s.precioActual > 0 ? fmt(s.precioActual) + ' → ' : 'Sin precio → ') +
+            '<strong style="color:#C9A84C">' + fmt(s.precioOpt) + '</strong>' +
+          '</div>' +
+        '</div>' +
+        '<div style="text-align:right">' +
+          '<div style="font-size:12px;font-weight:800;color:#66BB6A">' + impacto + fmt(s.delta) + '</div>' +
+          '<div style="font-size:9px;color:#555">' + s.kgReal.toFixed(2) + 'kg</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    // Store sugs for apply
+    window._csSugs = sugs;
+  }
+
+  function aplicarOptimos() {
+    if (!window._csSugs) return;
+    window._csSugs.forEach(function(s) {
+      var idx = state.cortes.findIndex(function(c){ return c.nombre === s.nombre; });
+      if (idx >= 0) state.cortes[idx].precioVenta = s.precioOpt;
+    });
+    recalcular();
+    var panel = document.getElementById('cs-estrategia'); if (panel) panel.style.display='none';
+    showToast('✅ Precios optimizados aplicados');
+  }
+
+  function aplicarSugeridos() {
+    var res = calcular();
+    if (!res) return;
+    res.corteResults.forEach(function(cr) {
+      var idx = state.cortes.findIndex(function(c){ return c.nombre === cr.nombre; });
+      if (idx >= 0 && state.cortes[idx].destino !== 'descarte') {
+        state.cortes[idx].precioVenta = cr.precioSug;
+      }
+    });
+    recalcular();
+    showToast('⚡ Precios sugeridos (40% margen) aplicados');
+  }
+
+  function verPrecios() {
+    var rows = Object.entries(REFS)
+      .filter(function(e){ return e[1] > 0; })
+      .sort(function(a,b){ return b[1]-a[1]; })
+      .map(function(e) {
+        return '<tr><td style="padding:6px 8px;color:#aaa;font-size:12px">' + e[0] + '</td><td style="padding:6px 8px;text-align:right;color:#C9A84C;font-weight:700;font-size:12px">' + fmt(e[1]) + '/kg</td></tr>';
+      }).join('');
+    var modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;overflow-y:auto;padding:20px';
+    modal.innerHTML = '<div style="max-width:480px;margin:0 auto">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+        '<div style="font-size:14px;font-weight:800;color:#fff">📊 Precios de referencia mercado</div>' +
+        '<button onclick="this.closest(\'div[style]\').remove()" style="background:#333;border:none;color:#fff;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:16px">✕</button>' +
+      '</div>' +
+      '<table style="width:100%;border-collapse:collapse">' +
+        '<thead><tr><th style="text-align:left;padding:6px 8px;color:#555;font-size:10px;text-transform:uppercase">Corte</th><th style="text-align:right;padding:6px 8px;color:#555;font-size:10px;text-transform:uppercase">Ref. mercado</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+      '</table>' +
+    '</div>';
+    document.body.appendChild(modal);
+  }
+
+  // ── ESCENARIOS ───────────────────────────────────────────────────
+  function guardarEscenario() {
+    var res = calcular();
+    if (!res || !state.kgCompra) { showToast('⚠️ Cargá los datos primero'); return; }
+    var tipo_labels = {mocho:'Mocho',media_res:'Media res',pistola:'Pistola',animal_pie:'Animal en pie'};
+    var esc = {
+      id: Date.now(),
+      tipo: state.tipo,
+      label: tipo_labels[state.tipo] || state.tipo,
+      kg: state.kgCompra,
+      precioCompra: state.precioCompra,
+      costoConHect: res.costoConHect,
+      merma_pct: res.merma_pct,
+      ingresoTotal: res.ingresoTotal,
+      gananciaTotal: res.gananciaTotal,
+      margenTotal: res.margenTotal,
+      conPrecio: res.conPrecio,
+      totalCortes: res.totalCortes,
+      cortes: JSON.parse(JSON.stringify(state.cortes)),
+    };
+    state.escenarios.push(esc);
+    save();
+    renderEscenarios();
+    showToast('💾 Escenario guardado');
+  }
+
+  function renderEscenarios() {
+    var wrap  = document.getElementById('cs-escenarios-wrap');
+    var tabla = document.getElementById('cs-escenarios-tabla');
+    var mejor = document.getElementById('cs-mejor-escenario');
+    if (!wrap || !tabla) return;
+
+    if (!state.escenarios.length) { wrap.style.display='none'; return; }
+    wrap.style.display = 'block';
+
+    // Find best
+    var completos = state.escenarios.filter(function(e){ return e.conPrecio === e.totalCortes; });
+    var bestEsc   = completos.length ? completos.reduce(function(a,b){ return b.margenTotal > a.margenTotal ? b : a; }) : null;
+
+    tabla.innerHTML = state.escenarios.map(function(e, i) {
+      var isBest = bestEsc && e.id === bestEsc.id;
+      return '<div class="cs-esc-row' + (isBest ? ' cs-esc-best' : '') + '">' +
+        '<div style="flex:1">' +
+          '<div style="font-size:12px;font-weight:700;color:#fff">' + e.label + ' ' + e.kg + 'kg' + (isBest ? ' 🏆' : '') + '</div>' +
+          '<div style="font-size:10px;color:#555">Compra: ' + fmt(e.precioCompra) + '/kg · Costo real: ' + fmt(e.costoConHect) + '/kg · Merma: ' + e.merma_pct + '%</div>' +
+        '</div>' +
+        '<div style="text-align:right;min-width:90px">' +
+          '<div style="font-size:14px;font-weight:800;color:' + (e.gananciaTotal >= 0 ? '#66BB6A':'#EF5350') + '">' + fmt(e.gananciaTotal) + '</div>' +
+          '<div style="font-size:12px;color:' + colorMargen(e.margenTotal, state.margenObj) + '">' + e.margenTotal + '%</div>' +
+        '</div>' +
+        '<button class="cs-btn cs-btn-sm cs-btn-ghost" onclick="CarnSim.cargarEscenario(' + i + ')" style="margin-left:6px">↩</button>' +
+        '<button class="cs-btn cs-btn-sm cs-btn-ghost" onclick="CarnSim.borrarEscenario(' + i + ')" style="margin-left:4px">🗑</button>' +
+      '</div>';
+    }).join('');
+
+    if (bestEsc && mejor) {
+      mejor.style.display = 'block';
+      mejor.innerHTML = '🏆 <strong>' + bestEsc.label + '</strong> es la mejor opción: ' +
+        '<strong>' + fmt(bestEsc.gananciaTotal) + '</strong> de ganancia (' + bestEsc.margenTotal + '% margen)';
+    }
+  }
+
+  function cargarEscenario(i) {
+    var esc = state.escenarios[i];
+    if (!esc) return;
+    state.tipo = esc.tipo;
+    state.kgCompra = esc.kg;
+    state.precioCompra = esc.precioCompra;
+    state.cortes = JSON.parse(JSON.stringify(esc.cortes));
+    // Update UI
+    var tipSel = document.getElementById('cs-tipo');
+    var kgInp  = document.getElementById('cs-kg');
+    var prInp  = document.getElementById('cs-precio-compra');
+    if (tipSel) tipSel.value = esc.tipo;
+    if (kgInp)  kgInp.value  = esc.kg;
+    if (prInp)  prInp.value  = esc.precioCompra;
+    onTipo(true); // update pie extra visibility
+    recalcular();
+    showToast('↩ Escenario cargado');
+  }
+
+  function borrarEscenario(i) {
+    state.escenarios.splice(i, 1);
+    save();
+    renderEscenarios();
+  }
+
+  function limpiarEscenarios() {
+    if (!confirm('¿Borrar todos los escenarios?')) return;
+    state.escenarios = [];
+    save();
+    renderEscenarios();
+  }
+
+  // ── EVENT HANDLERS ───────────────────────────────────────────────
+  function onTipo(preserveCortes) {
+    var sel = document.getElementById('cs-tipo');
+    if (sel) state.tipo = sel.value;
+    var pieExtra = document.getElementById('cs-pie-extra');
+    if (pieExtra) pieExtra.style.display = state.tipo === 'animal_pie' ? 'block' : 'none';
+    if (!preserveCortes) loadCortes();
+  }
+
+  function onConfig() {
+    var mo = document.getElementById('cs-margen-obj');
+    var hc = document.getElementById('cs-hector');
+    if (mo) state.margenObj   = parseFloat(mo.value) || 40;
+    if (hc) state.costoHector = parseFloat(hc.value) || 0;
+    save();
+    recalcular();
+  }
+
+  function setRend(i, val) {
+    state.cortes[i].rend = parseFloat(val) || 0;
+    recalcular();
+  }
+
+  function setPrecio(i, val) {
+    state.cortes[i].precioVenta = parseFloat(val) || 0;
+    recalcular();
+  }
+
+  // ── TOAST ────────────────────────────────────────────────────────
+  function showToast(msg) {
+    // Use existing toast if available
+    if (typeof toast === 'function') { toast(msg); return; }
+    var t = document.getElementById('toast');
+    if (t) { t.textContent = msg; t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); }, 2500); }
+  }
+
+  // ── CSS ──────────────────────────────────────────────────────────
+  function injectCSS() {
+    if (document.getElementById('cs-styles')) return;
+    var style = document.createElement('style');
+    style.id = 'cs-styles';
+    style.textContent = [
+      '.cs-wrap{padding:0;font-family:"Nunito",sans-serif}',
+      '.cs-card{background:#161616;border:1px solid #222;border-radius:12px;padding:14px;margin-bottom:10px}',
+      '.cs-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}',
+      '.cs-card-title{font-size:12px;font-weight:800;color:#C9A84C;text-transform:uppercase;letter-spacing:.5px}',
+      '.cs-row{display:flex;gap:8px;flex-wrap:wrap}',
+      '.cs-field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}',
+      '.cs-lbl{font-size:10px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}',
+      '.cs-input{width:100%;background:#1A1A1A;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:"Nunito";font-size:14px;font-weight:700;color:#fff;outline:none;box-sizing:border-box}',
+      '.cs-input:focus{border-color:#C9A84C44}',
+      '.cs-big{font-size:20px!important;font-weight:900!important;color:#C9A84C!important;text-align:center}',
+      '.cs-input-sm{font-size:14px!important;text-align:center}',
+      '.cs-select{width:100%;background:#1A1A1A;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:"Nunito";font-size:13px;font-weight:700;color:#fff;outline:none;cursor:pointer}',
+      '.cs-resultado{background:linear-gradient(135deg,#0F1A0F,#161616)!important;border-color:#43A04733!important}',
+      '.cs-res-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}',
+      '.cs-res-item{background:#1A1A1A;border-radius:8px;padding:8px;text-align:center}',
+      '.cs-res-big{grid-column:span 1}',
+      '.cs-res-lbl{font-size:9px;color:#555;text-transform:uppercase;margin-bottom:3px}',
+      '.cs-res-val{font-size:14px;font-weight:800;color:#fff}',
+      '.cs-res-huge{font-size:22px!important}',
+      '.cs-warn{font-size:10px;color:#FFB74D;margin-top:8px;padding:6px 8px;background:rgba(255,183,77,.08);border-radius:6px}',
+      '.cs-btn{padding:9px 14px;border-radius:9px;font-family:"Nunito";font-size:12px;font-weight:800;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;gap:4px}',
+      '.cs-btn-gold{background:#C9A84C;color:#0A0A0A}',
+      '.cs-btn-ghost{background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A}',
+      '.cs-btn-sm{padding:5px 10px;font-size:10px;border-radius:7px;background:#1A1A1A;color:#aaa;border:1px solid #222;cursor:pointer;font-family:"Nunito";font-weight:700}',
+      '.cs-btn-full{width:100%}',
+      '.cs-corte{background:#1A1A1A;border-radius:9px;padding:10px;margin-bottom:6px;border-left:3px solid #2A2A2A;transition:border-color .2s}',
+      '.cs-corte-merma{opacity:.55;border-left-color:#1E1E1E!important}',
+      '.cs-corte-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}',
+      '.cs-corte-nombre{font-size:12px;font-weight:700;color:#fff}',
+      '.cs-corte-row{display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap}',
+      '.cs-corte-field{display:flex;flex-direction:column;gap:3px}',
+      '.cs-corte-field-wide{flex:1;min-width:100px}',
+      '.cs-corte-lbl{font-size:9px;color:#555;white-space:nowrap}',
+      '.cs-corte-val{font-size:13px;font-weight:700;color:#C9A84C;min-height:28px;display:flex;align-items:center}',
+      '.cs-corte-inp{background:#111;border:1px solid #2A2A2A;border-radius:7px;padding:5px 7px;font-family:"Nunito";font-size:13px;font-weight:700;color:#fff;outline:none;width:100%;box-sizing:border-box}',
+      '.cs-corte-inp-sm{width:55px;text-align:center}',
+      '.cs-corte-inp:focus{border-color:#C9A84C55}',
+      '.cs-corte-ingreso{font-size:10px;color:#555;margin-top:5px}',
+      '.cs-badge{font-size:9px;font-weight:800;padding:2px 6px;border-radius:5px}',
+      '.cs-badge-grey{background:#222;color:#555}',
+      '.cs-badge-red{background:rgba(239,83,80,.15);color:#EF9A9A}',
+      '.cs-badge-orange{background:rgba(255,167,38,.12);color:#FFB74D}',
+      '.cs-badge-green{background:rgba(102,187,106,.12);color:#81C784}',
+      '.cs-rec{padding:9px 11px;border-radius:8px;margin-bottom:6px;font-size:11px;line-height:1.5}',
+      '.cs-sug-row{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid #222}',
+      '.cs-esc-row{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid #1E1E1E}',
+      '.cs-esc-best{background:rgba(201,168,76,.06);border-radius:8px;padding:10px!important;margin-bottom:4px}',
+      '.cs-mejor{background:#1A1500;border:1px solid #C9A84C33;border-radius:8px;padding:10px;font-size:11px;color:#C9A84C;margin-top:8px}',
+      '@media(max-width:400px){.cs-res-grid{grid-template-columns:1fr 1fr}.cs-res-big{grid-column:span 1}}',
+    ].join('');
+    document.head.appendChild(style);
+  }
+
+  // ── PUBLIC API ───────────────────────────────────────────────────
   return {
-    cargarCortes,
-    calcular
+    init: function() {
+      load();
+      injectCSS();
+      renderMain();
+    },
+    recalcular: recalcular,
+    onTipo: onTipo,
+    onConfig: onConfig,
+    setRend: setRend,
+    setPrecio: setPrecio,
+    modoMaximizar: modoMaximizar,
+    aplicarOptimos: aplicarOptimos,
+    aplicarSugeridos: aplicarSugeridos,
+    verPrecios: verPrecios,
+    guardarEscenario: guardarEscenario,
+    cargarEscenario: cargarEscenario,
+    borrarEscenario: borrarEscenario,
+    limpiarEscenarios: limpiarEscenarios,
   };
 
 })();
-
-// INIT seguro
-setTimeout(() => {
-  if (document.getElementById("carne-tipo")) {
-    carne.cargarCortes();
-  }
-}, 500);
-
-
 
 </script>
 </body>
