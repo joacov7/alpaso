@@ -169,6 +169,53 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
   <button class="tab"     onclick="tab(this,'ayuda')">❓ Ayuda</button>
 </div>
 
+ <!-- ═══ CARNICERÍA PRO ═══════════════════════════ -->
+<div id="tab-carniceria" class="sec" style="display:none">
+
+  <div class="sec-title">Simulador de rentabilidad</div>
+
+  <div class="card">
+    <div class="card-title">📥 Compra</div>
+
+    <div class="fg">
+      <label>Tipo de compra</label>
+      <select id="carne-tipo" onchange="carne.cargarCortes()">
+        <option value="mocho">Mocho</option>
+        <option value="media">Media res</option>
+        <option value="pistola">Pistola</option>
+      </select>
+    </div>
+
+    <div class="fg-row">
+      <div class="fg">
+        <label>Kg comprados</label>
+        <input id="carne-kg" type="number" oninput="carne.calcular()">
+      </div>
+      <div class="fg">
+        <label>Precio compra/kg</label>
+        <input id="carne-precio" type="number" oninput="carne.calcular()">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🥩 Cortes</div>
+    <div id="carne-cortes"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📊 Resultado</div>
+
+    <div style="font-size:22px;font-weight:900;color:#C9A84C" id="carne-ganancia">$0</div>
+    <div style="font-size:12px;color:#555">Ganancia</div>
+
+    <div style="margin-top:8px;font-size:18px" id="carne-margen">0%</div>
+    <div style="font-size:12px;color:#555">Margen</div>
+
+    <div id="carne-sugerencia" style="margin-top:10px;font-size:12px;color:#aaa"></div>
+  </div>
+
+</div> 
 <!-- ═══ PEDIDOS ════════════════════════════════════ -->
 <div id="tab-pedidos" class="sec">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
@@ -8236,7 +8283,105 @@ analizarStockParaPedido = async function() {
 
 
 
+// ═══ MÓDULO CARNICERÍA PRO ═══════════════════════
+const carne = (() => {
 
+  const cortesDB = {
+    mocho: [
+      { nombre: "nalga", r: 0.18 },
+      { nombre: "cuadrada", r: 0.15 },
+      { nombre: "bola de lomo", r: 0.12 },
+      { nombre: "peceto", r: 0.08 }
+    ],
+    media: [
+      { nombre: "asado", r: 0.22 },
+      { nombre: "vacío", r: 0.08 },
+      { nombre: "matambre", r: 0.03 },
+      { nombre: "hueso", r: 0.15 },
+      { nombre: "grasa", r: 0.10 }
+    ],
+    pistola: [
+      { nombre: "nalga", r: 0.20 },
+      { nombre: "cuadrada", r: 0.16 },
+      { nombre: "lomo", r: 0.05 }
+    ]
+  };
+
+  function cargarCortes() {
+    const tipo = document.getElementById("carne-tipo").value;
+    const cont = document.getElementById("carne-cortes");
+
+    if (!cont) return;
+
+    cont.innerHTML = "";
+
+    cortesDB[tipo].forEach((c, i) => {
+      cont.innerHTML += `
+        <div class="fg-row">
+          <div class="fg">
+            <label>${c.nombre} (%)</label>
+            <input type="number" value="${c.r * 100}" id="r-${i}" oninput="carne.calcular()">
+          </div>
+          <div class="fg">
+            <label>Precio venta</label>
+            <input type="number" id="p-${i}" oninput="carne.calcular()">
+          </div>
+        </div>
+      `;
+    });
+  }
+
+  function calcular() {
+    const kg = parseFloat(document.getElementById("carne-kg")?.value) || 0;
+    const precio = parseFloat(document.getElementById("carne-precio")?.value) || 0;
+    const tipo = document.getElementById("carne-tipo")?.value;
+
+    if (!tipo) return;
+
+    let total = 0;
+
+    cortesDB[tipo].forEach((c, i) => {
+      const r = (parseFloat(document.getElementById(`r-${i}`)?.value) || 0) / 100;
+      const p = parseFloat(document.getElementById(`p-${i}`)?.value) || 0;
+
+      total += (kg * r) * p;
+    });
+
+    const costo = kg * precio;
+    const ganancia = total - costo;
+    const margen = costo > 0 ? (ganancia / costo) * 100 : 0;
+
+    const g = document.getElementById("carne-ganancia");
+    const m = document.getElementById("carne-margen");
+
+    if (g) g.innerText = "$" + ganancia.toFixed(0);
+    if (m) m.innerText = margen.toFixed(1) + "%";
+
+    sugerencia(margen);
+  }
+
+  function sugerencia(margen) {
+    const el = document.getElementById("carne-sugerencia");
+    if (!el) return;
+
+    if (margen > 35) el.innerText = "🔥 Excelente margen. Podés bajar precios y rotar más";
+    else if (margen < 20) el.innerText = "⚠️ Margen bajo. Revisar compra o precios";
+    else el.innerText = "👍 Margen aceptable";
+  }
+
+  return {
+    cargarCortes,
+    calcular
+  };
+
+})();
+
+// INIT seguro
+setTimeout(() => {
+  if (document.getElementById("carne-tipo")) {
+    carne.cargarCortes();
+  }
+}, 500);
 
 
 
