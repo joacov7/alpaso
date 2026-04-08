@@ -2337,6 +2337,7 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
 
 
 
+
 // ══════════════════════════════════════════════════
 // SUPABASE
 // ══════════════════════════════════════════════════
@@ -7442,25 +7443,95 @@ async function loadPlantillasCfg() {
 }
 
 async function loadPlantillaCfg() {
-  var id=$('cfg-plantilla-sel')?.value;
-  var el=$('plantilla-cfg-lista'); if(!el) return;
-  if(!id){el.innerHTML='<div style="color:#333;font-size:12px;text-align:center;padding:12px">Seleccioná una plantilla</div>';return;}
-  var res=await db.from('carn_plantilla_cortes').select('*').eq('plantilla_id',id).order('orden');
-  var data=res.data||[];
-  if(!data.length){el.innerHTML='<div style="color:#333;font-size:12px;text-align:center;padding:12px">Sin cortes</div>';return;}
-  el.innerHTML=data.map(function(c){
-    return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #1A1A1A">'+
-      '<div style="flex:1"><div style="font-size:12px;font-weight:700;color:#fff">'+c.nombre+'</div></div>'+
-      '<div style="display:flex;align-items:center;gap:4px">'+
-        '<input type="number" value="'+c.rendimiento_pct+'" step="0.1" min="0" max="100" onchange="actualizarRendimiento('+c.id+',this.value)" '+
-          'style="width:65px;background:#1A1A1A;border:1px solid #333;border-radius:7px;padding:5px 6px;font-family:Nunito;font-size:13px;font-weight:800;color:#C9A84C;outline:none;text-align:center">'+
-        '<span style="font-size:11px;color:#555">%</span>'+
-      '</div>'+
-      '<input type="number" value="'+(c.precio_venta||0)+'" step="100" placeholder="Precio vta" onchange="actualizarPrecioPlantilla('+c.id+',this.value)" '+
-        'style="width:90px;background:#1A1A1A;border:1px solid #333;border-radius:7px;padding:5px 6px;font-family:Nunito;font-size:12px;font-weight:800;color:#43A047;outline:none;text-align:center">'+
+  var id  = $('cfg-plantilla-sel')?.value;
+  var el  = $('plantilla-cfg-lista'); if (!el) return;
+  if (!id) { el.innerHTML = '<div style="color:#333;font-size:12px;text-align:center;padding:12px">Seleccioná una plantilla</div>'; return; }
+
+  var res  = await db.from('carn_plantilla_cortes').select('*').eq('plantilla_id', id).order('orden');
+  var data = res.data || [];
+  if (!data.length) { el.innerHTML = '<div style="color:#333;font-size:12px;text-align:center;padding:12px">Sin cortes</div>'; return; }
+
+  var totalRend = Math.round(data.reduce(function(s,c){ return s + c.rendimiento_pct; }, 0) * 10) / 10;
+
+  el.innerHTML = data.map(function(c) {
+    return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #1A1A1A">' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-size:12px;font-weight:700;color:#fff">' + c.nombre + '</div>' +
+      '</div>' +
+      // Rendimiento
+      '<div style="display:flex;align-items:center;gap:4px">' +
+        '<input type="number" value="' + c.rendimiento_pct + '" step="0.01" min="0" max="100" onchange="actualizarRendimiento(' + c.id + ',this.value)" ' +
+          'style="width:65px;background:#1A1A1A;border:1px solid #333;border-radius:7px;padding:5px 6px;font-family:Nunito;font-size:13px;font-weight:800;color:#C9A84C;outline:none;text-align:center">' +
+        '<span style="font-size:11px;color:#555">%</span>' +
+      '</div>' +
+      // Precio ref
+      '<input type="number" value="' + (c.precio_venta||0) + '" step="100" placeholder="Precio vta" onchange="actualizarPrecioPlantilla(' + c.id + ',this.value)" ' +
+        'style="width:90px;background:#1A1A1A;border:1px solid #333;border-radius:7px;padding:5px 6px;font-family:Nunito;font-size:12px;font-weight:800;color:#43A047;outline:none;text-align:center">' +
+      // Delete button
+      '<button onclick="eliminarCorteConfig(' + c.id + ',' + id + ')" ' +
+        'style="padding:4px 8px;border-radius:6px;background:#2E1A1A;color:#EF9A9A;border:1px solid #3A2A2A;font-size:11px;cursor:pointer;flex-shrink:0">🗑</button>' +
     '</div>';
-  }).join('')+'<div style="font-size:10px;color:#555;margin-top:8px;text-align:right">Total: '+Math.round(data.reduce(function(s,c){return s+c.rendimiento_pct;},0)*10)/10+'%</div>';
+  }).join('') +
+  // Total + add new corte
+  '<div style="font-size:10px;color:' + (Math.abs(totalRend-100)>2?'#FFB74D':'#555') + ';text-align:right;margin-top:8px;padding-top:8px;border-top:1px solid #222">' +
+    'Total: ' + totalRend + '% ' + (Math.abs(totalRend-100)>2?'⚠️ debería ser ~100%':'✓') +
+  '</div>' +
+  // Add corte form
+  '<div style="background:#1A1A1A;border-radius:9px;padding:10px;margin-top:10px">' +
+    '<div style="font-size:10px;font-weight:800;color:#555;text-transform:uppercase;margin-bottom:8px">➕ Agregar corte</div>' +
+    '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
+      '<input id="cfg-new-nombre" placeholder="Nombre del corte" ' +
+        'style="flex:2;min-width:120px;background:#111;border:1px solid #333;border-radius:7px;padding:7px 8px;font-family:Nunito;font-size:12px;color:#fff;outline:none">' +
+      '<input id="cfg-new-rend" type="number" placeholder="% rend" step="0.01" min="0" max="100" ' +
+        'style="width:70px;background:#111;border:1px solid #333;border-radius:7px;padding:7px;font-family:Nunito;font-size:12px;font-weight:700;color:#C9A84C;outline:none;text-align:center">' +
+      '<select id="cfg-new-dest" ' +
+        'style="background:#111;border:1px solid #333;border-radius:7px;padding:7px 6px;font-family:Nunito;font-size:11px;color:#aaa;outline:none">' +
+        '<option value="mostrador">Mostrador</option>' +
+        '<option value="picada">Picada</option>' +
+        '<option value="chorizo">Chorizo</option>' +
+        '<option value="descarte">Descarte</option>' +
+      '</select>' +
+      '<button onclick="agregarCorteConfig(' + id + ')" ' +
+        'style="padding:7px 12px;border-radius:7px;background:#C9A84C;border:none;color:#0A0A0A;font-family:Nunito;font-size:11px;font-weight:800;cursor:pointer">+ Agregar</button>' +
+    '</div>' +
+  '</div>';
 }
+
+async function eliminarCorteConfig(corteId, plantillaId) {
+  var ok = await confirmar('¿Eliminar este corte de la plantilla?');
+  if (!ok) return;
+  await db.from('carn_plantilla_cortes').delete().eq('id', corteId);
+  toast('✅ Corte eliminado');
+  loadPlantillaCfg();
+}
+
+async function agregarCorteConfig(plantillaId) {
+  var nombre = document.getElementById('cfg-new-nombre')?.value?.trim();
+  var rend   = parseFloat(document.getElementById('cfg-new-rend')?.value) || 0;
+  var dest   = document.getElementById('cfg-new-dest')?.value || 'mostrador';
+  if (!nombre) { toast('⚠️ Ingresá el nombre del corte'); return; }
+  if (!rend)   { toast('⚠️ Ingresá el rendimiento %'); return; }
+
+  // Get current max orden
+  var { data: existing } = await db.from('carn_plantilla_cortes')
+    .select('orden').eq('plantilla_id', plantillaId).order('orden', {ascending:false}).limit(1);
+  var nextOrden = existing?.length ? (existing[0].orden + 1) : 0;
+
+  var { error } = await db.from('carn_plantilla_cortes').insert({
+    plantilla_id:    plantillaId,
+    nombre:          nombre,
+    rendimiento_pct: rend,
+    destino_default: dest,
+    apto_vacio:      false,
+    precio_venta:    0,
+    orden:           nextOrden,
+  });
+
+  if (error) { toast('⚠️ Error: ' + error.message); return; }
+  toast('✅ Corte agregado — ' + nombre + ' (' + rend + '%)');
+  loadPlantillaCfg();
+}
+
 
 async function actualizarRendimiento(id,val){await db.from('carn_plantilla_cortes').update({rendimiento_pct:parseFloat(val)||0}).eq('id',id);toast('✅ Guardado');}
 async function actualizarPrecioPlantilla(id,val){await db.from('carn_plantilla_cortes').update({precio_venta:parseFloat(val)||0}).eq('id',id);}
@@ -8278,29 +8349,29 @@ var CarnSim = (function() {
       {nombre:'Merma/gancho',  rend:9.12,  destino:'descarte',  grasa:true},
     ],
     media_res: [
-      {nombre:'Costilla',      rend:10.33, destino:'mostrador', grasa:false},
-      {nombre:'Costeleta',     rend:9.61,  destino:'mostrador', grasa:false},
-      {nombre:'Aguja',         rend:8.59,  destino:'mostrador', grasa:false},
-      {nombre:'Osobuco',       rend:5.34,  destino:'mostrador', grasa:false},
-      {nombre:'Vacío',         rend:5.43,  destino:'mostrador', grasa:false},
-      {nombre:'Nalga',         rend:4.03,  destino:'mostrador', grasa:false},
-      {nombre:'Cuadrada',      rend:3.46,  destino:'mostrador', grasa:false},
-      {nombre:'Bola de lomo',  rend:3.72,  destino:'mostrador', grasa:false},
-      {nombre:'Cuadril',       rend:3.63,  destino:'mostrador', grasa:false},
-      {nombre:'Paleta',        rend:3.13,  destino:'mostrador', grasa:false},
-      {nombre:'Lomo',          rend:1.66,  destino:'mostrador', grasa:false},
-      {nombre:'Peceto',        rend:1.45,  destino:'mostrador', grasa:false},
-      {nombre:'Matambre',      rend:1.45,  destino:'mostrador', grasa:false},
-      {nombre:'Tapa de asado', rend:2.17,  destino:'mostrador', grasa:false},
-      {nombre:'Tapa de nalga', rend:1.52,  destino:'mostrador', grasa:false},
-      {nombre:'Colita cuadril',rend:0.79,  destino:'mostrador', grasa:false},
-      {nombre:'Tortuguita',    rend:1.48,  destino:'mostrador', grasa:false},
-      {nombre:'Entraña',       rend:0.55,  destino:'mostrador', grasa:false},
-      {nombre:'Marucha',       rend:3.16,  destino:'picada',    grasa:false},
-      {nombre:'Degolladero',   rend:5.12,  destino:'picada',    grasa:false},
-      {nombre:'Recortes',      rend:4.00,  destino:'picada',    grasa:false},
-      {nombre:'Grasa',         rend:7.52,  destino:'chorizo',   grasa:true},
-      {nombre:'Hueso',         rend:12.60, destino:'descarte',  grasa:true},
+      {nombre:'Costeleta',     rend:11.83, destino:'mostrador', grasa:false},
+      {nombre:'Costilla',      rend:10.16, destino:'mostrador', grasa:false},
+      {nombre:'Aguja',         rend:9.52,  destino:'mostrador', grasa:false},
+      {nombre:'Osobuco',       rend:7.63,  destino:'mostrador', grasa:false},
+      {nombre:'Falda',         rend:7.39,  destino:'mostrador', grasa:false},
+      {nombre:'Nalga',         rend:6.66,  destino:'mostrador', grasa:false},
+      {nombre:'Cuadrada',      rend:4.78,  destino:'mostrador', grasa:false},
+      {nombre:'Vacío',         rend:4.89,  destino:'mostrador', grasa:false},
+      {nombre:'Cuadril',       rend:3.80,  destino:'mostrador', grasa:false},
+      {nombre:'Paleta',        rend:3.87,  destino:'mostrador', grasa:false},
+      {nombre:'Bola de lomo',  rend:4.21,  destino:'mostrador', grasa:false},
+      {nombre:'Tortuguita',    rend:2.11,  destino:'mostrador', grasa:false},
+      {nombre:'Peceto',        rend:1.86,  destino:'mostrador', grasa:false},
+      {nombre:'Lomo',          rend:1.80,  destino:'mostrador', grasa:false},
+      {nombre:'Matambre',      rend:1.68,  destino:'mostrador', grasa:false},
+      {nombre:'Chiquisuela',   rend:0.73,  destino:'mostrador', grasa:false},
+      {nombre:'Entraña',       rend:0.65,  destino:'mostrador', grasa:false},
+      {nombre:'Marucha',       rend:4.05,  destino:'picada',    grasa:false},
+      {nombre:'Degolladero',   rend:3.86,  destino:'picada',    grasa:false},
+      {nombre:'Puchero común', rend:3.26,  destino:'picada',    grasa:false},
+      {nombre:'Recortes',      rend:2.17,  destino:'picada',    grasa:false},
+      {nombre:'Grasa',         rend:8.00,  destino:'descarte',  grasa:true},
+      {nombre:'Hueso',         rend:8.82,  destino:'descarte',  grasa:true},
     ],
     pistola: [
       {nombre:'Lomo',          rend:12.0,  destino:'mostrador', grasa:false},
@@ -9138,6 +9209,7 @@ var CarnSim = (function() {
   };
 
 })();
+
 
 
 
