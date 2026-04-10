@@ -8,1450 +8,357 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
+/* ═══ RESET ═══════════════════════════════════════════ */
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:100vh}
-.wrap{max-width:680px;margin:0 auto;padding-bottom:80px}
 
-/* TOP BAR */
-.topbar{background:#111;border-bottom:1px solid #222;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
-.topbar-logo{font-family:'Bebas Neue';font-size:22px;color:#C9A84C;letter-spacing:2px}
-.topbar-fecha{font-size:11px;color:#555}
+/* ═══ BASE ═════════════════════════════════════════════ */
+body{font-family:'Nunito',sans-serif;background:#F4F5F7;color:#1A1A2E;min-height:100vh}
 
-/* ESTADO RÁPIDO */
-.estado-bar{background:#161616;border-bottom:1px solid #222;padding:10px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:57px;z-index:90}
-.estado-info{display:flex;align-items:center;gap:8px}
-.dot{width:10px;height:10px;border-radius:50%;background:#43A047;flex-shrink:0;transition:background .3s}
-.dot.off{background:#E53935}
-.estado-txt{font-size:13px;font-weight:700}
+/* ═══ LAYOUT ════════════════════════════════════════════ */
+.app-layout{display:flex;min-height:100vh}
 
-/* TABS */
-.tabs{display:flex;flex-wrap:wrap;gap:4px;padding:10px 14px;background:#111;border-bottom:1px solid #1A1A1A;position:sticky;top:103px;z-index:80}
-.tabs::-webkit-scrollbar{display:none}
-.tab{padding:8px 16px;border-radius:8px;font-family:'Nunito';font-size:12px;font-weight:800;cursor:pointer;color:#555;background:transparent;border:none;white-space:nowrap;transition:all .15s}
-.tab.on{background:#C9A84C;color:#0A0A0A}
+/* ═══ SIDEBAR ═══════════════════════════════════════════ */
+.sidebar{width:220px;background:#1A1A2E;display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:200;transition:transform .25s;overflow-y:auto}
+.sidebar-logo{padding:20px 18px 14px;border-bottom:1px solid rgba(255,255,255,.07)}
+.sidebar-logo-name{font-family:'Bebas Neue';font-size:26px;color:#fff;letter-spacing:2px;line-height:1}
+.sidebar-logo-sub{font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.sidebar-estado{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:space-between}
+.sidebar-estado-info{display:flex;align-items:center;gap:8px}
+.dot{width:8px;height:8px;border-radius:50%;background:#22C55E;flex-shrink:0}
+.dot.off{background:#EF4444}
+.estado-txt{font-size:12px;font-weight:700;color:rgba(255,255,255,.7)}
+.sidebar-nav{flex:1;padding:10px 10px;overflow-y:auto}
+.nav-group{margin-bottom:4px}
+.nav-group-label{font-size:9px;font-weight:800;color:rgba(255,255,255,.25);text-transform:uppercase;letter-spacing:1.5px;padding:8px 10px 4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;cursor:pointer;border:none;background:transparent;width:100%;text-align:left;font-family:'Nunito';font-size:13px;font-weight:700;color:rgba(255,255,255,.55);transition:all .15s;margin-bottom:1px}
+.nav-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.9)}
+.nav-item.on{background:#E53935;color:#fff}
+.nav-item-icon{font-size:16px;width:22px;text-align:center;flex-shrink:0}
+.nav-item-badge{margin-left:auto;background:rgba(255,255,255,.15);color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:10px;min-width:18px;text-align:center}
+.nav-item.on .nav-item-badge{background:rgba(255,255,255,.25)}
 
-/* SECCIÓN */
-.sec{padding:16px 18px}
-.sec-title{font-size:10px;font-weight:800;color:#C9A84C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px}
+/* ═══ MAIN CONTENT ══════════════════════════════════════ */
+.main-content{flex:1;margin-left:220px;min-height:100vh;display:flex;flex-direction:column}
+.topbar{background:#fff;border-bottom:1px solid #E5E7EB;padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.topbar-title{font-size:16px;font-weight:800;color:#1A1A2E}
+.topbar-fecha{font-size:12px;color:#9CA3AF;font-weight:600}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.page-content{padding:20px 24px;flex:1}
 
-/* CARD */
-.card{background:#161616;border:1px solid #222;border-radius:14px;padding:16px;margin-bottom:12px}
-.card-title{font-size:13px;font-weight:800;color:#fff;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+/* ═══ HAMBURGER (mobile) ════════════════════════════════ */
+.hamburger{display:none;background:none;border:none;cursor:pointer;padding:8px;border-radius:8px}
+.hamburger span{display:block;width:22px;height:2px;background:#1A1A2E;margin:5px 0;border-radius:2px;transition:.3s}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:190}
 
-/* FORMS */
+/* ═══ BOTTOM NAV (mobile) ═══════════════════════════════ */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #E5E7EB;z-index:200;padding:6px 0 calc(6px + env(safe-area-inset-bottom));box-shadow:0 -2px 10px rgba(0,0,0,.08)}
+.bottom-nav-items{display:flex;justify-content:space-around}
+.bottom-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 12px;border:none;background:none;cursor:pointer;font-family:'Nunito';min-width:52px;border-radius:10px;transition:all .15s;position:relative}
+.bottom-nav-item .bni-icon{font-size:20px;line-height:1}
+.bottom-nav-item .bni-label{font-size:9px;font-weight:700;color:#9CA3AF}
+.bottom-nav-item.on .bni-icon{transform:scale(1.1)}
+.bottom-nav-item.on .bni-label{color:#E53935;font-weight:800}
+.bottom-nav-dot{position:absolute;top:4px;right:8px;width:6px;height:6px;background:#EF4444;border-radius:50%;display:none}
+.bottom-nav-dot.show{display:block}
+
+/* ═══ MORE DRAWER (mobile - the "Más" panel) ════════════ */
+.more-drawer{position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;z-index:300;padding:16px 16px 32px;transform:translateY(100%);transition:transform .3s;box-shadow:0 -4px 20px rgba(0,0,0,.12)}
+.more-drawer.open{transform:translateY(0)}
+.more-drawer-handle{width:40px;height:4px;background:#E5E7EB;border-radius:2px;margin:0 auto 16px}
+.more-drawer-title{font-size:14px;font-weight:800;color:#1A1A2E;margin-bottom:14px}
+.more-drawer-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.more-drawer-item{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;background:#F4F5F7;border-radius:12px;border:none;cursor:pointer;font-family:'Nunito'}
+.more-drawer-item-icon{font-size:22px}
+.more-drawer-item-label{font-size:10px;font-weight:700;color:#4B5563;text-align:center;line-height:1.2}
+.more-drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:295;display:none}
+.more-drawer-overlay.open{display:block}
+
+/* ═══ CARDS ═════════════════════════════════════════════ */
+.card{background:#fff;border:1px solid #E5E7EB;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.card-title{font-size:13px;font-weight:800;color:#1A1A2E;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+
+/* ═══ KPI CARDS ═════════════════════════════════════════ */
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.kpi{background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:14px 12px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.kpi.kpi-green{border-top:3px solid #22C55E}
+.kpi.kpi-red{border-top:3px solid #EF4444}
+.kpi.kpi-yellow{border-top:3px solid #F59E0B}
+.kpi.kpi-blue{border-top:3px solid #3B82F6}
+.kpi.kpi-gold{border-top:3px solid #C9A84C}
+.kpi-val{font-size:22px;font-weight:900;color:#1A1A2E;line-height:1.1}
+.kpi-lbl{font-size:10px;color:#9CA3AF;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
+
+/* ═══ TABS (within sections) ════════════════════════════ */
+.tabs{display:none} /* hide old tabs - replaced by sidebar */
+.sec{padding:0}
+.sec-title{font-size:10px;font-weight:800;color:#E53935;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px}
+
+/* ═══ FORMS ═════════════════════════════════════════════ */
 .fg{margin-bottom:12px}
-.fg label{display:block;font-size:10px;font-weight:800;color:#666;margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
-.fg input,.fg select,.fg textarea{width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none;transition:border-color .15s}
-.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:#C9A84C}
+.fg label{display:block;font-size:10px;font-weight:800;color:#6B7280;margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+.fg input,.fg select,.fg textarea{width:100%;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:9px;padding:11px 13px;font-family:'Nunito';font-size:14px;color:#1A1A2E;outline:none;transition:border-color .15s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:#E53935;background:#fff}
 .fg textarea{resize:vertical;min-height:70px}
 .fg-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.fg-hint{font-size:10px;color:#555;margin-top:4px;line-height:1.4}
-.preview-img{width:100%;height:80px;object-fit:cover;border-radius:8px;margin-top:8px;border:1px solid #2A2A2A;display:none}
+.fg-hint{font-size:10px;color:#9CA3AF;margin-top:4px;line-height:1.4}
+.preview-img{width:100%;height:80px;object-fit:cover;border-radius:8px;margin-top:8px;border:1px solid #E5E7EB;display:none}
 
-/* TOGGLE */
-.tog-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #1E1E1E}
+/* ═══ BUTTONS ═══════════════════════════════════════════ */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:9px;font-family:'Nunito';font-size:13px;font-weight:800;cursor:pointer;border:none;transition:all .15s}
+.btn-gold{background:#C9A84C;color:#fff}
+.btn-gold:hover{background:#B8963D}
+.btn-primary{background:#E53935;color:#fff}
+.btn-primary:hover{background:#CC2F2B}
+.btn-ghost{background:#F4F5F7;color:#4B5563;border:1px solid #E5E7EB}
+.btn-ghost:hover{background:#E5E7EB}
+.btn-danger{background:#FEF2F2;color:#EF4444;border:1px solid #FECACA}
+.btn-full{width:100%;justify-content:center}
+
+/* ═══ TOGGLE ════════════════════════════════════════════ */
+.tog-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #F3F4F6}
 .tog-row:last-child{border:none}
-.tog-lbl{font-size:13px;font-weight:600;color:#fff}
-.tog-sub{font-size:10px;color:#555;margin-top:2px}
+.tog-lbl{font-size:13px;font-weight:700;color:#1A1A2E}
+.tog-sub{font-size:10px;color:#9CA3AF;margin-top:2px}
 .tog{position:relative;width:44px;height:24px;flex-shrink:0;cursor:pointer}
 .tog input{opacity:0;width:0;height:0;position:absolute}
-.tog-sl{position:absolute;inset:0;background:#2A2A2A;border-radius:12px;transition:.3s;cursor:pointer}
-.tog-sl::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#666;border-radius:50%;transition:.3s}
-.tog input:checked+.tog-sl{background:#C9A84C}
-.tog input:checked+.tog-sl::before{background:#fff;transform:translateX(20px)}
+.tog-sl{position:absolute;inset:0;background:#E5E7EB;border-radius:12px;transition:.3s}
+.tog-sl:before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.tog input:checked+.tog-sl{background:#22C55E}
+.tog input:checked+.tog-sl:before{transform:translateX(20px)}
 
-/* BUTTONS */
-.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:9px;font-family:'Nunito';font-size:13px;font-weight:800;cursor:pointer;border:none;transition:all .15s}
-.btn-gold{background:#C9A84C;color:#0A0A0A}
-.btn-gold:active{background:#B89440}
-.btn-ghost{background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A}
-.btn-ghost:active{background:#252525}
-.btn-danger{background:rgba(229,57,53,.1);color:#EF9A9A;border:1px solid rgba(229,57,53,.2)}
-.btn-full{width:100%;justify-content:center;padding:13px}
+/* ═══ ALERTS ════════════════════════════════════════════ */
+.alert{padding:12px 14px;border-radius:10px;margin-bottom:8px;font-size:12px;font-weight:700;display:flex;align-items:flex-start;gap:8px}
+.alert-red{background:#FEF2F2;color:#DC2626;border:1px solid #FECACA}
+.alert-yellow{background:#FFFBEB;color:#D97706;border:1px solid #FDE68A}
+.alert-green{background:#F0FDF4;color:#16A34A;border:1px solid #BBF7D0}
+.alert-blue{background:#EFF6FF;color:#2563EB;border:1px solid #BFDBFE}
 
-/* PEDIDOS */
-.ped{background:#161616;border:1px solid #222;border-radius:12px;padding:14px;margin-bottom:10px}
-.ped-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
-.ped-num{font-size:15px;font-weight:900;color:#C9A84C}
-.ped-badge{font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px}
-.b-nuevo{background:rgba(67,160,71,.15);color:#81C784}
-.b-preparando{background:rgba(251,140,0,.15);color:#FFB74D}
-.b-listo{background:rgba(33,150,243,.15);color:#64B5F6}
-.b-entregado{background:#1A1A1A;color:#444}
-.b-cancelado{background:rgba(229,57,53,.1);color:#EF9A9A}
-.b-pendiente_pago{background:rgba(33,150,243,.15);color:#64B5F6}
-.ped-cliente{font-size:13px;font-weight:700;color:#fff;margin-bottom:2px}
-.ped-meta{font-size:11px;color:#555;margin-bottom:8px}
-.ped-items{font-size:11px;color:#888;padding:8px 0;border-top:1px solid #1E1E1E;border-bottom:1px solid #1E1E1E;margin-bottom:8px;line-height:1.7}
-.ped-footer{display:flex;align-items:center;justify-content:space-between}
-.ped-total{font-size:16px;font-weight:900;color:#fff}
-.ped-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
-.ped-btn{padding:7px 12px;border-radius:8px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;border:none;transition:all .15s}
+/* ═══ TABLE ═════════════════════════════════════════════ */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;padding:8px 12px;font-size:10px;font-weight:800;color:#9CA3AF;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #F3F4F6}
+.tbl td{padding:10px 12px;font-size:13px;color:#1A1A2E;border-bottom:1px solid #F3F4F6}
+.tbl tr:last-child td{border:none}
+.tbl tr:hover td{background:#F9FAFB}
 
-/* PRODUCTOS */
-.prod-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1A1A1A}
-.prod-item:last-child{border:none}
-.prod-name{flex:1;min-width:0}
-.prod-name-txt{font-size:12px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.prod-cat-txt{font-size:10px;color:#555}
+/* ═══ BADGE ═════════════════════════════════════════════ */
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:800}
+.badge-green{background:#DCFCE7;color:#16A34A}
+.badge-red{background:#FEE2E2;color:#DC2626}
+.badge-yellow{background:#FEF3C7;color:#D97706}
+.badge-gray{background:#F3F4F6;color:#6B7280}
+.badge-blue{background:#DBEAFE;color:#2563EB}
+.badge-gold{background:#FEF3C7;color:#92400E}
 
-/* KPI */
-.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
-.kpi{background:#161616;border:1px solid #222;border-radius:12px;padding:14px;text-align:center}
-.kpi-val{font-size:26px;font-weight:900;color:#C9A84C;line-height:1}
-.kpi-lbl{font-size:10px;color:#555;margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+/* ═══ LOADING ═══════════════════════════════════════════ */
+.loading-panel{text-align:center;padding:32px;color:#9CA3AF;font-size:24px}
 
-/* BANNER CIERRE */
-.banner-cierre-preview{background:linear-gradient(135deg,#1A0A00,#C9A84C33);border:1px solid #C9A84C44;border-radius:10px;padding:12px;margin-top:8px;font-size:12px;color:#C9A84C;line-height:1.5;display:none}
+/* ═══ TOAST ═════════════════════════════════════════════ */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:#1A1A2E;color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;opacity:0;transition:all .3s;z-index:999;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* TOAST */
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#161616;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:700;opacity:0;transition:all .3s;pointer-events:none;border:1px solid #333;z-index:999;white-space:nowrap}
-.toast.on{opacity:1;transform:translateX(-50%)}
+/* ═══ MODAL ═════════════════════════════════════════════ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:flex-end;justify-content:center}
+.modal-box{background:#fff;border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:600px;max-height:85vh;overflow-y:auto}
+.modal-title{font-size:16px;font-weight:800;color:#1A1A2E;margin-bottom:16px}
+@media(min-width:600px){.modal-overlay{align-items:center}.modal-box{border-radius:16px;max-height:90vh}}
 
-/* LOADING */
-.loading-panel{display:flex;align-items:center;justify-content:center;padding:48px;color:#333;font-size:13px;gap:8px}
-.billete-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #1A1A1A}
-.billete-denom{font-size:13px;font-weight:800;color:#C9A84C;width:70px;flex-shrink:0}
-.billete-input{width:56px;background:#1A1A1A;border:1.5px solid #2A2A2A;border-radius:8px;padding:6px 8px;font-family:'Nunito';font-size:16px;font-weight:900;color:#fff;outline:none;text-align:center}
-.billete-input:focus{border-color:#C9A84C}
-.billete-subtotal{font-size:12px;font-weight:700;color:#555;flex:1;text-align:right}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(201,168,76,.4)}70%{box-shadow:0 0 0 10px rgba(201,168,76,0)}100%{box-shadow:0 0 0 0 rgba(201,168,76,0)}}
+/* ═══ WRAP (legacy compatibility) ══════════════════════ */
+.wrap{max-width:none;margin:0;padding-bottom:0}
+
+/* ═══ SCANNER MODAL ═════════════════════════════════════ */
+#scanner-prod-modal{align-items:center;justify-content:center}
+
+/* ═══ MOBILE ════════════════════════════════════════════ */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-220px)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay{display:block;opacity:0;pointer-events:none;transition:opacity .25s}
+  .sidebar-overlay.open{opacity:1;pointer-events:auto}
+  .main-content{margin-left:0}
+  .topbar{padding:0 16px}
+  .page-content{padding:14px 14px 90px}
+  .hamburger{display:block}
+  .bottom-nav{display:block}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .fg-row{grid-template-columns:1fr}
+}
+@media(min-width:769px){
+  .bottom-nav{display:none}
+  .hamburger{display:none}
+}
+
+/* ═══ DARK OVERRIDES for inner components ═══════════════ */
+/* Sub-tab buttons inside sections keep their own styles */
+.carn-stab,.compras-stab,.merma-stab,.prod-stab,.fin-stab,.cfg-stock-tab,.carn-cfg2-tab{
+  font-family:'Nunito'!important
+}
+/* Dark cards inside white sections */
+.cs-card{background:#F9FAFB!important;border-color:#E5E7EB!important}
+.cs-corte{background:#F3F4F6!important}
+.cs-corte-inp,.cs-input{background:#fff!important;border-color:#E5E7EB!important;color:#1A1A2E!important}
+.cs-select{background:#fff!important;border-color:#E5E7EB!important;color:#1A1A2E!important}
+.cs-res-item{background:#F3F4F6!important}
+.cs-resultado{background:linear-gradient(135deg,#F0FDF4,#F9FAFB)!important;border-color:#BBF7D0!important}
+.cs-res-huge,.cs-res-val{color:#1A1A2E!important}
+.cs-lbl{color:#6B7280!important}
+.cs-corte-nombre{color:#1A1A2E!important}
+.cs-corte-val-sm{color:#E53935!important}
+.cs-warn{background:#FFFBEB!important;color:#D97706!important}
+.cs-mejor{background:#FEF3C7!important;color:#92400E!important;border-color:#FDE68A!important}
+/* Inner dark cards for carniceria */
+.carn-stab.on{background:#E53935!important;color:#fff!important}
+.carn-stab{background:#F4F5F7!important;color:#4B5563!important;border-color:#E5E7EB!important}
 </style>
 </head>
 <body>
-<div class="wrap">
+<!-- Sidebar overlay -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
-<!-- TOP BAR -->
-<div class="topbar">
-  <div class="topbar-logo">◆ AL PASO — PANEL</div>
-  <div class="topbar-fecha" id="fecha-hoy"></div>
-</div>
+<!-- More drawer overlay -->
+<div class="more-drawer-overlay" id="more-drawer-overlay" onclick="closeMoreDrawer()"></div>
 
-<!-- ESTADO RÁPIDO -->
-<div class="estado-bar">
-  <div class="estado-info">
-    <div class="dot" id="estado-dot"></div>
-    <div>
+<!-- ══ SIDEBAR ══════════════════════════════════════════ -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-name">◆ AL PASO</div>
+    <div class="sidebar-logo-sub">Panel de gestión</div>
+  </div>
+  <div class="sidebar-estado">
+    <div class="sidebar-estado-info">
+      <div class="dot" id="estado-dot"></div>
       <div class="estado-txt" id="estado-txt">Cargando...</div>
     </div>
+    <label class="tog" title="Abrir / cerrar local">
+      <input type="checkbox" id="tog-acepta" onchange="toggleAcepta(this)">
+      <div class="tog-sl"></div>
+    </label>
   </div>
-  <label class="tog" title="Abrir / cerrar local">
-    <input type="checkbox" id="tog-acepta" onchange="toggleAcepta(this)">
-    <div class="tog-sl"></div>
-  </label>
-</div>
+  <nav class="sidebar-nav">
 
-<!-- TABS -->
-<div class="tabs" style="flex-wrap:wrap;gap:4px">
-  <button class="tab"     onclick="tab(this,'alertas')">🚨 Alertas</button>
-  <button class="tab on"  onclick="tab(this,'pedidos')">📋 Pedidos</button>
-  <button class="tab"     onclick="tab(this,'carga')">⚡ Carga</button>
-  <button class="tab"     onclick="tab(this,'dashboard')">📊 Stats</button>
-  <button class="tab"     onclick="tab(this,'prediccion')">🔮 Pred.</button>
-  <button class="tab"     onclick="tab(this,'clientes')">👥 Clientes</button>
-  <button class="tab"     onclick="tab(this,'visual')">🎨 Visual</button>
-  <button class="tab"     onclick="tab(this,'operaciones')">⚙️ Operac.</button>
-  <button class="tab"     onclick="tab(this,'productos')">📦 Productos</button>
-  <button class="tab"     onclick="tab(this,'fidelidad')">💛 Fidelidad</button>
-  <button class="tab"     onclick="tab(this,'tareas')">✅ Tareas</button>
-  <button class="tab"     onclick="tab(this,'empleados')">👷 Empleados</button>
-  <button class="tab"     onclick="tab(this,'compras')">🛍️ Compras</button>
-  <button class="tab"     onclick="tab(this,'caja')">💰 Caja</button>
-  <button class="tab"     onclick="tab(this,'fichaje')">⏱ Fichaje</button>
-  <button class="tab"     onclick="tab(this,'mermas')">🗑 Mermas</button>
-  <button class="tab"     onclick="tab(this,'stock')">📊 Stock</button>
-  <button class="tab"     onclick="tab(this,'objetivos')">🎯 Objetivos</button>
-  <button class="tab"     onclick="tab(this,'carteles')">🖨 Carteles</button>
-  <button class="tab"     onclick="tab(this,'precios')">💰 Precios</button>
-  <button class="tab"     onclick="tab(this,'ia')">🤖 IA</button>
-  <button class="tab"     onclick="tab(this,'finanzas')">📈 Finanzas</button>
-  <button class="tab"     onclick="tab(this,'carniceria')">🥩 Carnicería</button>
-  <button class="tab"     onclick="tab(this,'ayuda')">❓ Ayuda</button>
-</div>
-
-<!-- ═══ PEDIDOS ════════════════════════════════════ -->
-<div id="tab-pedidos" class="sec">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-    <div class="sec-title" style="margin:0">Pedidos activos</div>
-    <button class="btn btn-ghost" onclick="loadPedidos()" style="padding:6px 12px;font-size:11px">🔄 Actualizar</button>
-  </div>
-  <div id="pedidos-list"><div class="loading-panel">⏳ Cargando...</div></div>
-</div>
-
-<!-- ═══ DASHBOARD ══════════════════════════════════ -->
-<div id="tab-dashboard" class="sec" style="display:none">
-  <div class="sec-title">Resumen de hoy</div>
-  <div class="kpi-grid">
-    <div class="kpi"><div class="kpi-val" id="kpi-ped">—</div><div class="kpi-lbl">Pedidos</div></div>
-    <div class="kpi"><div class="kpi-val" id="kpi-vta">—</div><div class="kpi-lbl">Ventas</div></div>
-    <div class="kpi"><div class="kpi-val" id="kpi-cli">—</div><div class="kpi-lbl">Clientes</div></div>
-    <div class="kpi"><div class="kpi-val" id="kpi-tkt">—</div><div class="kpi-lbl">Ticket prom.</div></div>
-  </div>
-  <div class="card">
-    <div class="card-title">📋 Últimos pedidos del día</div>
-    <div id="dash-pedidos"><div class="loading-panel">⏳</div></div>
-  </div>
-</div>
-
-<!-- ═══ VISUAL ═════════════════════════════════════ -->
-<div id="tab-visual" class="sec" style="display:none">
-  <div class="sec-title">Apariencia de la app</div>
-
-  <!-- HEADER -->
-  <div class="card">
-    <div class="card-title">🖼 Header — imagen de fondo</div>
-    <div class="fg">
-      <label>URL de la foto de fondo</label>
-      <input id="c-header-foto" placeholder="https://..." oninput="previewImg('c-header-foto','prev-header')">
-      <div class="fg-hint">Reemplaza el color sólido del header. Recomendado: 800×200px horizontal.<br>
-      URL actual de tu imagen: <span style="color:#C9A84C;word-break:break-all">https://tlsyakbhceolczjzadpc.supabase.co/storage/v1/object/public/productos/alpasoinicio.png</span></div>
-      <img id="prev-header" class="preview-img" style="height:100px">
-    </div>
-  </div>
-
-  <!-- LOGO Y NOMBRE -->
-  <div class="card">
-    <div class="card-title">🏪 Logo y nombre</div>
-    <div class="fg-row">
-      <div class="fg">
-        <label>Nombre del local</label>
-        <input id="c-nombre" placeholder="Al Paso">
-      </div>
-      <div class="fg">
-        <label>Emoji del logo</label>
-        <input id="c-logo" placeholder="👣">
-      </div>
-    </div>
-    <div class="fg">
-      <label>Logo — URL de imagen (reemplaza el emoji)</label>
-      <input id="c-logo-url" placeholder="https://... (logo cuadrado, ej 100x100px)" oninput="previewImg('c-logo-url','prev-logo')">
-      <div class="fg-hint">Si cargás una imagen acá, reemplaza el emoji del logo. Recomendado: imagen cuadrada, fondo transparente.</div>
-      <img id="prev-logo" class="preview-img" style="height:60px;width:60px;object-fit:cover;border-radius:10px">
-    </div>
-    <div class="fg">
-      <label>Subtítulo (debajo del nombre)</label>
-      <input id="c-subtitulo" placeholder="Tu mercado de proximidad">
-    </div>
-  </div>
-
-  <!-- BLOQUE EMPANADAS -->
-  <div class="card">
-    <div class="card-title">🫓 Bloque Empanadas</div>
-    <div class="fg">
-      <label>Foto de la oferta (reemplaza el emoji 🫓)</label>
-      <input id="c-b1-foto" placeholder="https://... (foto de empanadas, ej 200x180px)" oninput="previewImg('c-b1-foto','prev-b1')">
-      <img id="prev-b1" class="preview-img" style="height:80px;width:100px;object-fit:cover;border-radius:12px">
-    </div>
-    <div class="fg"><label>Tag / etiqueta</label><input id="c-b1-tag" placeholder="🔥 OFERTA DEL DÍA"></div>
-    <div class="fg"><label>Título (HTML permitido para saltos de línea)</label><input id="c-b1-titulo" placeholder="4 empanadas&lt;br&gt;+ bebida"></div>
-    <div class="fg"><label>Precio destacado</label><input id="c-b1-precio" placeholder="$7.500"></div>
-  </div>
-
-  <!-- BLOQUE CARNES -->
-  <div class="card">
-    <div class="card-title">🥩 Bloque Carnes</div>
-    <div class="fg">
-      <label>Foto de fondo (URL)</label>
-      <input id="c-b2-foto" placeholder="https://..." oninput="previewImg('c-b2-foto','prev-b2')">
-      <img id="prev-b2" class="preview-img">
-    </div>
-    <div class="fg"><label>Título</label><input id="c-b2-titulo" placeholder="Cortes al vacío&lt;br&gt;y carnicería"></div>
-    <div class="fg"><label>Subtítulo</label><input id="c-b2-sub" placeholder="Vacío · Nalga · Costeleta"></div>
-  </div>
-
-  <!-- BANNER BIENVENIDA -->
-  <div class="card">
-    <div class="card-title">🎁 Banner de bienvenida</div>
-    <div class="fg"><label>Título del banner</label><input id="c-wb-titulo" placeholder="10% off en tu primera compra"></div>
-    <div class="fg"><label>Texto del banner</label><input id="c-wb-texto" placeholder="Para clientes del local anterior..."></div>
-  </div>
-
-  <button class="btn btn-gold btn-full" onclick="guardarSeccion('visual')">💾 Guardar cambios visuales</button>
-</div>
-
-<!-- ═══ OPERACIONES ════════════════════════════════ -->
-<div id="tab-operaciones" class="sec" style="display:none">
-  <div class="sec-title">Operaciones diarias</div>
-
-  <!-- MENSAJE CIERRE -->
-  <div class="card">
-    <div class="card-title">🔴 Mensaje cuando está cerrado</div>
-    <div class="fg">
-      <label>Mensaje que ve el cliente</label>
-      <input id="c-cierre" placeholder="Estamos cerrados. Volvemos mañana a las 8:00hs 🕗" oninput="actualizarPreviewCierre()">
-      <div class="banner-cierre-preview" id="preview-cierre"></div>
-    </div>
-  </div>
-
-  <!-- HORARIOS -->
-  <div class="card">
-    <div class="card-title">🕐 Horarios de atención</div>
-    <div style="font-size:10px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Lunes a Viernes</div>
-    <div class="fg-row">
-      <div class="fg"><label>Apertura</label><input id="c-lv-desde" type="time" value="08:00"></div>
-      <div class="fg"><label>Cierre</label><input id="c-lv-hasta" type="time" value="21:00"></div>
-    </div>
-    <div style="font-size:10px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:.5px;margin:10px 0 8px">Sábado</div>
-    <div class="fg-row">
-      <div class="fg"><label>Apertura</label><input id="c-sab-desde" type="time" value="08:00"></div>
-      <div class="fg"><label>Cierre</label><input id="c-sab-hasta" type="time" value="14:00"></div>
-    </div>
-    <div class="tog-row" style="margin-top:8px">
-      <div><div class="tog-lbl">Abierto los domingos</div></div>
-      <label class="tog"><input type="checkbox" id="tog-dom" onchange="toggleDomingo(this)"><div class="tog-sl"></div></label>
-    </div>
-    <div id="horario-dom" style="display:none;margin-top:10px">
-      <div class="fg-row">
-        <div class="fg"><label>Apertura Dom</label><input id="c-dom-desde" type="time" value="09:00"></div>
-        <div class="fg"><label>Cierre Dom</label><input id="c-dom-hasta" type="time" value="13:00"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- TIEMPOS ENTREGA -->
-  <div class="card">
-    <div class="card-title">⏱ Tiempos de entrega</div>
-    <div style="font-size:10px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Delivery</div>
-    <div class="fg-row">
-      <div class="fg"><label>Mínimo (min)</label><input id="c-del-min" type="number" value="30"></div>
-      <div class="fg"><label>Máximo (min)</label><input id="c-del-max" type="number" value="45"></div>
-    </div>
-    <div style="font-size:10px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:.5px;margin:10px 0 8px">Retiro en local</div>
-    <div class="fg-row">
-      <div class="fg"><label>Mínimo (min)</label><input id="c-ret-min" type="number" value="10"></div>
-      <div class="fg"><label>Máximo (min)</label><input id="c-ret-max" type="number" value="15"></div>
-    </div>
-  </div>
-
-  <!-- DELIVERY Y PAGOS -->
-  <div class="card">
-    <div class="card-title">🛵 Delivery y pagos</div>
-    <div class="fg"><label>Monto mínimo para envío gratis ($)</label><input id="c-del-minimo" type="number" value="10000"></div>
-    <div class="fg"><label>Costo de envío si no alcanza ($)</label><input id="c-del-costo" type="number" value="1500"></div>
-    <div class="fg"><label>Recargo crédito 3 cuotas (%)</label><input id="c-recargo" type="number" value="20"></div>
-    <div class="fg"><label>Link MercadoPago</label><input id="c-mp-link" placeholder="https://mpago.la/..."></div>
-    <div class="fg"><label>Alias / CBU para transferencia</label><input id="c-mp-alias" placeholder="alpaso.mp"></div>
-  </div>
-
-  <!-- ENTREGA Y PAGO -->
-  <div class="card">
-    <div class="card-title">🛵 Modalidades de entrega</div>
-    <div class="tog-row">
-      <div><div class="tog-lbl">🛵 Delivery habilitado</div><div class="tog-sub">Los clientes pueden pedir con envío a domicilio</div></div>
-      <label class="tog"><input type="checkbox" id="c-entrega-delivery" checked><div class="tog-sl"></div></label>
-    </div>
-    <div class="tog-row">
-      <div><div class="tog-lbl">🏪 Retiro en local habilitado</div><div class="tog-sub">Los clientes pueden retirar del local</div></div>
-      <label class="tog"><input type="checkbox" id="c-entrega-retiro" checked><div class="tog-sl"></div></label>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">💳 Formas de pago habilitadas</div>
-    <div class="tog-row">
-      <div><div class="tog-lbl">💵 Efectivo / Débito / Transferencia</div></div>
-      <label class="tog"><input type="checkbox" id="c-pago-efectivo" checked><div class="tog-sl"></div></label>
-    </div>
-    <div class="tog-row">
-      <div><div class="tog-lbl">💙 MercadoPago</div><div class="tog-sub">Requiere que esté configurado el link de MP</div></div>
-      <label class="tog"><input type="checkbox" id="c-pago-mp" checked><div class="tog-sl"></div></label>
-    </div>
-    <div class="tog-row">
-      <div><div class="tog-lbl">💳 Crédito 3 cuotas</div></div>
-      <label class="tog"><input type="checkbox" id="c-pago-credito3" checked><div class="tog-sl"></div></label>
-    </div>
-  </div>
-
-  <!-- WHATSAPP -->
-  <div class="card">
-    <div class="card-title">📲 WhatsApp</div>
-    <div class="fg"><label>Número principal (pedidos)</label><input id="c-wsp-local" placeholder="5491100000000"><div class="fg-hint">Sin + ni espacios. Ej: 5491155443322</div></div>
-    <div class="fg"><label>Cocina / Repartidor</label><input id="c-tel-cocina" placeholder="5491100000000"></div>
-  </div>
-
-  <!-- EMPANADAS -->
-  <div class="card">
-    <div class="card-title">🫓 Empanadas</div>
-    <div class="fg"><label>Unidades por caja / pedido</label><input id="c-emp-caja" type="number" value="6"><div class="fg-hint">Lo que el cliente selecciona es por unidad, pero el precio viene de Supabase como precio de caja. Este número se usa para calcular el precio por unidad.</div></div>
-  </div>
-
-  <button class="btn btn-gold btn-full" onclick="guardarSeccion('operaciones')">💾 Guardar operaciones</button>
-</div>
-
-<!-- ═══ PRODUCTOS ══════════════════════════════════ -->
-<div id="tab-productos" class="sec" style="display:none">
-
-  <!-- SUB-TABS -->
-  <div style="display:flex;gap:6px;margin-bottom:16px">
-    <button class="prod-stab on" onclick="prodSubTab(this,'lista')" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:12px;font-weight:800;cursor:pointer;border:none;background:#C9A84C;color:#0A0A0A">📋 Lista</button>
-    <button class="prod-stab" onclick="prodSubTab(this,'scanner')" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:12px;font-weight:800;cursor:pointer;border:1px solid #2A2A2A;background:#1E1E1E;color:#aaa">📷 Cargar producto</button>
-    <button class="prod-stab" onclick="prodSubTab(this,'importar')" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:12px;font-weight:800;cursor:pointer;border:1px solid #2A2A2A;background:#1E1E1E;color:#aaa">📥 Importar</button>
-  </div>
-
-  <!-- LISTA -->
-  <div id="prod-panel-lista">
-    <div class="fg-row" style="margin-bottom:12px">
-      <input id="prod-buscar" placeholder="🔍 Buscar..." oninput="loadProductos()"
-        style="background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
-      <select id="prod-cat" onchange="loadProductos()"
-        style="background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:12px;color:#fff;outline:none">
-        <option value="">Todas las categorías</option>
-        <option>Empanadas</option><option>Carnicería</option><option>Carne al Vacío</option>
-        <option>Fiambres</option><option>Lácteos</option><option>Bebidas</option>
-        <option>Almacén</option><option>Limpieza</option><option>Kiosco</option><option>Panadería</option>
-      </select>
-    </div>
-    <div style="display:flex;gap:6px;margin-bottom:8px">
-      <select id="prod-filtro-activo" onchange="loadProductos()"
-        style="background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:8px 10px;font-family:'Nunito';font-size:12px;color:#fff;outline:none">
-        <option value="">Todos</option>
-        <option value="true">✅ Activos en app</option>
-        <option value="false">⭕ Inactivos</option>
-      </select>
-      <div style="flex:1;background:#1A1A1A;border-radius:9px;padding:8px 12px;font-size:11px;color:#555;display:flex;align-items:center" id="prod-count">—</div>
-    </div>
-    <div style="display:flex;gap:6px;margin-bottom:12px">
-      <button onclick="activarCategoria(true)" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#1A2E1A;color:#81C784;border:1px solid #2A3A2A">✅ Activar categoría</button>
-      <button onclick="activarCategoria(false)" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#2E1A1A;color:#EF9A9A;border:1px solid #3A2A2A">⭕ Desactivar categoría</button>
-    </div>
-    <div class="card" id="prod-list" style="padding:0 16px"><div class="loading-panel">⏳ Cargando...</div></div>
-  </div>
-
-  <!-- CARGAR PRODUCTO -->
-  <div id="prod-panel-scanner" style="display:none">
-    <div class="card">
-      <div class="card-title">📷 Buscar por código de barra</div>
-      <div style="display:flex;gap:8px;margin-bottom:8px">
-        <input id="scan-cod" placeholder="Escaneá o escribí el código..." type="text"
-          style="flex:1;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:14px;color:#fff;outline:none;letter-spacing:2px"
-          oninput="buscarPorCodigo(this.value)" autocomplete="off">
-        <button onclick="$('scan-cod').value='';$('scan-resultado').innerHTML='';$('scan-form').style.display='none'"
-          style="padding:10px 14px;background:#2A2A2A;border:none;border-radius:9px;color:#aaa;font-size:16px;cursor:pointer">✕</button>
-      </div>
-      <div style="font-size:10px;color:#555">Usá un lector de código de barra USB o escribí el número manualmente</div>
-    </div>
-
-    <!-- Resultado búsqueda -->
-    <div id="scan-resultado"></div>
-
-    <!-- Formulario editar/crear -->
-    <div id="scan-form" style="display:none">
-      <div class="card">
-        <div class="card-title" id="scan-form-titulo">✏️ Editar producto</div>
-        <input type="hidden" id="scan-id">
-
-        <div class="fg">
-          <label>Nombre del producto</label>
-          <input id="scan-nombre" placeholder="Nombre como aparece en la app">
-        </div>
-
-        <div class="fg">
-          <label>Código de barras</label>
-          <input id="scan-codbarras" placeholder="7790000000000" readonly style="color:#555">
-        </div>
-
-        <div class="fg-row">
-          <div class="fg">
-            <label>Precio de costo ($)</label>
-            <input id="scan-costo" type="number" placeholder="0" oninput="calcularPrecioVenta()">
-          </div>
-          <div class="fg">
-            <label>Margen de ganancia (%)</label>
-            <input id="scan-margen" type="number" placeholder="30" value="30" oninput="calcularPrecioVenta()">
-          </div>
-        </div>
-
-        <div class="fg">
-          <label>Precio de venta ($) — calculado automáticamente</label>
-          <div style="position:relative">
-            <input id="scan-precio" type="number" placeholder="0"
-              style="background:#1E1E1E;border:1.5px solid #C9A84C;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:16px;font-weight:900;color:#C9A84C;outline:none;width:100%">
-            <div style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:10px;color:#555">editable</div>
-          </div>
-          <div class="fg-hint" id="scan-margen-real">Margen real: —</div>
-        </div>
-
-        <div class="fg-row">
-          <div class="fg">
-            <label>Stock en góndola</label>
-            <input id="scan-stock-gondola" type="number" placeholder="0" min="0" step="0.5"
-              style="font-size:18px;font-weight:800;color:#43A047;text-align:center">
-          </div>
-          <div class="fg">
-            <label>Stock en depósito</label>
-            <input id="scan-stock-deposito" type="number" placeholder="0" min="0" step="0.5"
-              style="font-size:18px;font-weight:800;color:#C9A84C;text-align:center">
-          </div>
-        </div>
-        <div class="fg">
-          <label>Stock mínimo góndola (alerta)</label>
-          <input id="scan-stock-minimo" type="number" placeholder="0" min="0" step="1">
-          <div class="fg-hint">Cuando baje de este número aparece una alerta</div>
-        </div>
-
-        <div class="fg">
-          <label>Categoría</label>
-          <select id="scan-cat"
-            style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
-            <option value="Sin categoría">Sin categoría</option>
-            <option value="Empanadas">🫓 Empanadas</option>
-            <option value="Carnicería">🥩 Carnicería</option>
-            <option value="Carne al Vacío">🥩 Carne al Vacío</option>
-            <option value="Fiambres">🧀 Fiambres</option>
-            <option value="Lácteos">🥛 Lácteos</option>
-            <option value="Bebidas">🥤 Bebidas</option>
-            <option value="Almacén">🌾 Almacén</option>
-            <option value="Limpieza">🧹 Limpieza</option>
-            <option value="Kiosco">🍬 Kiosco</option>
-            <option value="Panadería">🍞 Panadería</option>
-          </select>
-        </div>
-
-        <div class="tog-row">
-          <div>
-            <div class="tog-lbl">Visible en la app cliente</div>
-            <div class="tog-sub">Si está activo, los clientes pueden verlo y comprarlo</div>
-          </div>
-          <label class="tog"><input type="checkbox" id="scan-activo"><div class="tog-sl"></div></label>
-        </div>
-
-        <div style="margin-top:16px;display:flex;gap:8px">
-          <button onclick="guardarProducto()" class="btn btn-gold" style="flex:1;justify-content:center;padding:13px">💾 Guardar</button>
-          <button onclick="$('scan-form').style.display='none'" class="btn btn-ghost" style="padding:13px 16px">Cancelar</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-  <!-- IMPORTAR PRODUCTOS -->
-  <div id="prod-importar" style="display:none">
-
-    <!-- Instrucciones -->
-    <div style="background:#1A1500;border:1px solid #C9A84C33;border-radius:12px;padding:14px;margin-bottom:14px">
-      <div style="font-size:12px;font-weight:800;color:#C9A84C;margin-bottom:8px">📋 Formato del Excel</div>
-      <div style="font-size:11px;color:#aaa;line-height:1.8">
-        La primera fila debe tener los encabezados. Columnas reconocidas:<br>
-        <strong style="color:#fff">nombre</strong> (requerido) · <strong style="color:#fff">codigo</strong> o <strong style="color:#fff">cod_barras</strong> · 
-        <strong style="color:#fff">precio</strong> o <strong style="color:#fff">precio_venta</strong> · 
-        <strong style="color:#fff">costo</strong> o <strong style="color:#fff">precio_costo</strong> · 
-        <strong style="color:#fff">stock</strong> · <strong style="color:#fff">categoria</strong> o <strong style="color:#fff">cat</strong>
-      </div>
-      <button onclick="descargarPlantilla()" style="margin-top:10px;padding:7px 14px;border-radius:8px;background:#1E1E1E;border:1px solid #2A2A2A;color:#C9A84C;font-family:'Nunito';font-size:11px;font-weight:700;cursor:pointer">
-        ⬇️ Descargar plantilla de ejemplo
+    <div class="nav-group">
+      <div class="nav-group-label">Principal</div>
+      <button class="nav-item" onclick="navTo('alertas',this)">
+        <span class="nav-item-icon">🚨</span> Alertas
+        <span class="nav-item-badge" id="badge-alertas" style="display:none">0</span>
+      </button>
+      <button class="nav-item on" onclick="navTo('dashboard',this)">
+        <span class="nav-item-icon">📊</span> Dashboard
+      </button>
+      <button class="nav-item" onclick="navTo('caja',this)">
+        <span class="nav-item-icon">💰</span> Caja
+      </button>
+      <button class="nav-item" onclick="navTo('tareas',this)">
+        <span class="nav-item-icon">✅</span> Tareas
       </button>
     </div>
 
-    <!-- Upload -->
-    <div id="import-drop-zone"
-      style="border:2px dashed #333;border-radius:14px;padding:32px 20px;text-align:center;cursor:pointer;margin-bottom:14px;transition:border-color .2s"
-      onclick="$('import-file-input').click()"
-      ondragover="event.preventDefault();this.style.borderColor='#C9A84C'"
-      ondragleave="this.style.borderColor='#333'"
-      ondrop="handleImportDrop(event)">
-      <div style="font-size:32px;margin-bottom:8px">📊</div>
-      <div style="font-size:14px;font-weight:800;color:#fff;margin-bottom:4px">Subí tu Excel</div>
-      <div style="font-size:11px;color:#555">Tocá acá o arrastrá el archivo .xlsx</div>
-      <input type="file" id="import-file-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleImportFile(this.files[0])">
-    </div>
-
-    <!-- Preview -->
-    <div id="import-preview" style="display:none">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div style="font-size:13px;font-weight:800;color:#fff" id="import-preview-titulo">Preview</div>
-        <div style="display:flex;gap:6px">
-          <button onclick="cancelarImport()" class="btn btn-ghost" style="padding:7px 12px;font-size:12px">Cancelar</button>
-          <button onclick="ejecutarImport()" class="btn btn-gold" style="padding:7px 14px;font-size:12px" id="btn-ejecutar-import">✅ Importar</button>
-        </div>
-      </div>
-
-      <!-- Resumen -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
-        <div class="kpi" style="padding:10px"><div class="kpi-val" style="font-size:20px;color:#43A047" id="import-count-nuevos">0</div><div class="kpi-lbl">Nuevos</div></div>
-        <div class="kpi" style="padding:10px"><div class="kpi-val" style="font-size:20px;color:#C9A84C" id="import-count-actualizar">0</div><div class="kpi-lbl">Actualizar</div></div>
-        <div class="kpi" style="padding:10px"><div class="kpi-val" style="font-size:20px;color:#E53935" id="import-count-errores">0</div><div class="kpi-lbl">Errores</div></div>
-      </div>
-
-      <!-- Mapeo de columnas -->
-      <div class="card" style="margin-bottom:12px" id="import-mapeo-wrap">
-        <div class="card-title">🗺️ Mapeo de columnas</div>
-        <div id="import-mapeo-lista"></div>
-      </div>
-
-      <!-- Tabla preview -->
-      <div class="card" style="padding:0">
-        <div style="overflow-x:auto">
-          <table id="import-tabla" style="width:100%;border-collapse:collapse;font-size:11px"></table>
-        </div>
-      </div>
-    </div>
-
-    <!-- Progress -->
-    <div id="import-progress" style="display:none">
-      <div style="text-align:center;padding:30px">
-        <div style="font-size:28px;margin-bottom:12px">⏳</div>
-        <div style="font-size:14px;font-weight:800;color:#fff;margin-bottom:8px" id="import-progress-txt">Importando...</div>
-        <div style="background:#1A1A1A;border-radius:6px;height:8px;overflow:hidden;margin-bottom:8px">
-          <div id="import-progress-bar" style="height:100%;background:#C9A84C;width:0%;border-radius:6px;transition:width .3s"></div>
-        </div>
-        <div style="font-size:12px;color:#555" id="import-progress-sub">0 / 0</div>
-      </div>
-    </div>
-
-    <!-- Resultado -->
-    <div id="import-resultado" style="display:none">
-      <div class="card" style="text-align:center">
-        <div style="font-size:32px;margin-bottom:8px">✅</div>
-        <div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:4px" id="import-resultado-txt">Importación completada</div>
-        <div style="font-size:12px;color:#555" id="import-resultado-sub"></div>
-        <button onclick="resetImport()" class="btn btn-gold btn-full" style="margin-top:14px">📥 Importar otro archivo</button>
-      </div>
-    </div>
-
-  </div>
-
-<!-- ═══ FIDELIDAD ══════════════════════════════════ -->
-<div id="tab-fidelidad" class="sec" style="display:none">
-  <div class="sec-title">Programa de Pasos</div>
-
-  <div class="card">
-    <div class="card-title">💛 Descuento bienvenida</div>
-    <div class="tog-row">
-      <div>
-        <div class="tog-lbl">Descuento bienvenida activo</div>
-        <div class="tog-sub">Si está apagado, los clientes nuevos no ven el descuento</div>
-      </div>
-      <label class="tog"><input type="checkbox" id="c-bv-activa" checked><div class="tog-sl"></div></label>
-    </div>
-    <div class="fg" style="margin-top:12px">
-      <label>Porcentaje de descuento (%)</label>
-      <input id="c-bv-pct" type="number" value="10">
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">👣 Configuración de Pasos</div>
-    <div class="fg"><label>Pasos por cada $100 gastados</label><input id="c-pts-x" type="number" value="1"></div>
-    <div class="fg"><label>Pasos necesarios para canjear</label><input id="c-pts-canje" type="number" value="500"></div>
-    <div class="fg"><label>Valor del canje ($)</label><input id="c-pts-val" type="number" value="500"></div>
-    <div class="fg"><label>Descuento cumpleaños (%)</label><input id="c-cumple-pct" type="number" value="10"></div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">📊 Clientes registrados</div>
-    <div id="clientes-stats"><div class="loading-panel">⏳</div></div>
-  </div>
-
-  <button class="btn btn-gold btn-full" onclick="guardarSeccion('fidelidad')">💾 Guardar fidelidad</button>
-</div>
-
-<!-- ═══ CARGA RÁPIDA ══════════════════════════════ -->
-<div id="tab-carga" class="sec" style="display:none">
-  <div class="sec-title">Carga rápida de pedido</div>
-  <div class="card">
-    <div class="card-title">👤 Cliente</div>
-    <div class="fg">
-      <label>Buscar por teléfono o nombre</label>
-      <input id="cr-buscar" placeholder="Ej: 1155443322 o Juan..." oninput="buscarClienteRapido(this.value)">
-    </div>
-    <div id="cr-cliente-result" style="display:none;background:#1E1E1E;border-radius:10px;padding:12px;margin-bottom:12px">
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <div>
-          <div style="font-size:13px;font-weight:800;color:#fff" id="cr-cli-nombre">—</div>
-          <div style="font-size:11px;color:#555" id="cr-cli-info">—</div>
-        </div>
-        <div style="font-size:11px;font-weight:800;color:#C9A84C" id="cr-cli-pts">0 Pasos</div>
-      </div>
-    </div>
-    <div style="font-size:10px;color:#555;margin-top:4px" id="cr-sin-cliente">
-      <span style="cursor:pointer;color:#C9A84C;text-decoration:underline" onclick="crClienteSinRegistro()">Continuar sin cliente registrado</span>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">🛒 Productos</div>
-    <div class="fg-row" style="margin-bottom:10px">
-      <input id="cr-prod-buscar" placeholder="🔍 Buscar producto..." oninput="buscarProdRapido(this.value)"
-        style="background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
-      <select id="cr-prod-cat" onchange="buscarProdRapido($('cr-prod-buscar').value)"
-        style="background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 10px;font-family:'Nunito';font-size:12px;color:#fff;outline:none">
-        <option value="">Todas</option>
-        <option>Empanadas</option><option>Carnicería</option><option>Carne al Vacío</option>
-        <option>Bebidas</option><option>Lácteos</option><option>Almacén</option>
-      </select>
-    </div>
-    <div id="cr-prod-list" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px"></div>
-  </div>
-
-  <div class="card" id="cr-items-card" style="display:none">
-    <div class="card-title">📝 Items del pedido</div>
-    <div id="cr-items-list"></div>
-    <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid #222;margin-top:8px">
-      <div style="font-size:16px;font-weight:900;color:#fff">Total</div>
-      <div style="font-size:20px;font-weight:900;color:#C9A84C" id="cr-total">$0</div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">📦 Entrega y pago</div>
-    <div class="fg-row">
-      <div class="fg">
-        <label>Entrega</label>
-        <select id="cr-entrega" style="background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none;width:100%">
-          <option value="Delivery">🛵 Delivery</option>
-          <option value="Retiro">🏪 Retiro</option>
-          <option value="En mesa">🪑 En mesa</option>
-        </select>
-      </div>
-      <div class="fg">
-        <label>Pago</label>
-        <select id="cr-pago" style="background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none;width:100%">
-          <option value="efectivo">💵 Efectivo</option>
-          <option value="debito">💳 Débito</option>
-          <option value="transferencia">📲 Transferencia</option>
-          <option value="mp">💙 MercadoPago</option>
-          <option value="credito3">💳 Crédito 3c</option>
-        </select>
-      </div>
-    </div>
-    <div class="fg"><label>Notas (opcional)</label><input id="cr-notas" placeholder="Sin cebolla, extra picante..."></div>
-  </div>
-
-  <button class="btn btn-gold btn-full" onclick="confirmarCargaRapida()">✅ Confirmar pedido</button>
-</div>
-
-<!-- ═══ PREDICCIÓN ═════════════════════════════════ -->
-<div id="tab-prediccion" class="sec" style="display:none">
-  <div class="sec-title">Predicción e inteligencia</div>
-
-  <div class="kpi-grid">
-    <div class="kpi"><div class="kpi-val" id="pred-mejor-dia">—</div><div class="kpi-lbl">Mejor día</div></div>
-    <div class="kpi"><div class="kpi-val" id="pred-hora-pico">—</div><div class="kpi-lbl">Hora pico</div></div>
-    <div class="kpi"><div class="kpi-val" id="pred-prod-top">—</div><div class="kpi-lbl">Producto #1</div></div>
-    <div class="kpi"><div class="kpi-val" id="pred-ticket-prom">—</div><div class="kpi-lbl">Ticket promedio</div></div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">📦 Productos más vendidos</div>
-    <div id="pred-top-prods"><div class="loading-panel">⏳</div></div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">📅 Ventas por día de la semana</div>
-    <div id="pred-por-dia"><div class="loading-panel">⏳</div></div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">⏰ Ventas por hora del día</div>
-    <div id="pred-por-hora"><div class="loading-panel">⏳</div></div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">💡 Recomendaciones</div>
-    <div id="pred-recomendaciones"><div class="loading-panel">⏳</div></div>
-  </div>
-</div>
-
-<!-- ═══ CLIENTES ═══════════════════════════════════ -->
-<div id="tab-clientes" class="sec" style="display:none">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-    <div class="sec-title" style="margin:0">Clientes registrados</div>
-    <div style="font-size:11px;color:#555" id="clientes-count"></div>
-  </div>
-
-  <div class="fg-row" style="margin-bottom:12px">
-    <input id="cli-buscar" placeholder="🔍 Nombre o teléfono..." oninput="loadClientes()"
-      style="background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
-    <select id="cli-nivel" onchange="loadClientes()"
-      style="background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 10px;font-family:'Nunito';font-size:12px;color:#fff;outline:none">
-      <option value="">Todos los niveles</option>
-      <option value="Gold">🥇 Gold</option>
-      <option value="Silver">🥈 Silver</option>
-      <option value="Bronze">🥉 Bronze</option>
-    </select>
-  </div>
-
-  <div id="clientes-list"><div class="loading-panel">⏳ Cargando...</div></div>
-</div>
-
-
-<!-- ═══ TAREAS ════════════════════════════════════ -->
-<div id="tab-tareas" class="sec" style="display:none">
-  <div class="sec-title">Tareas del día</div>
-
-  <div style="display:flex;gap:6px;margin-bottom:14px">
-    <select id="tareas-fecha" onchange="loadTareas()"
-      style="background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:8px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none;flex:1">
-      <option value="">Hoy</option>
-    </select>
-    <button onclick="loadTareas()" style="padding:8px 14px;border-radius:9px;background:#C9A84C;color:#0A0A0A;border:none;font-family:'Nunito';font-size:12px;font-weight:800;cursor:pointer">🔄</button>
-  </div>
-
-  <!-- KPI tareas -->
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
-    <div class="kpi" style="padding:10px"><div class="kpi-val" id="t-kpi-total" style="font-size:22px">—</div><div class="kpi-lbl">Total</div></div>
-    <div class="kpi" style="padding:10px"><div class="kpi-val" id="t-kpi-ok" style="font-size:22px;color:#43A047">—</div><div class="kpi-lbl">Hechas</div></div>
-    <div class="kpi" style="padding:10px"><div class="kpi-val" id="t-kpi-pend" style="font-size:22px;color:#E53935">—</div><div class="kpi-lbl">Pendientes</div></div>
-  </div>
-
-  <div class="card" id="tareas-list-panel" style="padding:0 14px"><div class="loading-panel">⏳</div></div>
-
-  <div style="display:flex;gap:8px;margin-top:12px">
-    <button onclick="generarTareasHoy()" class="btn btn-ghost" style="flex:1;justify-content:center;padding:10px">🔄 Regenerar</button>
-    <button onclick="mostrarRanking()" class="btn btn-gold" style="flex:1;justify-content:center;padding:10px">🏆 Ranking</button>
-  </div>
-
-  <!-- RANKING -->
-  <div id="ranking-panel" style="display:none;margin-top:16px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-      <div style="font-size:13px;font-weight:800;color:#fff">🏆 Ranking de rendimiento</div>
-      <select id="ranking-periodo" onchange="cargarRanking()" style="background:#1E1E1E;border:1px solid #2A2A2A;border-radius:8px;padding:5px 10px;font-family:'Nunito';font-size:11px;color:#fff;outline:none">
-        <option value="hoy">Hoy</option>
-        <option value="semana">Esta semana</option>
-        <option value="mes">Este mes</option>
-      </select>
-    </div>
-    <div id="ranking-list"></div>
-  </div>
-</div>
-
-<!-- ═══ EMPLEADOS ══════════════════════════════════ -->
-<div id="tab-empleados" class="sec" style="display:none">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-    <div class="sec-title" style="margin:0">Empleados</div>
-    <button onclick="abrirNuevoEmpleado()" class="btn btn-gold" style="padding:7px 14px;font-size:12px">+ Agregar</button>
-  </div>
-
-  <div class="card" id="empleados-list" style="padding:0 14px"><div class="loading-panel">⏳</div></div>
-
-  <!-- Form nuevo empleado -->
-  <div id="emp-form" style="display:none">
-    <div class="card" style="margin-top:12px">
-      <div class="card-title" id="emp-form-titulo">➕ Nuevo empleado</div>
-      <input type="hidden" id="emp-id">
-      <div class="fg"><label>Nombre</label><input id="emp-nombre" placeholder="Ej: María García"></div>
-      <div class="fg">
-        <label>PIN de acceso (4 dígitos)</label>
-        <input id="emp-pin" type="number" placeholder="1234" maxlength="4"
-          style="font-size:24px;font-weight:800;letter-spacing:8px;text-align:center">
-        <div class="fg-hint">El empleado usa este PIN para ingresar a la app de tareas</div>
-      </div>
-      <div class="tog-row">
-        <div><div class="tog-lbl">Empleado activo</div></div>
-        <label class="tog"><input type="checkbox" id="emp-activo" checked><div class="tog-sl"></div></label>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:14px">
-        <button onclick="guardarEmpleado()" class="btn btn-gold" style="flex:1;justify-content:center;padding:12px">💾 Guardar</button>
-        <button onclick="$('emp-form').style.display='none'" class="btn btn-ghost" style="padding:12px 16px">Cancelar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Plantillas de tareas -->
-  <div style="margin-top:20px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <div class="sec-title" style="margin:0">Plantillas de tareas</div>
-      <button onclick="abrirNuevaPlantilla()" class="btn btn-ghost" style="padding:6px 12px;font-size:11px">+ Nueva</button>
-    </div>
-    <div class="card" id="plantillas-list" style="padding:0 14px"><div class="loading-panel">⏳</div></div>
-  </div>
-
-  <!-- Form nueva plantilla -->
-  <div id="plantilla-form" style="display:none">
-    <div class="card" style="margin-top:12px">
-      <div class="card-title" id="plantilla-form-titulo">➕ Nueva tarea plantilla</div>
-      <input type="hidden" id="pt-id">
-      <div class="fg"><label>Título</label><input id="pt-titulo" placeholder="Ej: Limpiar vidrieras"></div>
-      <div class="fg"><label>Descripción (opcional)</label><input id="pt-desc" placeholder="Detalle de la tarea..."></div>
-      <div class="fg-row">
-        <div class="fg">
-          <label>Categoría</label>
-          <select id="pt-cat" style="background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none;width:100%">
-            <option value="apertura">🔑 Apertura</option>
-            <option value="cierre">🔒 Cierre</option>
-            <option value="limpieza">🧹 Limpieza</option>
-            <option value="stock">📦 Stock</option>
-            <option value="empanadas">🫓 Empanadas</option>
-            <option value="pedidos">🛒 Pedidos</option>
-            <option value="atencion">😊 Atención</option>
-          </select>
-        </div>
-        <div class="fg">
-          <label>Turno</label>
-          <select id="pt-turno" style="background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none;width:100%">
-            <option value="mañana">🌅 Mañana</option>
-            <option value="tarde">🌆 Tarde</option>
-            <option value="noche">🌙 Noche</option>
-          </select>
-        </div>
-      </div>
-      <div class="fg">
-        <label>Días de la semana</label>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px" id="pt-dias">
-          <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#aaa;cursor:pointer"><input type="checkbox" value="1" checked> Lun</label>
-          <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#aaa;cursor:pointer"><input type="checkbox" value="2" checked> Mar</label>
-          <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#aaa;cursor:pointer"><input type="checkbox" value="3" checked> Mié</label>
-          <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#aaa;cursor:pointer"><input type="checkbox" value="4" checked> Jue</label>
-          <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#aaa;cursor:pointer"><input type="checkbox" value="5" checked> Vie</label>
-          <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#aaa;cursor:pointer"><input type="checkbox" value="6"> Sáb</label>
-          <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#aaa;cursor:pointer"><input type="checkbox" value="0"> Dom</label>
-        </div>
-      </div>
-      <div class="fg">
-        <label>Empleado asignado por defecto</label>
-        <select id="pt-empleado" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
-          <option value="">Sin asignar (libre para todos)</option>
-        </select>
-        <div class="fg-hint">El empleado asignado la verá destacada en su celular</div>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:14px">
-        <button onclick="guardarPlantilla()" class="btn btn-gold" style="flex:1;justify-content:center;padding:12px">💾 Guardar</button>
-        <button onclick="$('plantilla-form').style.display='none'" class="btn btn-ghost" style="padding:12px 16px">Cancelar</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══ COMPRAS ════════════════════════════════════ -->
-<div id="tab-compras" class="sec" style="display:none">
-
-  <!-- Sub-tabs -->
-  <div style="display:flex;gap:6px;margin-bottom:14px">
-    <button class="compras-stab on" onclick="comprasSubTab(this,'faltantes')" style="flex:1;min-width:60px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#C9A84C;color:#0A0A0A;border:none">📦 Faltantes</button>
-    <button class="compras-stab" onclick="comprasSubTab(this,'pedido-auto')" style="flex:1;min-width:60px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">🤖 Auto pedido</button>
-    <button class="compras-stab" onclick="comprasSubTab(this,'pedido')" style="flex:1;min-width:60px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">📋 Pedido</button>
-    <button class="compras-stab" onclick="comprasSubTab(this,'config-stock')" style="flex:1;min-width:60px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">⚙️ Config</button>
-    <button class="compras-stab" onclick="comprasSubTab(this,'proveedores')" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">🏢 Proveedores</button>
-  </div>
-
-  <!-- FALTANTES -->
-  <div id="compras-faltantes">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <div>
-        <div style="font-size:13px;font-weight:800;color:#fff">Faltantes reportados</div>
-        <div style="font-size:10px;color:#555" id="falt-fecha-label">Hoy</div>
-      </div>
-      <div style="display:flex;gap:6px">
-        <button onclick="loadFaltantesPanel()" style="padding:6px 10px;border-radius:8px;background:#1E1E1E;border:1px solid #2A2A2A;color:#aaa;font-family:'Nunito';font-size:11px;cursor:pointer">🔄</button>
-        <button onclick="armarPedidoDesde()" style="padding:6px 12px;border-radius:8px;background:#C9A84C;border:none;color:#0A0A0A;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer">📋 Armar pedido</button>
-      </div>
-    </div>
-
-    <!-- IA Alert -->
-    <div id="ia-alert" style="display:none;background:linear-gradient(135deg,#1A1500,#0A0A1A);border:1px solid #C9A84C44;border-radius:12px;padding:14px;margin-bottom:12px">
-      <div style="font-size:10px;font-weight:800;color:#C9A84C;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">🤖 Análisis inteligente</div>
-      <div id="ia-texto" style="font-size:12px;color:#aaa;line-height:1.6"></div>
-    </div>
-
-    <div class="card" id="faltantes-panel-list" style="padding:0 14px"><div class="loading-panel">⏳</div></div>
-  </div>
-
-  <!-- ARMAR PEDIDO -->
-  <div id="compras-pedido" style="display:none">
-    <div style="margin-bottom:12px">
-      <div style="font-size:13px;font-weight:800;color:#fff;margin-bottom:4px">Pedido de compra</div>
-      <div style="font-size:10px;color:#555">Seleccioná proveedor, revisá cantidades y enviá por WhatsApp</div>
-    </div>
-
-    <div class="fg">
-      <label>Proveedor</label>
-      <select id="pedido-proveedor" onchange="cargarItemsPedido()"
-        style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
-        <option value="">Seleccioná un proveedor...</option>
-      </select>
-    </div>
-
-    <div id="pedido-items-container" style="display:none">
-      <div class="card" id="pedido-items-list" style="padding:0 14px;margin-bottom:12px"></div>
-
-      <div style="background:#161616;border:1px solid #222;border-radius:12px;padding:14px;margin-bottom:12px">
-        <div style="font-size:11px;font-weight:800;color:#C9A84C;margin-bottom:8px">➕ Agregar producto manual</div>
-        <div style="display:flex;gap:8px">
-          <input id="pedido-add-prod" placeholder="Buscar producto..."
-            style="flex:1;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:8px 12px;font-family:'Nunito';font-size:12px;color:#fff;outline:none"
-            oninput="buscarProdPedido(this.value)">
-          <input id="pedido-add-qty" type="number" value="1" min="1"
-            style="width:60px;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:8px;font-family:'Nunito';font-size:13px;font-weight:800;color:#C9A84C;outline:none;text-align:center">
-        </div>
-        <div id="pedido-add-result" style="margin-top:6px"></div>
-      </div>
-
-      <div class="fg"><label>Notas del pedido</label><input id="pedido-notas" placeholder="Ej: Delivery martes, pagar en 30 días..."></div>
-
-      <div style="display:flex;gap:8px">
-        <button onclick="enviarPedidoWsp()" class="btn btn-gold" style="flex:1;justify-content:center;padding:13px">💬 Enviar por WhatsApp</button>
-        <button onclick="guardarBorrador()" class="btn btn-ghost" style="padding:13px 16px">💾 Borrador</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- PROVEEDORES -->
-  <div id="compras-proveedores" style="display:none">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-      <div class="sec-title" style="margin:0">Proveedores</div>
-      <button onclick="abrirNuevoProveedor()" class="btn btn-gold" style="padding:7px 14px;font-size:12px">+ Agregar</button>
-    </div>
-    <div class="card" id="proveedores-list" style="padding:0 14px"><div class="loading-panel">⏳</div></div>
-
-    <div id="prov-form" style="display:none">
-      <div class="card" style="margin-top:12px">
-        <div class="card-title" id="prov-form-titulo">➕ Nuevo proveedor</div>
-        <input type="hidden" id="prov-id">
-        <div class="fg"><label>Nombre del proveedor</label><input id="prov-nombre" placeholder="Ej: Distribuidora Bebidas"></div>
-        <div class="fg"><label>Contacto / Representante</label><input id="prov-contacto" placeholder="Juan García"></div>
-        <div class="fg"><label>WhatsApp (con código de país)</label><input id="prov-wsp" placeholder="5493444000000"></div>
-        <div class="fg">
-          <label>Días de pedido</label>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px" id="prov-dias">
-            <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#aaa;cursor:pointer"><input type="checkbox" value="1"> Lun</label>
-            <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#aaa;cursor:pointer"><input type="checkbox" value="2"> Mar</label>
-            <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#aaa;cursor:pointer"><input type="checkbox" value="3"> Mié</label>
-            <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#aaa;cursor:pointer"><input type="checkbox" value="4"> Jue</label>
-            <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#aaa;cursor:pointer"><input type="checkbox" value="5"> Vie</label>
-            <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#aaa;cursor:pointer"><input type="checkbox" value="6"> Sáb</label>
-          </div>
-        </div>
-        <div class="fg"><label>Hora límite de pedido</label><input id="prov-hora" type="time" value="10:00"></div>
-        <div style="display:flex;gap:8px;margin-top:14px">
-          <button onclick="guardarProveedor()" class="btn btn-gold" style="flex:1;justify-content:center;padding:12px">💾 Guardar</button>
-          <button onclick="$('prov-form').style.display='none'" class="btn btn-ghost" style="padding:12px 16px">Cancelar</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-</div>
-
-  <!-- AUTO PEDIDO -->
-  <div id="compras-pedido-auto" style="display:none">
-    <div style="font-size:11px;color:#555;margin-bottom:12px">El sistema detecta qué productos están bajo stock mínimo y arma el pedido por proveedor automáticamente</div>
-
-    <!-- Botón analizar -->
-    <button onclick="analizarStockParaPedido()" class="btn btn-gold btn-full" style="margin-bottom:14px">
-      🔍 Analizar stock y generar pedidos
-    </button>
-
-    <!-- Resultado por proveedor -->
-    <div id="auto-pedido-resultado"></div>
-  </div>
-
-  <!-- CONFIG STOCK MÍNIMO Y PROVEEDORES -->
-  <div id="compras-config-stock" style="display:none">
-
-    <!-- Sub-tabs config -->
-    <div style="display:flex;gap:6px;margin-bottom:12px">
-      <button class="cfg-stock-tab on" onclick="cfgStockTab(this,'minimos')" style="flex:1;padding:7px;border-radius:8px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#C9A84C;color:#0A0A0A;border:none">📊 Stock mínimo</button>
-      <button class="cfg-stock-tab" onclick="cfgStockTab(this,'asignar-prov')" style="flex:1;padding:7px;border-radius:8px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">🏭 Asignar prov.</button>
-    </div>
-
-    <!-- STOCK MÍNIMO POR CATEGORÍA -->
-    <div id="cfg-minimos">
-      <div style="font-size:11px;color:#555;margin-bottom:12px">Configurá el stock mínimo por categoría. Se aplica a todos los productos de esa categoría que tengan stock en 0.</div>
-      <div id="cfg-minimos-lista"><div class="loading-panel">⏳</div></div>
-      <button onclick="aplicarMinimosCat()" class="btn btn-gold btn-full" style="margin-top:12px">✅ Aplicar a todos los productos</button>
-    </div>
-
-    <!-- ASIGNAR PROVEEDOR POR CATEGORÍA -->
-    <div id="cfg-asignar-prov" style="display:none">
-      <div style="font-size:11px;color:#555;margin-bottom:12px">Asignás un proveedor por defecto a cada categoría. Los productos sin proveedor lo heredan.</div>
-      <div id="cfg-prov-lista"><div class="loading-panel">⏳</div></div>
-      <button onclick="aplicarProvCat()" class="btn btn-gold btn-full" style="margin-top:12px">✅ Aplicar a todos los productos</button>
-    </div>
-
-  </div>
-
-</div>
-
-<!-- ═══ CAJA ══════════════════════════════════════ -->
-<div id="tab-caja" class="sec" style="display:none">
-
-  <!-- Selector de caja + turno -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-    <select id="caja-sel" onchange="loadCaja()"
-      style="background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;font-weight:800;color:#C9A84C;outline:none">
-      <option value="">Cargando...</option>
-    </select>
-    <select id="caja-turno" onchange="loadCaja()"
-      style="background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;font-weight:800;color:#fff;outline:none">
-      <option value="mañana">🌅 Mañana</option>
-      <option value="tarde">🌆 Tarde</option>
-      <option value="noche">🌙 Noche</option>
-    </select>
-  </div>
-  <div style="display:flex;gap:8px;margin-bottom:16px">
-    <input type="date" id="caja-fecha" onchange="loadCaja()"
-      style="flex:1;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
-    <select id="caja-cajera" onchange="loadCaja()"
-      style="flex:1;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:12px;color:#fff;outline:none">
-      <option value="">Todas las cajeras</option>
-    </select>
-  </div>
-
-  <!-- Estado de la caja -->
-  <div id="caja-estado-bar" style="background:#161616;border:1px solid #222;border-radius:12px;padding:14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">
-    <div>
-      <div style="font-size:11px;color:#555;margin-bottom:3px">Estado</div>
-      <div style="font-size:14px;font-weight:800;color:#fff" id="caja-estado-txt">—</div>
-    </div>
-    <div style="text-align:right">
-      <div style="font-size:11px;color:#555;margin-bottom:3px">Efectivo esperado</div>
-      <div style="font-size:20px;font-weight:900;color:#C9A84C" id="caja-efectivo-txt">$0</div>
-    </div>
-  </div>
-
-  <!-- KPIs del día -->
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
-    <div class="kpi" style="padding:10px"><div class="kpi-val" id="kpi-efect" style="font-size:18px">$0</div><div class="kpi-lbl">Efectivo</div></div>
-    <div class="kpi" style="padding:10px"><div class="kpi-val" id="kpi-deb"   style="font-size:18px">$0</div><div class="kpi-lbl">Débito</div></div>
-    <div class="kpi" style="padding:10px"><div class="kpi-val" id="kpi-mp"    style="font-size:18px">$0</div><div class="kpi-lbl">MP</div></div>
-    <div class="kpi" style="padding:10px"><div class="kpi-val" id="kpi-egr"   style="font-size:18px;color:#E53935">$0</div><div class="kpi-lbl">Egresos</div></div>
-    <div class="kpi" style="padding:10px"><div class="kpi-val" id="kpi-ret"   style="font-size:18px;color:#E53935">$0</div><div class="kpi-lbl">Retiros</div></div>
-    <div class="kpi" style="padding:10px"><div class="kpi-val" id="kpi-tot"   style="font-size:18px;color:#43A047">$0</div><div class="kpi-lbl">Total ventas</div></div>
-  </div>
-
-  <!-- Botones de acción rápida -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
-    <button onclick="abrirMovimiento('apertura')"     class="btn btn-ghost" style="justify-content:center;padding:11px;font-size:12px">🔓 Apertura</button>
-    <button onclick="abrirMovimiento('venta_efectivo')" class="btn btn-ghost" style="justify-content:center;padding:11px;font-size:12px">💵 Venta efectivo</button>
-    <button onclick="abrirMovimiento('venta_debito')"   class="btn btn-ghost" style="justify-content:center;padding:11px;font-size:12px">💳 Venta débito</button>
-    <button onclick="abrirMovimiento('venta_mp')"       class="btn btn-ghost" style="justify-content:center;padding:11px;font-size:12px">💙 Venta MP</button>
-    <button onclick="abrirMovimiento('egreso')"         class="btn btn-ghost" style="justify-content:center;padding:11px;font-size:12px">📤 Egreso</button>
-    <button onclick="abrirMovimiento('retiro_dueno')"   class="btn btn-ghost" style="justify-content:center;padding:11px;font-size:12px">💼 Retiro dueño</button>
-  </div>
-
-  <!-- Movimientos del día -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-    <div style="font-size:11px;font-weight:800;color:#C9A84C;text-transform:uppercase;letter-spacing:1px">Movimientos</div>
-    <button onclick="loadCaja()" style="padding:4px 10px;border-radius:7px;background:#1E1E1E;border:1px solid #2A2A2A;color:#555;font-family:'Nunito';font-size:10px;cursor:pointer">🔄</button>
-  </div>
-  <div class="card" id="caja-movs" style="padding:0 14px;margin-bottom:12px"><div class="loading-panel">⏳</div></div>
-
-  <!-- Cierre de caja -->
-  <div class="card" id="caja-cierre-form">
-    <div class="card-title">🔒 Cierre de caja</div>
-    <div class="fg">
-      <label>Efectivo contado físicamente ($)</label>
-      <button onclick="toggleBilletesCierre()" id="btn-billetes-cierre"
-        style="width:100%;padding:10px;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;font-family:'Nunito';font-size:12px;font-weight:800;color:#C9A84C;cursor:pointer;margin-bottom:8px">
-        🪙 Contar por billetes
+    <div class="nav-group">
+      <div class="nav-group-label">Operaciones</div>
+      <button class="nav-item" onclick="navTo('productos',this)">
+        <span class="nav-item-icon">📦</span> Productos
       </button>
-      <div id="cierre-billetes-wrap" style="display:none;background:#1A1A1A;border-radius:10px;padding:12px;margin-bottom:10px">
-        <div id="cierre-billetes-filas"></div>
-        <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid #222;margin-top:4px">
-          <span style="font-size:12px;font-weight:800;color:#fff">Total</span>
-          <span style="font-size:18px;font-weight:900;color:#C9A84C" id="cierre-billetes-total">$0</span>
-        </div>
-      </div>
-      <input id="caja-contado" type="number" placeholder="0" oninput="calcularDiferencia()"
-        style="font-size:20px;font-weight:900;color:#C9A84C;text-align:center">
+      <button class="nav-item" onclick="navTo('stock',this)">
+        <span class="nav-item-icon">🏪</span> Stock
+      </button>
+      <button class="nav-item" onclick="navTo('mermas',this)">
+        <span class="nav-item-icon">🗑</span> Mermas
+      </button>
+      <button class="nav-item" onclick="navTo('compras',this)">
+        <span class="nav-item-icon">🛍️</span> Compras
+      </button>
+      <button class="nav-item" onclick="navTo('precios',this)">
+        <span class="nav-item-icon">🏷️</span> Precios
+      </button>
     </div>
-    <div style="background:#1A1A1A;border-radius:10px;padding:12px;margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px">
-        <span style="color:#555">Efectivo esperado</span>
-        <span style="color:#fff;font-weight:700" id="cierre-esperado">$0</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px">
-        <span style="color:#555">Efectivo contado</span>
-        <span style="color:#fff;font-weight:700" id="cierre-contado">$0</span>
-      </div>
-      <div style="height:1px;background:#222;margin:8px 0"></div>
-      <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:800">
-        <span style="color:#555">Diferencia</span>
-        <span id="cierre-diferencia" style="color:#43A047">$0</span>
-      </div>
+
+    <div class="nav-group">
+      <div class="nav-group-label">Carnicería</div>
+      <button class="nav-item" onclick="navTo('carniceria',this)">
+        <span class="nav-item-icon">🥩</span> Carnicería
+      </button>
     </div>
-    <div class="fg"><label>Monto a depositar ($)</label><input id="caja-deposito" type="number" placeholder="0"></div>
-    <div class="fg"><label>Notas del cierre</label><input id="caja-notas-cierre" placeholder="Ej: Todo correcto, sobraron $500..."></div>
-    <button onclick="cerrarCaja()" class="btn btn-gold btn-full" style="margin-top:4px">🔒 Cerrar caja del día</button>
-  </div>
 
-  <!-- Historial de cierres -->
-  <div style="margin-top:16px">
-    <div style="font-size:11px;font-weight:800;color:#C9A84C;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Historial de cierres</div>
-    <div id="caja-historial"><div class="loading-panel" style="padding:20px">⏳</div></div>
-  </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Finanzas</div>
+      <button class="nav-item" onclick="navTo('finanzas',this)">
+        <span class="nav-item-icon">📈</span> Finanzas
+      </button>
+      <button class="nav-item" onclick="navTo('objetivos',this)">
+        <span class="nav-item-icon">🎯</span> Objetivos
+      </button>
+      <button class="nav-item" onclick="navTo('ia',this)">
+        <span class="nav-item-icon">🤖</span> IA
+      </button>
+    </div>
 
+    <div class="nav-group">
+      <div class="nav-group-label">Equipo</div>
+      <button class="nav-item" onclick="navTo('empleados',this)">
+        <span class="nav-item-icon">👷</span> Empleados
+      </button>
+      <button class="nav-item" onclick="navTo('fichaje',this)">
+        <span class="nav-item-icon">⏱</span> Fichaje
+      </button>
+      <button class="nav-item" onclick="navTo('clientes',this)">
+        <span class="nav-item-icon">👥</span> Clientes
+      </button>
+      <button class="nav-item" onclick="navTo('fidelidad',this)">
+        <span class="nav-item-icon">💛</span> Fidelidad
+      </button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-label">Más</div>
+      <button class="nav-item" onclick="navTo('pedidos',this)">
+        <span class="nav-item-icon">📋</span> Pedidos
+      </button>
+      <button class="nav-item" onclick="navTo('carga',this)">
+        <span class="nav-item-icon">⚡</span> Carga rápida
+      </button>
+      <button class="nav-item" onclick="navTo('prediccion',this)">
+        <span class="nav-item-icon">🔮</span> Predicción
+      </button>
+      <button class="nav-item" onclick="navTo('visual',this)">
+        <span class="nav-item-icon">🎨</span> Visual
+      </button>
+      <button class="nav-item" onclick="navTo('operaciones',this)">
+        <span class="nav-item-icon">⚙️</span> Operaciones
+      </button>
+      <button class="nav-item" onclick="navTo('carteles',this)">
+        <span class="nav-item-icon">🖨</span> Carteles
+      </button>
+      <button class="nav-item" onclick="navTo('ayuda',this)">
+        <span class="nav-item-icon">❓</span> Ayuda
+      </button>
+    </div>
+
+  </nav>
 </div>
 
-<!-- MODAL MOVIMIENTO -->
-<div style="position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:flex-end;z-index:200" id="modal-movimiento" onclick="if(event.target===this)cerrarMovimiento()">
-  <div style="background:#161616;border-radius:20px 20px 0 0;padding:24px 20px 32px;width:100%;max-width:680px;margin:0 auto;max-height:90vh;overflow-y:auto">
-    <div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:4px" id="mov-titulo">Registrar movimiento</div>
-    <div style="font-size:11px;color:#555;margin-bottom:16px" id="mov-subtitulo">—</div>
-    <input type="hidden" id="mov-tipo">
+<!-- ══ MAIN CONTENT ══════════════════════════════════════ -->
+<div class="main-content">
 
-    <!-- CONTADOR DE BILLETES (solo para efectivo) -->
-    <div id="mov-billetes-wrap" style="display:none;margin-bottom:16px">
-      <div style="font-size:10px;font-weight:800;color:#C9A84C;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Conteo de billetes</div>
-      <div id="billetes-filas"></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;margin-top:4px;border-top:2px solid #C9A84C44">
-        <div style="font-size:13px;font-weight:800;color:#fff">Total contado</div>
-        <div style="font-size:24px;font-weight:900;color:#C9A84C" id="billetes-total">$0</div>
-      </div>
-    </div>
-
-    <!-- MONTO MANUAL (para otros tipos) -->
-    <div id="mov-monto-wrap">
-      <div class="fg"><label>Monto ($)</label>
-        <input id="mov-monto" type="number" placeholder="0" oninput="sincronizarMonto()" style="font-size:24px;font-weight:900;color:#C9A84C;text-align:center">
-      </div>
-    </div>
-
-    <div class="fg"><label>Concepto / Descripción</label>
-      <input id="mov-concepto" placeholder="Ej: Compra de bolsas, pan para empanadas...">
-    </div>
-    <div style="display:flex;gap:8px;margin-top:4px">
-      <button onclick="cerrarMovimiento()" class="btn btn-ghost" style="flex:1;justify-content:center;padding:13px">Cancelar</button>
-      <button onclick="guardarMovimiento()" class="btn btn-gold" style="flex:1;justify-content:center;padding:13px">💾 Guardar</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══ FICHAJE ════════════════════════════════════ -->
-<div id="tab-fichaje" class="sec" style="display:none">
-
-  <!-- Filtros -->
-  <div style="display:flex;gap:8px;margin-bottom:14px">
-    <input type="date" id="fich-fecha" onchange="loadFichaje()"
-      style="flex:1;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
-    <select id="fich-emp" onchange="loadFichaje()"
-      style="flex:1;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:12px;color:#fff;outline:none">
-      <option value="">Todos</option>
-    </select>
-  </div>
-
-  <!-- KPIs -->
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
-    <div class="kpi" style="padding:10px"><div class="kpi-val" id="fich-presentes" style="font-size:22px">—</div><div class="kpi-lbl">Presentes</div></div>
-    <div class="kpi" style="padding:10px"><div class="kpi-val" id="fich-tardanzas" style="font-size:22px;color:#E53935">—</div><div class="kpi-lbl">Tardanzas</div></div>
-    <div class="kpi" style="padding:10px"><div class="kpi-val" id="fich-horas"     style="font-size:22px;color:#C9A84C">—</div><div class="kpi-lbl">Horas tot.</div></div>
-  </div>
-
-  <!-- Lista -->
-  <div class="card" id="fichaje-list" style="padding:0 14px"><div class="loading-panel">⏳</div></div>
-
-  <!-- Resumen semanal -->
-  <div style="margin-top:16px">
-    <div style="font-size:11px;font-weight:800;color:#C9A84C;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Resumen semanal</div>
-    <div id="fichaje-semana"><div class="loading-panel" style="padding:20px">⏳</div></div>
-  </div>
-</div>
-
-<!-- ═══ MERMAS ═════════════════════════════════════ -->
-<div id="tab-mermas" class="sec" style="display:none">
-
-  <!-- Sub-tabs mermas/lotes -->
-  <div style="display:flex;gap:6px;margin-bottom:14px">
-    <button class="merma-stab on" onclick="mermaSubTab(this,'mermas')" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#C9A84C;color:#0A0A0A;border:none">🗑 Mermas</button>
-    <button class="merma-stab" onclick="mermaSubTab(this,'lotes')" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#1E1E1E;color:#aaa;border:1px solid #2A2A2A">📦 Lotes / Vencimientos</button>
-  </div>
-
-  <!-- MERMAS -->
-  <div id="mermas-panel-mermas">
-  <!-- Filtros -->
-  <div style="display:flex;gap:8px;margin-bottom:10px">
-    <input type="date" id="merma-desde" onchange="loadMermas()"
-      style="flex:1;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:12px;color:#fff;outline:none">
-    <select id="merma-tipo-fil" onchange="loadMermas()"
-      style="flex:1;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 10px;font-family:'Nunito';font-size:12px;color:#fff;outline:none">
-      <option value="">Todos los tipos</option>
-      <option value="vencido">📅 Vencidos</option>
-      <option value="roto">💔 Rotos</option>
-      <option value="robado">🚨 Robados</option>
-      <option value="devolucion">↩ Devoluciones</option>
-      <option value="otro">❓ Otros</option>
-    </select>
-  </div>
-
-  <!-- KPIs -->
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
-    <div class="kpi" style="padding:10px"><div class="kpi-val" id="merma-kpi-cant" style="font-size:22px;color:#E53935">—</div><div class="kpi-lbl">Reportes</div></div>
-    <div class="kpi" style="padding:10px"><div class="kpi-val" id="merma-kpi-perd" style="font-size:18px;color:#E53935">—</div><div class="kpi-lbl">Pérdida est.</div></div>
-    <div class="kpi" style="padding:10px"><div class="kpi-val" id="merma-kpi-recl" style="font-size:22px;color:#FFB74D">—</div><div class="kpi-lbl">Reclamos</div></div>
-  </div>
-
-  <!-- Alerta vencimientos próximos -->
-  <div id="merma-alerta-vto" style="display:none;background:linear-gradient(135deg,#2E1A00,#1A0A00);border:1px solid #E5393544;border-radius:12px;padding:14px;margin-bottom:12px">
-    <div style="font-size:10px;font-weight:800;color:#EF9A9A;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">⚠️ Vencimientos próximos</div>
-    <div id="merma-vtos-list" style="font-size:12px;color:#aaa;line-height:1.8"></div>
-  </div>
-
-  <!-- Lista de mermas -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-    <div style="font-size:11px;font-weight:800;color:#C9A84C;text-transform:uppercase;letter-spacing:1px">Mermas reportadas</div>
-    <div style="display:flex;gap:6px">
-      <button onclick="loadMermas()" style="padding:4px 10px;border-radius:7px;background:#1E1E1E;border:1px solid #2A2A2A;color:#555;font-family:'Nunito';font-size:10px;cursor:pointer">🔄</button>
-      <button onclick="exportarMermasWsp()" style="padding:4px 10px;border-radius:7px;background:#1A2E1A;border:1px solid #2A3A2A;color:#81C784;font-family:'Nunito';font-size:10px;font-weight:700;cursor:pointer">💬 Enviar reporte</button>
-    </div>
-  </div>
-  <div class="card" id="mermas-panel-list" style="padding:0 14px"><div class="loading-panel">⏳</div></div>
-
-  </div><!-- /mermas-panel-mermas -->
-
-  <!-- LOTES / VENCIMIENTOS -->
-  <div id="mermas-panel-lotes" style="display:none">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger" id="hamburger-btn" onclick="toggleSidebar()">
+        <span></span><span></span><span></span>
+      </button>
       <div>
-        <div style="font-size:13px;font-weight:800;color:#fff">Lotes con vencimiento</div>
-        <div style="font-size:10px;color:#555">Registrá cada ingreso con su fecha de vto</div>
-      </div>
-      <button onclick="abrirNuevoLote()" class="btn btn-gold" style="padding:7px 14px;font-size:12px">+ Nuevo lote</button>
-    </div>
-    <div style="display:flex;gap:6px;margin-bottom:12px">
-      <select id="lote-filtro" onchange="loadLotes()"
-        style="flex:1;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:8px 10px;font-family:'Nunito';font-size:12px;color:#fff;outline:none">
-        <option value="">Todos los lotes activos</option>
-        <option value="urgente">🔴 Vencen en 3 días</option>
-        <option value="proximo">🟡 Vencen en 7 días</option>
-        <option value="ok">✅ Sin urgencia</option>
-      </select>
-      <button onclick="loadLotes()" style="padding:8px 12px;border-radius:9px;background:#1E1E1E;border:1px solid #2A2A2A;color:#aaa;font-family:'Nunito';font-size:11px;cursor:pointer">🔄</button>
-    </div>
-    <div id="lotes-list"><div class="loading-panel">⏳</div></div>
-
-    <!-- Form nuevo lote -->
-    <div id="lote-form" style="display:none">
-      <div class="card" style="margin-top:12px">
-        <div class="card-title" id="lote-form-titulo">➕ Nuevo lote</div>
-        <input type="hidden" id="lote-id">
-        <div class="fg">
-          <label>Buscar producto</label>
-          <input id="lote-buscar" placeholder="Nombre o código de barra..." oninput="buscarProdLote(this.value)">
-          <div id="lote-buscar-result" style="margin-top:6px"></div>
-        </div>
-        <input type="hidden" id="lote-prod-id">
-        <div class="fg">
-          <label>Producto seleccionado</label>
-          <input id="lote-prod-nombre" placeholder="Buscá arriba para seleccionar" readonly style="color:#C9A84C;font-weight:700">
-        </div>
-        <div class="fg-row">
-          <div class="fg">
-            <label>Cantidad</label>
-            <input id="lote-cantidad" type="number" placeholder="0" min="0.1" step="0.1" style="font-size:20px;font-weight:900;color:#C9A84C;text-align:center">
-          </div>
-          <div class="fg">
-            <label>Unidad</label>
-            <select id="lote-unidad" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
-              <option value="unidad">Unidad</option>
-              <option value="kg">Kg</option>
-              <option value="caja">Caja</option>
-              <option value="pack">Pack</option>
-            </select>
-          </div>
-        </div>
-        <div class="fg">
-          <label>Fecha de vencimiento</label>
-          <input id="lote-fecha-vto" type="date" style="font-size:15px;font-weight:700;color:#E53935">
-          <div class="fg-hint" id="lote-dias-hint"></div>
-        </div>
-        <div class="fg-row">
-          <div class="fg">
-            <label>Precio de compra ($) — opcional</label>
-            <input id="lote-precio-compra" type="number" placeholder="0">
-          </div>
-          <div class="fg">
-            <label>Proveedor — opcional</label>
-            <select id="lote-proveedor" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
-              <option value="">Sin proveedor</option>
-            </select>
-          </div>
-        </div>
-        <div class="fg"><label>Notas</label><input id="lote-notas" placeholder="Ej: Lote del martes, 2da entrega..."></div>
-        <div style="display:flex;gap:8px;margin-top:4px">
-          <button onclick="guardarLote()" class="btn btn-gold" style="flex:1;justify-content:center;padding:12px">💾 Guardar lote</button>
-          <button onclick="$('lote-form').style.display='none'" class="btn btn-ghost" style="padding:12px 16px">Cancelar</button>
-        </div>
+        <div class="topbar-title" id="topbar-title">Dashboard</div>
+        <div class="topbar-fecha" id="fecha-hoy"></div>
       </div>
     </div>
-  </div><!-- /lotes -->
-
-</div>
-
-<!-- ═══ STOCK ══════════════════════════════════════ -->
-<div id="tab-stock" class="sec" style="display:none">
-  <div style="display:flex;gap:8px;margin-bottom:12px">
-    <input id="stock-buscar-panel" placeholder="🔍 Buscar producto..." oninput="loadStockPanel()"
-      style="flex:1;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
-    <select id="stock-cat-panel" onchange="loadStockPanel()"
-      style="background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:9px 10px;font-family:'Nunito';font-size:12px;color:#fff;outline:none">
-      <option value="">Todas</option>
-      <option>Empanadas</option><option>Bebidas</option><option>Lácteos</option>
-      <option>Fiambres</option><option>Almacén</option><option>Limpieza</option><option>Kiosco</option>
-    </select>
-  </div>
-  <div style="display:flex;gap:6px;margin-bottom:12px">
-    <select id="stock-filtro-panel" onchange="loadStockPanel()"
-      style="flex:1;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:8px 10px;font-family:'Nunito';font-size:12px;color:#fff;outline:none">
-      <option value="">Todos los productos</option>
-      <option value="alerta">⚠️ Stock bajo en góndola</option>
-      <option value="sin_gondola">🚫 Sin stock en góndola</option>
-      <option value="deposito_ok">📦 Con stock en depósito</option>
-    </select>
-  </div>
-  <div class="card" id="stock-panel-list" style="padding:0 14px"><div class="loading-panel">⏳</div></div>
-</div>
-
-<!-- ═══ OBJETIVOS ═══════════════════════════════════ -->
-<div id="tab-objetivos" class="sec" style="display:none">
-  <div class="sec-title">Objetivos de venta</div>
-
-  <!-- Objetivo de hoy -->
-  <div class="card" style="background:linear-gradient(135deg,#1A1500,#0A0A0A);border-color:#C9A84C33">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-      <div class="card-title" style="margin:0">🎯 Objetivo de hoy</div>
-      <button onclick="editarObjetivoDia()" style="padding:5px 12px;border-radius:8px;background:#C9A84C;border:none;color:#0A0A0A;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer">✏️ Editar</button>
-    </div>
-    <div style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px">
-        <div>
-          <div style="font-size:32px;font-weight:900;color:#C9A84C" id="obj-real-hoy">$0</div>
-          <div style="font-size:12px;color:#555">vendido hoy</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:18px;font-weight:800;color:#fff" id="obj-meta-hoy">$0</div>
-          <div style="font-size:11px;color:#555">objetivo</div>
-        </div>
-      </div>
-      <div style="background:#1A1A1A;border-radius:4px;height:8px;overflow:hidden;margin-bottom:4px">
-        <div id="obj-barra-hoy" style="height:100%;background:linear-gradient(90deg,#C9A84C,#43A047);width:0%;border-radius:4px;transition:width .5s"></div>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:#555">
-        <span id="obj-pct-hoy">0%</span>
-        <span id="obj-falta-hoy">Falta $0</span>
-      </div>
+    <div class="topbar-right">
+      <div style="font-size:11px;font-weight:700;color:#9CA3AF" id="topbar-caja-estado"></div>
     </div>
   </div>
 
-  <!-- Form editar objetivo -->
-  <div id="obj-form" style="display:none">
-    <div class="card">
-      <div class="card-title">✏️ Configurar objetivo</div>
-      <input type="hidden" id="obj-id">
-      <div class="fg"><label>Tipo</label>
-        <select id="obj-tipo" style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:9px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none">
-          <option value="diario">📅 Diario</option>
-          <option value="semanal">📆 Semanal</option>
-          <option value="mensual">📅 Mensual</option>
-        </select>
-      </div>
-      <div class="fg"><label>Meta de ventas ($)</label>
-        <input id="obj-meta" type="number" placeholder="150000" style="font-size:22px;font-weight:900;color:#C9A84C;text-align:center">
-      </div>
-      <div class="fg"><label>Fecha</label><input id="obj-fecha" type="date"></div>
-      <div class="fg"><label>Notas (opcional)</label><input id="obj-notas" placeholder="Ej: Fin de semana, esperamos más ventas..."></div>
-      <div style="display:flex;gap:8px">
-        <button onclick="guardarObjetivo()" class="btn btn-gold" style="flex:1;justify-content:center;padding:12px">💾 Guardar</button>
-        <button onclick="$('obj-form').style.display='none'" class="btn btn-ghost" style="padding:12px 16px">Cancelar</button>
-      </div>
-    </div>
-  </div>
+  <!-- Page content (all sections go here) -->
+  <div class="page-content">
+  <div class="wrap">
 
-  <!-- Historial objetivos -->
-  <div style="margin-top:14px">
-    <div style="font-size:11px;font-weight:800;color:#C9A84C;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Historial</div>
-    <div id="obj-historial"><div class="loading-panel" style="padding:20px">⏳</div></div>
-  </div>
-</div>
 
 <!-- ═══ ALERTAS ════════════════════════════════════ -->
 <div id="tab-alertas" class="sec" style="display:none">
@@ -2300,10 +1207,14 @@ body{font-family:'Nunito',sans-serif;background:#0A0A0A;color:#fff;min-height:10
 </div>
 
 </div><!-- /wrap -->
+  </div><!-- /page-content -->
+</div><!-- /main-content -->
 
 <div class="toast" id="toast"></div>
 
 <script>
+
+
 
 
 
@@ -2370,6 +1281,130 @@ function mostrarModal(titulo, contenido) {
   document.body.appendChild(m);
 }
 
+
+// ══════════════════════════════════════════════════
+// NAVEGACIÓN NUEVA — sidebar + bottom nav + drawer
+// ══════════════════════════════════════════════════
+var _navTitles = {
+  alertas:'Alertas', pedidos:'Pedidos', carga:'Carga rápida',
+  dashboard:'Dashboard', prediccion:'Predicción', clientes:'Clientes',
+  visual:'Visual', operaciones:'Operaciones', productos:'Productos',
+  fidelidad:'Fidelidad', tareas:'Tareas', empleados:'Empleados',
+  compras:'Compras', caja:'Caja', fichaje:'Fichaje', mermas:'Mermas',
+  stock:'Stock', objetivos:'Objetivos', carteles:'Carteles',
+  precios:'Precios', ia:'Inteligencia Artificial', finanzas:'Finanzas',
+  carniceria:'Carnicería', ayuda:'Ayuda',
+};
+
+function navTo(id, btnEl) {
+  // Hide all sections
+  document.querySelectorAll('.sec').forEach(function(s){ s.style.display='none'; });
+
+  // Show target section
+  var sec = document.getElementById('tab-' + id);
+  if (sec) sec.style.display = 'block';
+
+  // Update sidebar active state
+  document.querySelectorAll('.nav-item').forEach(function(b){ b.classList.remove('on'); });
+  if (btnEl && btnEl.classList.contains('nav-item')) btnEl.classList.add('on');
+
+  // Update bottom nav active state
+  document.querySelectorAll('.bottom-nav-item').forEach(function(b){ b.classList.remove('on'); });
+  var bni = document.getElementById('bni-' + id);
+  if (bni) bni.classList.add('on');
+
+  // Update topbar title
+  var title = document.getElementById('topbar-title');
+  if (title) title.textContent = _navTitles[id] || id;
+
+  // Close sidebar on mobile
+  closeSidebar();
+
+  // Fire load functions (same as old tab() function)
+  _loadSection(id);
+
+  // Scroll to top
+  window.scrollTo(0,0);
+}
+
+function navFromDrawer(id) {
+  closeMoreDrawer();
+  navTo(id, null);
+}
+
+function _loadSection(id) {
+  // Mirror old tab() loadSection logic
+  if (id==='dashboard')   loadDashboard && loadDashboard();
+  if (id==='pedidos')     loadPedidos && loadPedidos();
+  if (id==='alertas')     loadAlertas && loadAlertas();
+  if (id==='productos')   loadProductos && loadProductos();
+  if (id==='caja')        loadCaja && loadCaja();
+  if (id==='finanzas')    loadFinanzas && loadFinanzas();
+  if (id==='fichaje')     loadFichaje && loadFichaje();
+  if (id==='mermas')      loadMermas && loadMermas();
+  if (id==='stock')       loadStock && loadStock();
+  if (id==='tareas')      loadTareas && loadTareas();
+  if (id==='empleados')   loadEmpleados && loadEmpleados();
+  if (id==='compras')     loadCompras && loadCompras();
+  if (id==='clientes')    loadClientes && loadClientes();
+  if (id==='fidelidad')   loadFidelidad && loadFidelidad();
+  if (id==='prediccion')  loadPrediccion && loadPrediccion();
+  if (id==='objetivos')   loadObjetivos && loadObjetivos();
+  if (id==='precios')     loadPrecios && loadPrecios();
+  if (id==='carteles')    loadCarteles && loadCarteles();
+  if (id==='ia')          initIA && initIA();
+  if (id==='carniceria')  loadCarniceria && loadCarniceria();
+  if (id==='operaciones') loadOperaciones && loadOperaciones();
+  if (id==='ayuda')       loadAyuda && loadAyuda();
+  if (id==='visual')      loadVisual && loadVisual();
+  if (id==='carga')       initCargaRapida && initCargaRapida();
+}
+
+// Keep backward compatibility with old tab() calls in the code
+function tab(btnEl, id) { navTo(id, null); }
+
+// ── SIDEBAR TOGGLE ────────────────────────────────
+function toggleSidebar() {
+  var sb  = document.getElementById('sidebar');
+  var ov  = document.getElementById('sidebar-overlay');
+  if (!sb) return;
+  var open = sb.classList.contains('open');
+  sb.classList.toggle('open', !open);
+  if (ov) ov.classList.toggle('open', !open);
+}
+
+function closeSidebar() {
+  var sb = document.getElementById('sidebar');
+  var ov = document.getElementById('sidebar-overlay');
+  if (sb) sb.classList.remove('open');
+  if (ov) ov.classList.remove('open');
+}
+
+// ── MORE DRAWER ───────────────────────────────────
+function toggleMoreDrawer() {
+  var d  = document.getElementById('more-drawer');
+  var ov = document.getElementById('more-drawer-overlay');
+  if (!d) return;
+  var open = d.classList.contains('open');
+  d.classList.toggle('open', !open);
+  if (ov) ov.classList.toggle('open', !open);
+}
+
+function closeMoreDrawer() {
+  var d  = document.getElementById('more-drawer');
+  var ov = document.getElementById('more-drawer-overlay');
+  if (d)  d.classList.remove('open');
+  if (ov) ov.classList.remove('open');
+}
+
+// ── INIT NAVIGATION ───────────────────────────────
+function initNav() {
+  // Show dashboard by default
+  document.querySelectorAll('.sec').forEach(function(s){ s.style.display='none'; });
+  var dash = document.getElementById('tab-dashboard');
+  if (dash) dash.style.display = 'block';
+  _loadSection('dashboard');
+}
 function confirmar(msg) {
   return new Promise(function(resolve) {
     var m = document.createElement('div');
@@ -2391,37 +1426,7 @@ function toast(msg, dur=2600) {
 // ══════════════════════════════════════════════════
 // TABS
 // ══════════════════════════════════════════════════
-function tab(btn, id) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
-  btn.classList.add('on');
-  ['alertas','pedidos','carga','dashboard','prediccion','clientes','visual','operaciones','productos','fidelidad','tareas','empleados','compras','caja','fichaje','mermas','stock','objetivos','carteles','precios','ia','finanzas','carniceria','ayuda'].forEach(t => {
-    const el = $('tab-'+t); if(el) el.style.display = t === id ? 'block' : 'none';
-  });
-  if (id === 'alertas')     loadAlertas();
-  if (id === 'pedidos')     loadPedidos();
-  if (id === 'carga')       initCargaRapida();
-  if (id === 'dashboard')   loadDashboard();
-  if (id === 'prediccion')  loadPrediccion();
-  if (id === 'clientes')    loadClientes();
-  if (id === 'visual')      loadConfig();
-  if (id === 'operaciones') loadConfig();
-  if (id === 'productos')   loadProductos();
-  if (id === 'fidelidad')   { loadConfig(); loadClientesStats(); }
-  if (id === 'tareas')     loadTareas();
-  if (id === 'empleados')  loadEmpleados();
-  if (id === 'compras')    loadCompras();
-  if (id === 'caja')       loadCaja();
-  if (id === 'fichaje')    loadFichaje();
-  if (id === 'mermas')     loadMermas();
-  if (id === 'stock')      loadStockPanel();
-  if (id === 'objetivos')  loadObjetivos();
-  if (id === 'carteles')   loadCarteles();
-  if (id === 'precios')    loadPrecios();
-  if (id === 'ia')         initIA();
-  if (id === 'finanzas')   loadFinanzas();
-  if (id === 'carniceria') loadCarniceria();
-  if (id === 'ayuda')      loadAyuda();
-}
+
 
 // ══════════════════════════════════════════════════
 // ESTADO LOCAL
@@ -9213,6 +8218,64 @@ var CarnSim = (function() {
 
 
 
+
+
 </script>
+
+<!-- Bottom nav (mobile) -->
+<div class="bottom-nav">
+  <div class="bottom-nav-items">
+    <button class="bottom-nav-item on" onclick="navTo('dashboard',this)" id="bni-dashboard">
+      <span class="bni-icon">📊</span>
+      <span class="bni-label">Inicio</span>
+    </button>
+    <button class="bottom-nav-item" onclick="navTo('caja',this)" id="bni-caja">
+      <span class="bni-icon">💰</span>
+      <span class="bni-label">Caja</span>
+    </button>
+    <button class="bottom-nav-item" onclick="navTo('carniceria',this)" id="bni-carniceria">
+      <span class="bni-icon">🥩</span>
+      <span class="bni-label">Carne</span>
+    </button>
+    <button class="bottom-nav-item" onclick="navTo('productos',this)" id="bni-productos">
+      <span class="bni-icon">📦</span>
+      <span class="bni-label">Productos</span>
+      <div class="bottom-nav-dot" id="bnd-productos"></div>
+    </button>
+    <button class="bottom-nav-item" onclick="toggleMoreDrawer()" id="bni-more">
+      <span class="bni-icon">☰</span>
+      <span class="bni-label">Más</span>
+    </button>
+  </div>
+</div>
+
+<!-- More drawer (mobile) -->
+<div class="more-drawer" id="more-drawer">
+  <div class="more-drawer-handle"></div>
+  <div class="more-drawer-title">Todas las secciones</div>
+  <div class="more-drawer-grid">
+    <button class="more-drawer-item" onclick="navFromDrawer('alertas')"><span class="more-drawer-item-icon">🚨</span><span class="more-drawer-item-label">Alertas</span></button>
+    <button class="more-drawer-item" onclick="navFromDrawer('tareas')"><span class="more-drawer-item-icon">✅</span><span class="more-drawer-item-label">Tareas</span></button>
+    <button class="more-drawer-item" onclick="navFromDrawer('stock')"><span class="more-drawer-item-icon">🏪</span><span class="more-drawer-item-label">Stock</span></button>
+    <button class="more-drawer-item" onclick="navFromDrawer('mermas')"><span class="more-drawer-item-icon">🗑</span><span class="more-drawer-item-label">Mermas</span></button>
+    <button class="more-drawer-item" onclick="navFromDrawer('compras')"><span class="more-drawer-item-icon">🛍️</span><span class="more-drawer-item-label">Compras</span></button>
+    <button class="more-drawer-item" onclick="navFromDrawer('finanzas')"><span class="more-drawer-item-icon">📈</span><span class="more-drawer-item-label">Finanzas</span></button>
+    <button class="more-drawer-item" onclick="navFromDrawer('empleados')"><span class="more-drawer-item-icon">👷</span><span class="more-drawer-item-label">Empleados</span></button>
+    <button class="more-drawer-item" onclick="navFromDrawer('fichaje')"><span class="more-drawer-item-icon">⏱</span><span class="more-drawer-item-label">Fichaje</span></button>
+    <button class="more-drawer-item" onclick="navFromDrawer('precios')"><span class="more-drawer-item-icon">🏷️</span><span class="more-drawer-item-label">Precios</span></button>
+    <button class="more-drawer-item" onclick="navFromDrawer('ia')"><span class="more-drawer-item-icon">🤖</span><span class="more-drawer-item-label">IA</span></button>
+    <button class="more-drawer-item" onclick="navFromDrawer('clientes')"><span class="more-drawer-item-icon">👥</span><span class="more-drawer-item-label">Clientes</span></button>
+    <button class="more-drawer-item" onclick="navFromDrawer('objetivos')"><span class="more-drawer-item-icon">🎯</span><span class="more-drawer-item-label">Objetivos</span></button>
+    <button class="more-drawer-item" onclick="navFromDrawer('prediccion')"><span class="more-drawer-item-icon">🔮</span><span class="more-drawer-item-label">Pred.</span></button>
+    <button class="more-drawer-item" onclick="navFromDrawer('carga')"><span class="more-drawer-item-icon">⚡</span><span class="more-drawer-item-label">Carga</span></button>
+    <button class="more-drawer-item" onclick="navFromDrawer('pedidos')"><span class="more-drawer-item-icon">📋</span><span class="more-drawer-item-label">Pedidos</span></button>
+    <button class="more-drawer-item" onclick="navFromDrawer('fidelidad')"><span class="more-drawer-item-icon">💛</span><span class="more-drawer-item-label">Fidelidad</span></button>
+    <button class="more-drawer-item" onclick="navFromDrawer('visual')"><span class="more-drawer-item-icon">🎨</span><span class="more-drawer-item-label">Visual</span></button>
+    <button class="more-drawer-item" onclick="navFromDrawer('carteles')"><span class="more-drawer-item-icon">🖨</span><span class="more-drawer-item-label">Carteles</span></button>
+    <button class="more-drawer-item" onclick="navFromDrawer('operaciones')"><span class="more-drawer-item-icon">⚙️</span><span class="more-drawer-item-label">Operac.</span></button>
+    <button class="more-drawer-item" onclick="navFromDrawer('ayuda')"><span class="more-drawer-item-icon">❓</span><span class="more-drawer-item-label">Ayuda</span></button>
+  </div>
+</div>
+
 </body>
 </html>
