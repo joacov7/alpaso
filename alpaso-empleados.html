@@ -11,93 +11,137 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden;font-family:'Nunito',sans-serif}
-body{background:#111}
-.app{width:100%;max-width:480px;height:100dvh;margin:0 auto;background:#0A0A0A;display:flex;flex-direction:column;overflow:hidden}
+body{background:#F4F5F7}
+.app{width:100%;max-width:480px;height:100dvh;margin:0 auto;background:#F4F5F7;display:flex;flex-direction:column;overflow:hidden}
 
-/* LOGIN */
-.login{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:32px;text-align:center}
-.login-logo{font-family:'Bebas Neue';font-size:48px;color:#C9A84C;letter-spacing:4px;margin-bottom:4px}
-.login-sub{font-size:12px;color:#555;margin-bottom:32px}
-.login h2{font-size:18px;font-weight:800;color:#fff;margin-bottom:6px}
-.login p{font-size:12px;color:#555;margin-bottom:24px}
-.empleado-list{display:flex;flex-direction:column;gap:8px;width:100%;margin-bottom:20px}
-.emp-btn{background:#161616;border:1.5px solid #222;border-radius:12px;padding:14px 18px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:12px;transition:all .15s}
-.emp-btn:active{border-color:#C9A84C;background:#1A1500}
-.emp-av{width:40px;height:40px;border-radius:50%;background:#222;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#C9A84C;flex-shrink:0}
-.emp-name{font-size:15px;font-weight:800;color:#fff}
-.emp-role{font-size:11px;color:#555}
+/* ── LOGIN ─────────────────────────────────────────── */
+.login{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:32px;text-align:center;background:#fff}
+.login-logo{font-family:'Bebas Neue';font-size:52px;color:#E53935;letter-spacing:4px;margin-bottom:2px}
+.login-sub{font-size:11px;color:#9CA3AF;margin-bottom:28px;text-transform:uppercase;letter-spacing:1px;font-weight:700}
+.login h2{font-size:17px;font-weight:800;color:#1A1A2E;margin-bottom:4px}
+.login p{font-size:12px;color:#9CA3AF;margin-bottom:20px}
+.empleado-list{display:flex;flex-direction:column;gap:8px;width:100%;margin-bottom:16px}
+.emp-btn{background:#fff;border:1.5px solid #E5E7EB;border-radius:14px;padding:14px 16px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:12px;transition:all .15s;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.emp-btn:active{border-color:#E53935;background:#FEF2F2;transform:scale(.98)}
+.emp-av{width:42px;height:42px;border-radius:50%;background:#FEE2E2;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#E53935;flex-shrink:0}
+.emp-nombre{font-size:15px;font-weight:800;color:#1A1A2E}
+.emp-sector{font-size:11px;color:#9CA3AF;font-weight:600}
 
-/* PIN */
-.pin-screen{display:none;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:32px;text-align:center}
-.pin-name{font-size:22px;font-weight:900;color:#fff;margin-bottom:4px}
-.pin-sub{font-size:12px;color:#555;margin-bottom:28px}
-.pin-dots{display:flex;gap:14px;margin-bottom:28px}
-.pin-dot{width:16px;height:16px;border-radius:50%;background:#222;border:2px solid #333;transition:all .2s}
-.pin-dot.on{background:#C9A84C;border-color:#C9A84C}
-.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:240px}
-.pin-key{background:#161616;border:1.5px solid #222;border-radius:12px;padding:16px;font-size:22px;font-weight:800;color:#fff;cursor:pointer;text-align:center;transition:all .15s}
-.pin-key:active{background:#C9A84C;color:#0A0A0A;border-color:#C9A84C}
-.pin-key.del{font-size:16px;color:#555}
-.pin-error{color:#E53935;font-size:12px;font-weight:700;margin-top:12px;min-height:18px}
+/* Scanner button */
+#btn-scanner{background:#1A1A2E!important;border:none!important;border-radius:12px!important;color:#fff!important;font-weight:800!important}
+#cod-manual{background:#F9FAFB!important;border:1.5px solid #E5E7EB!important;border-radius:10px!important;color:#1A1A2E!important}
+#cod-manual::placeholder{color:#9CA3AF!important}
 
-/* MAIN */
+/* ── PIN ───────────────────────────────────────────── */
+.pin-screen{display:none;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:32px;text-align:center;background:#fff}
+.pin-name{font-size:24px;font-weight:900;color:#1A1A2E;margin-bottom:3px}
+.pin-sub{font-size:12px;color:#9CA3AF;margin-bottom:28px;font-weight:600}
+.pin-dots{display:flex;gap:14px;margin-bottom:32px}
+.pin-dot{width:16px;height:16px;border-radius:50%;background:#F3F4F6;border:2px solid #E5E7EB;transition:all .2s}
+.pin-dot.on{background:#E53935;border-color:#E53935}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:260px}
+.pin-key{background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:14px;padding:18px;font-size:24px;font-weight:800;color:#1A1A2E;cursor:pointer;text-align:center;transition:all .12s;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.pin-key:active{background:#E53935;color:#fff;border-color:#E53935;transform:scale(.95)}
+.pin-key.del{font-size:16px;color:#9CA3AF}
+.pin-error{color:#E53935;font-size:12px;font-weight:800;margin-top:12px;min-height:18px}
+
+/* ── MAIN SCREEN ────────────────────────────────────── */
 .main{display:none;flex-direction:column;flex:1;overflow:hidden}
-.main-hdr{background:#111;padding:max(env(safe-area-inset-top),12px) 16px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1A1A1A;flex-shrink:0}
+
+/* Header */
+.main-hdr{background:#1A1A2E;padding:max(env(safe-area-inset-top),12px) 16px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .main-hdr-left{display:flex;align-items:center;gap:10px}
-.hdr-av{width:34px;height:34px;border-radius:50%;background:#C9A84C;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#0A0A0A}
+.hdr-av{width:36px;height:36px;border-radius:50%;background:#E53935;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#fff}
 .hdr-name{font-size:14px;font-weight:800;color:#fff}
-.hdr-fecha{font-size:10px;color:#555}
-.btn-salir{padding:6px 12px;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:8px;color:#555;font-family:'Nunito';font-size:11px;font-weight:700;cursor:pointer}
+.hdr-fecha{font-size:10px;color:rgba(255,255,255,.4);font-weight:600}
+.btn-salir{padding:7px 14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:rgba(255,255,255,.6);font-family:'Nunito';font-size:11px;font-weight:700;cursor:pointer}
 
-/* TURNOS */
-.turnos{display:flex;gap:6px;padding:10px 14px;background:#111;border-bottom:1px solid #1A1A1A;flex-shrink:0}
-.turno-btn{flex:1;padding:7px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;border:1.5px solid #222;background:transparent;color:#555;transition:all .15s}
-.turno-btn.on{background:#C9A84C;color:#0A0A0A;border-color:#C9A84C}
+/* Module tabs */
+.modulos{display:flex;gap:0;background:#1A1A2E;padding:0 12px 12px;flex-shrink:0}
+.modulo-btn{flex:1;padding:8px 4px;border-radius:10px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;border:none;background:transparent;color:rgba(255,255,255,.4);transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:3px}
+.modulo-btn .mod-icon{font-size:20px}
+.modulo-btn.on{background:rgba(255,255,255,.1);color:#fff}
 
-/* PROGRESO */
-.progreso{padding:10px 16px;background:#111;border-bottom:1px solid #1A1A1A;flex-shrink:0}
-.prog-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
-.prog-txt{font-size:11px;font-weight:700;color:#555}
-.prog-pct{font-size:13px;font-weight:900;color:#C9A84C}
-.prog-bar{height:5px;background:#1A1A1A;border-radius:3px;overflow:hidden}
-.prog-fill{height:100%;background:linear-gradient(90deg,#C9A84C,#E8C96A);border-radius:3px;transition:width .4s}
+/* Progress bar */
+.progreso{padding:10px 16px;background:#fff;border-bottom:1px solid #F3F4F6;flex-shrink:0}
+.prog-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.prog-txt{font-size:11px;font-weight:700;color:#6B7280}
+.prog-pct{font-size:14px;font-weight:900;color:#E53935}
+.prog-bar{height:6px;background:#F3F4F6;border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,#E53935,#F87171);border-radius:3px;transition:width .4s}
 
-/* TAREAS */
+/* Content scroll */
 .tareas-scroll{flex:1;overflow-y:auto;padding:12px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .tareas-scroll::-webkit-scrollbar{display:none}
-.cat-titulo{font-size:9px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1.5px;padding:8px 4px 6px}
-.tarea{background:#161616;border:1.5px solid #222;border-radius:12px;padding:14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px;cursor:pointer;transition:all .2s}
-.tarea.completada{background:#0A1A0A;border-color:#1A3A1A;opacity:.7}
-.tarea.en_progreso{border-color:#C9A84C44;background:#1A1500}
-.tarea-check{width:26px;height:26px;border-radius:8px;border:2px solid #333;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;transition:all .2s;font-size:14px}
-.tarea.completada .tarea-check{background:#1A3A1A;border-color:#43A047;color:#43A047}
-.tarea.en_progreso .tarea-check{background:#1A1500;border-color:#C9A84C;color:#C9A84C}
+
+/* Section titles */
+.cat-titulo{font-size:9px;font-weight:800;color:#9CA3AF;text-transform:uppercase;letter-spacing:1.5px;padding:10px 4px 6px}
+
+/* Task cards */
+.tarea{background:#fff;border:1.5px solid #E5E7EB;border-radius:14px;padding:14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px;cursor:pointer;transition:all .15s;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.tarea:active{transform:scale(.98)}
+.tarea.completada{background:#F0FDF4;border-color:#BBF7D0;opacity:.8}
+.tarea.en_progreso{border-color:#E53935;background:#FEF2F2}
+.tarea-check{width:28px;height:28px;border-radius:9px;border:2px solid #E5E7EB;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;transition:all .2s;font-size:14px;background:#F9FAFB}
+.tarea.completada .tarea-check{background:#DCFCE7;border-color:#22C55E;color:#16A34A}
+.tarea.en_progreso .tarea-check{background:#FEE2E2;border-color:#E53935;color:#E53935}
 .tarea-info{flex:1;min-width:0}
-.tarea-titulo{font-size:13px;font-weight:700;color:#fff;margin-bottom:3px;line-height:1.3}
-.tarea.completada .tarea-titulo{text-decoration:line-through;color:#555}
-.tarea-desc{font-size:10px;color:#555;line-height:1.4}
-.tarea-meta{font-size:10px;color:#C9A84C;margin-top:4px;font-weight:700}
+.tarea-titulo{font-size:13px;font-weight:700;color:#1A1A2E;margin-bottom:3px;line-height:1.3}
+.tarea.completada .tarea-titulo{text-decoration:line-through;color:#9CA3AF}
+.tarea-desc{font-size:10px;color:#9CA3AF;line-height:1.4}
+.tarea-meta{font-size:10px;color:#E53935;margin-top:4px;font-weight:700}
 .tarea-badge{font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;margin-left:6px}
-.badge-mañana{background:rgba(251,140,0,.15);color:#FFB74D}
-.badge-tarde{background:rgba(33,150,243,.15);color:#64B5F6}
-.badge-noche{background:rgba(156,39,176,.15);color:#CE93D8}
+.badge-mañana{background:#FEF3C7;color:#D97706}
+.badge-tarde{background:#DBEAFE;color:#2563EB}
+.badge-noche{background:#F3E8FF;color:#7C3AED}
 
-/* MODAL NOTAS */
-.modal{position:absolute;inset:0;background:rgba(0,0,0,.8);display:none;align-items:flex-end;z-index:100}
+/* Inner module search inputs */
+.mod-buscar{width:100%;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:11px;padding:11px 14px;font-family:'Nunito';font-size:14px;color:#1A1A2E;outline:none;margin-bottom:10px}
+.mod-buscar:focus{border-color:#E53935;background:#fff}
+.mod-buscar::placeholder{color:#9CA3AF}
+
+/* Result cards in modules */
+.res-card{background:#fff;border:1.5px solid #E5E7EB;border-radius:12px;padding:12px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.res-card-nombre{font-size:14px;font-weight:800;color:#1A1A2E;margin-bottom:4px}
+.res-card-sub{font-size:11px;color:#9CA3AF}
+
+/* Buttons inside modules */
+.mod-btn-primary{width:100%;padding:14px;background:#E53935;border:none;border-radius:12px;font-family:'Nunito';font-size:15px;font-weight:800;color:#fff;cursor:pointer;margin-top:8px}
+.mod-btn-primary:active{background:#CC2F2B;transform:scale(.98)}
+.mod-btn-ghost{width:100%;padding:12px;background:#F4F5F7;border:1.5px solid #E5E7EB;border-radius:12px;font-family:'Nunito';font-size:14px;font-weight:700;color:#4B5563;cursor:pointer;margin-top:6px}
+
+/* Form inputs in modules */
+.mod-input{width:100%;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:11px;padding:11px 14px;font-family:'Nunito';font-size:14px;color:#1A1A2E;outline:none}
+.mod-input:focus{border-color:#E53935;background:#fff}
+.mod-label{font-size:10px;font-weight:800;color:#6B7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;display:block}
+.mod-field{margin-bottom:12px}
+.mod-select{width:100%;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:11px;padding:11px 14px;font-family:'Nunito';font-size:14px;color:#1A1A2E;outline:none}
+
+/* Modal */
+.modal{position:absolute;inset:0;background:rgba(0,0,0,.5);display:none;align-items:flex-end;z-index:100}
 .modal.on{display:flex}
-.modal-box{background:#161616;border-radius:20px 20px 0 0;padding:24px 20px 32px;width:100%}
-.modal-titulo{font-size:16px;font-weight:800;color:#fff;margin-bottom:4px}
-.modal-sub{font-size:11px;color:#555;margin-bottom:16px}
-.modal-notas{width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:10px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none;resize:none;min-height:80px;margin-bottom:16px}
-.modal-notas:focus{border-color:#C9A84C}
+.modal-box{background:#fff;border-radius:20px 20px 0 0;padding:24px 20px 32px;width:100%}
+.modal-titulo{font-size:16px;font-weight:800;color:#1A1A2E;margin-bottom:4px}
+.modal-sub{font-size:11px;color:#9CA3AF;margin-bottom:16px}
+.modal-notas{width:100%;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:10px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#1A1A2E;outline:none;resize:none;min-height:80px;margin-bottom:16px}
+.modal-notas:focus{border-color:#E53935}
 .modal-btns{display:flex;gap:8px}
-.mbtn{flex:1;padding:12px;border-radius:10px;font-family:'Nunito';font-size:13px;font-weight:800;cursor:pointer;border:none;transition:all .15s}
-.mbtn-gold{background:#C9A84C;color:#0A0A0A}
-.mbtn-ghost{background:#222;color:#aaa}
+.mbtn{flex:1;padding:13px;border-radius:12px;font-family:'Nunito';font-size:14px;font-weight:800;cursor:pointer;border:none}
+.mbtn-gold{background:#E53935;color:#fff}
+.mbtn-ghost{background:#F4F5F7;color:#6B7280;border:1.5px solid #E5E7EB}
 
-/* TOAST */
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#161616;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:700;opacity:0;transition:all .3s;pointer-events:none;border:1px solid #333;z-index:200;white-space:nowrap}
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1A1A2E;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:700;opacity:0;transition:all .3s;pointer-events:none;z-index:200;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.2)}
 .toast.on{opacity:1;transform:translateX(-50%)}
+
+/* Turnos */
+.turnos{display:flex;gap:6px;padding:10px 14px;background:#fff;border-bottom:1px solid #F3F4F6;flex-shrink:0}
+.turno-btn{flex:1;padding:8px;border-radius:10px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;border:1.5px solid #E5E7EB;background:#F9FAFB;color:#9CA3AF;transition:all .15s}
+.turno-btn.on{background:#E53935;color:#fff;border-color:#E53935}
+
+/* Scanner modal */
+#scanner-prod-modal{background:rgba(0,0,0,.92)}
+#scanner-prod-modal input{background:#1E1E1E!important;border-color:#333!important;color:#fff!important}
 </style>
 </head>
 <body>
@@ -113,7 +157,7 @@ body{background:#111}
   <!-- Scanner -->
   <div style="width:100%;margin-bottom:14px">
     <button onclick="toggleScanner()" id="btn-scanner"
-      style="width:100%;padding:11px;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:11px;font-family:'Nunito';font-size:13px;font-weight:800;color:#C9A84C;cursor:pointer">
+      style="width:100%;padding:12px;font-family:'Nunito';font-size:13px;cursor:pointer">
       📷 Escanear código
     </button>
     <div id="scanner-wrap" style="display:none;margin-top:10px;position:relative">
@@ -124,7 +168,7 @@ body{background:#111}
         style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.7);border:none;color:#fff;border-radius:50%;width:28px;height:28px;font-size:14px;cursor:pointer">✕</button>
     </div>
     <input id="cod-manual" type="text" placeholder="O ingresá el código manualmente..."
-      style="width:100%;background:#1E1E1E;border:1.5px solid #2A2A2A;border-radius:10px;padding:10px 12px;font-family:'Nunito';font-size:13px;color:#fff;outline:none;margin-top:8px"
+      style="width:100%;padding:10px 12px;font-family:'Nunito';font-size:13px;outline:none;margin-top:8px"
       oninput="buscarPorCodEmp(this.value)">
   </div>
 
@@ -198,12 +242,24 @@ body{background:#111}
   </div>
 
   <div id="modo-tareas">
-    <div class="turnos">
-      <button class="turno-btn on" onclick="setTurno(this,'mañana')">🌅 Mañana</button>
-      <button class="turno-btn"    onclick="setTurno(this,'tarde')">🌆 Tarde</button>
-      <button class="turno-btn"    onclick="setTurno(this,'noche')">🌙 Noche</button>
-      <button class="turno-btn"    onclick="setTurno(this,'todas')">📋 Todas</button>
-    </div>
+    <div class="modulos">
+  <button class="modulo-btn on" id="mod-tareas-btn" onclick="mostrarModulo('tareas')">
+    <span class="mod-icon">✅</span>
+    <span>Tareas</span>
+  </button>
+  <button class="modulo-btn" id="mod-faltantes-btn" onclick="mostrarModulo('faltantes')">
+    <span class="mod-icon">📦</span>
+    <span>Faltantes</span>
+  </button>
+  <button class="modulo-btn" id="mod-mermas-btn" onclick="mostrarModulo('mermas')">
+    <span class="mod-icon">🗑</span>
+    <span>Mermas</span>
+  </button>
+  <button class="modulo-btn" id="mod-stock-btn" onclick="mostrarModulo('stock')">
+    <span class="mod-icon">📊</span>
+    <span>Stock</span>
+  </button>
+</div>
   </div>
 
   <div class="progreso">
@@ -472,6 +528,7 @@ body{background:#111}
 <div class="toast" id="toast"></div>
 
 <script>
+
 
 
 
@@ -885,18 +942,17 @@ let urgenciaActual = 'normal';
 let faltSearchTimeout = null;
 
 function setModo(btn, modo) {
+  mostrarModulo(modo);
+}
+
+function mostrarModulo(modo) {
   modoActual = modo;
-  document.querySelectorAll('.modo-btn').forEach(b => {
-    b.style.background = 'transparent';
-    b.style.color = '#555';
-    b.style.border = '1.5px solid #222';
-  });
-  btn.style.background = '#C9A84C';
-  btn.style.color = '#0A0A0A';
-  btn.style.border = 'none';
-  ['tareas','faltantes','mermas','stock'].forEach(m => {
-    const el = document.getElementById('modo-'+m);
-    if (el) el.style.display = m === modo ? (m==='tareas'?'block':'flex') : 'none';
+  // Update module tab buttons
+  ['tareas','faltantes','mermas','stock'].forEach(function(m) {
+    var btnEl = document.getElementById('mod-' + m + '-btn');
+    if (btnEl) btnEl.classList.toggle('on', m === modo);
+    var panel = document.getElementById('modo-' + m);
+    if (panel) panel.style.display = m === modo ? (m==='tareas'?'block':'flex') : 'none';
   });
   if (modo === 'faltantes') cargarFaltantes();
   if (modo === 'mermas')    cargarMermasEmp();
@@ -1550,6 +1606,7 @@ async function confirmarCodProd(cod) {
   // Close scanner if still open
   cerrarScannerProd();
 }
+
 
 </script>
 
