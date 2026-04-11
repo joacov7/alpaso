@@ -1089,43 +1089,159 @@ input::placeholder { color: #9CA3AF !important; }
 
 <div id="tab-mermas" class="sec" style="display:none">
 
-  <!-- Filtros -->
-  <div style="display:flex;gap:8px;margin-bottom:10px">
-    <input type="date" id="merma-desde" onchange="loadMermas()"
-      style="flex:1;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:12px;color:#1A1A2E;outline:none">
-    <select id="merma-tipo-fil" onchange="loadMermas()"
-      style="flex:1;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:9px;padding:9px 10px;font-family:'Nunito';font-size:12px;color:#1A1A2E;outline:none">
-      <option value="">Todos los tipos</option>
-      <option value="vencido">⏰ Vencidos</option>
-      <option value="roto">💔 Rotos</option>
-      <option value="robado">🚨 Robados</option>
-      <option value="devolucion">↩ Devoluciones</option>
-      <option value="otro">❓ Otros</option>
-    </select>
+  <!-- Sub-tabs -->
+  <div style="display:flex;gap:6px;margin-bottom:14px">
+    <button class="merma-stab on" onclick="mermaSubTab(this,'mermas')" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#E53935;color:#fff;border:none">🗑 Mermas</button>
+    <button class="merma-stab" onclick="mermaSubTab(this,'lotes')" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#F4F5F7;color:#4B5563;border:1px solid #E5E7EB">📦 Lotes / Vencim.</button>
+    <button class="merma-stab" onclick="mermaSubTab(this,'descuentos-cfg')" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#F4F5F7;color:#4B5563;border:1px solid #E5E7EB">⚙️ Config</button>
   </div>
 
-  <!-- KPIs -->
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
-    <div class="kpi" style="padding:10px"><div class="kpi-val" id="merma-kpi-cant" style="font-size:22px;color:#E53935">—</div><div class="kpi-lbl">Reportes</div></div>
-    <div class="kpi" style="padding:10px"><div class="kpi-val" id="merma-kpi-perd" style="font-size:18px;color:#E53935">—</div><div class="kpi-lbl">Pérdida est.</div></div>
-    <div class="kpi" style="padding:10px"><div class="kpi-val" id="merma-kpi-recl" style="font-size:22px;color:#FFB74D">—</div><div class="kpi-lbl">Reclamos</div></div>
+  <!-- MERMAS PANEL -->
+  <div id="mermas-panel-mermas">
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <input type="date" id="merma-desde" onchange="loadMermas()"
+        style="flex:1;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:12px;color:#1A1A2E;outline:none">
+      <select id="merma-tipo-fil" onchange="loadMermas()"
+        style="flex:1;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:9px;padding:9px 10px;font-family:'Nunito';font-size:12px;color:#1A1A2E;outline:none">
+        <option value="">Todos los tipos</option>
+        <option value="vencido">⏰ Vencidos</option>
+        <option value="roto">💔 Rotos</option>
+        <option value="robado">🚨 Robados</option>
+        <option value="devolucion">↩️ Devolución</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <button onclick="loadMermas()" style="padding:7px 12px;border-radius:8px;background:#F4F5F7;border:1px solid #E5E7EB;color:#4B5563;font-family:'Nunito';font-size:11px;font-weight:700;cursor:pointer">🔍 Buscar</button>
+      <button onclick="exportarMermasWsp()" style="padding:7px 12px;border-radius:8px;background:#F0FDF4;border:1px solid #BBF7D0;color:#16A34A;font-family:'Nunito';font-size:11px;font-weight:700;cursor:pointer">📤 Enviar reporte</button>
+    </div>
+    <div class="card" id="mermas-panel-list" style="padding:0 14px"><div class="loading-panel">⏳</div></div>
   </div>
 
-  <!-- Alerta vencimientos próximos -->
-  <div id="merma-alerta-vto" style="display:none;background:linear-gradient(135deg,#2E1A00,#1A0A00);border:1px solid #E5393544;border-radius:12px;padding:14px;margin-bottom:12px">
-    <div style="font-size:10px;font-weight:800;color:#EF9A9A;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">⚠️ Vencimientos próximos</div>
-    <div id="merma-vtos-list" style="font-size:12px;color:#9CA3AF;line-height:1.8"></div>
-  </div>
+  <!-- LOTES / VENCIMIENTOS -->
+  <div id="mermas-panel-lotes" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div>
+        <div style="font-size:13px;font-weight:800;color:#1A1A2E">Lotes con vencimiento</div>
+        <div style="font-size:10px;color:#9CA3AF">El sistema sugiere descuentos automáticos</div>
+      </div>
+      <button onclick="abrirNuevoLote()" class="btn btn-primary" style="padding:7px 14px;font-size:12px">+ Nuevo lote</button>
+    </div>
 
-  <!-- Lista de mermas -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-    <div style="font-size:11px;font-weight:800;color:#E53935;text-transform:uppercase;letter-spacing:1px">Mermas reportadas</div>
-    <div style="display:flex;gap:6px">
-      <button onclick="loadMermas()" style="padding:4px 10px;border-radius:7px;background:#F9FAFB;border:1px solid #2A2A2A;color:#6B7280;font-family:'Nunito';font-size:10px;cursor:pointer">🔍 Buscar</button>
-      <button onclick="exportarMermasWsp()" style="padding:4px 10px;border-radius:7px;background:#1A2E1A;border:1px solid #2A3A2A;color:#81C784;font-family:'Nunito';font-size:10px;font-weight:700;cursor:pointer">📤 Enviar reporte</button>
+    <!-- Filtro urgencia -->
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <select id="lote-filtro" onchange="loadLotes()"
+        style="flex:1;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:9px;padding:8px 10px;font-family:'Nunito';font-size:12px;color:#1A1A2E;outline:none">
+        <option value="">Todos los lotes activos</option>
+        <option value="urgente">🔴 Vencen en 3 días</option>
+        <option value="proximo">🟡 Vencen en 7 días</option>
+        <option value="ok">✅ Sin urgencia</option>
+      </select>
+      <button onclick="loadLotes()" style="padding:8px 12px;border-radius:9px;background:#F4F5F7;border:1px solid #E5E7EB;color:#4B5563;font-family:'Nunito';font-size:11px;cursor:pointer">🔄</button>
+    </div>
+
+    <div id="lotes-list"><div class="loading-panel">⏳</div></div>
+
+    <!-- Form nuevo lote -->
+    <div id="lote-form" style="display:none">
+      <div class="card" style="margin-top:12px">
+        <div class="card-title" id="lote-form-titulo">➕ Nuevo lote</div>
+        <input type="hidden" id="lote-id">
+        <div class="fg">
+          <label>Buscar producto</label>
+          <input id="lote-buscar" placeholder="Nombre o código de barra..." oninput="buscarProdLote(this.value)">
+          <div id="lote-buscar-result" style="margin-top:6px"></div>
+        </div>
+        <input type="hidden" id="lote-prod-id">
+        <div class="fg">
+          <label>Producto seleccionado</label>
+          <input id="lote-prod-nombre" placeholder="Buscá arriba para seleccionar" readonly
+            style="color:#E53935;font-weight:700;background:#FEF2F2;border-color:#FECACA">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div class="fg" style="margin:0">
+            <label>Cantidad</label>
+            <input id="lote-cantidad" type="number" placeholder="0" min="0.1" step="0.1"
+              style="font-size:20px;font-weight:900;color:#E53935;text-align:center">
+          </div>
+          <div class="fg" style="margin:0">
+            <label>Unidad</label>
+            <select id="lote-unidad">
+              <option value="unidad">Unidad</option>
+              <option value="kg">Kg</option>
+              <option value="caja">Caja</option>
+              <option value="pack">Pack</option>
+            </select>
+          </div>
+        </div>
+        <div class="fg">
+          <label>Fecha de vencimiento</label>
+          <input id="lote-fecha-vto" type="date"
+            style="font-size:15px;font-weight:700;color:#E53935" oninput="calcularDescuentoSugerido()">
+          <div id="lote-dias-hint" style="font-size:11px;color:#9CA3AF;margin-top:4px"></div>
+        </div>
+        <!-- Descuento sugerido -->
+        <div id="lote-descuento-wrap" style="display:none;background:#FEF3C7;border:1px solid #FDE68A;border-radius:10px;padding:12px;margin-bottom:12px">
+          <div style="font-size:11px;font-weight:800;color:#D97706;margin-bottom:6px">💡 Descuento sugerido según vencimiento</div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div style="font-size:22px;font-weight:900;color:#D97706" id="lote-pct-sugerido">0%</div>
+              <div style="font-size:10px;color:#9CA3AF" id="lote-precio-original"></div>
+              <div style="font-size:13px;font-weight:700;color:#1A1A2E" id="lote-precio-rebajado"></div>
+            </div>
+            <button onclick="crearCartelDesdeForm()" class="btn btn-gold" style="padding:10px 14px;font-size:12px">
+              🖨️ Crear cartel
+            </button>
+          </div>
+        </div>
+        <div class="fg-row">
+          <div class="fg">
+            <label>Precio de compra ($) — opcional</label>
+            <input id="lote-precio-compra" type="number" placeholder="0">
+          </div>
+          <div class="fg">
+            <label>Proveedor — opcional</label>
+            <select id="lote-proveedor">
+              <option value="">Sin proveedor</option>
+            </select>
+          </div>
+        </div>
+        <div class="fg"><label>Notas</label><input id="lote-notas" placeholder="Ej: Lote del martes..."></div>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button onclick="guardarLote()" class="btn btn-primary" style="flex:1;justify-content:center;padding:12px">💾 Guardar lote</button>
+          <button onclick="$('lote-form').style.display='none'" class="btn btn-ghost" style="padding:12px 16px">Cancelar</button>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="card" id="mermas-panel-list" style="padding:0 14px"><div class="loading-panel">⏳</div></div>
+
+  <!-- CONFIG DESCUENTOS POR VENCIMIENTO -->
+  <div id="mermas-panel-descuentos-cfg" style="display:none">
+    <div style="font-size:13px;font-weight:800;color:#1A1A2E;margin-bottom:4px">Descuentos por proximidad al vencimiento</div>
+    <div style="font-size:11px;color:#9CA3AF;margin-bottom:14px">Definí qué % de descuento aplicar según los días que quedan para vencer</div>
+
+    <div id="descuentos-cfg-lista"></div>
+
+    <!-- Agregar regla -->
+    <div class="card" style="margin-top:10px">
+      <div class="card-title">➕ Agregar regla</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div class="fg" style="margin:0">
+          <label>Días para vencer</label>
+          <input id="cfg-dias" type="number" placeholder="7" min="1" max="365"
+            style="font-size:18px;font-weight:800;color:#E53935;text-align:center">
+        </div>
+        <div class="fg" style="margin:0">
+          <label>Descuento %</label>
+          <input id="cfg-pct" type="number" placeholder="10" min="1" max="99"
+            style="font-size:18px;font-weight:800;color:#D97706;text-align:center">
+        </div>
+      </div>
+      <button onclick="agregarReglaDescuento()" class="btn btn-primary btn-full">+ Agregar regla</button>
+    </div>
+
+    <button onclick="guardarConfigDescuentos()" class="btn btn-gold btn-full" style="margin-top:10px">💾 Guardar configuración</button>
+  </div>
+
 </div>
 
 <div id="tab-stock" class="sec" style="display:none">
@@ -2101,6 +2217,11 @@ input::placeholder { color: #9CA3AF !important; }
 
 
 
+
+
+
+
+
 // ══════════════════════════════════════════════════
 // SUPABASE
 // ══════════════════════════════════════════════════
@@ -2727,7 +2848,7 @@ function buscarProdRapido(q) {
         <div style="font-size:12px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nombre}</div>
         <div style="font-size:10px;color:#555">${p.cat} · ${fmt(p.precio_venta)}</div>
       </div>
-      <button onclick="crAddProd(${p.id})" style="background:#C9A84C;color:#0A0A0A;border:none;border-radius:7px;padding:6px 12px;font-family:'Nunito';font-size:12px;font-weight:800;cursor:pointer;flex-shrink:0;margin-left:8px">+ Agregar</button>
+      <button onclick="crAddProd(${p.id})" style="background:#C9A84C;color:#0A0A0A;border:none;border-radius:7px;padding:6px 12px;font-family:Nunito,sans-serif;font-size:12px;font-weight:800;cursor:pointer;flex-shrink:0;margin-left:8px">+ Agregar</button>
     </div>`).join('');
 }
 
@@ -2948,8 +3069,8 @@ async function loadClientes() {
           </div>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <button onclick="wsp('${c.telefono}','','0')" style="padding:5px 10px;border-radius:7px;font-family:'Nunito';font-size:11px;font-weight:700;cursor:pointer;background:#1A2E1A;color:#81C784;border:1px solid #2A3A2A">💬 WhatsApp</button>
-          <button onclick="editarPuntos('${c.id}',${pts},'${c.nombre}')" style="padding:5px 10px;border-radius:7px;font-family:'Nunito';font-size:11px;font-weight:700;cursor:pointer;background:#1A1A2E;color:#64B5F6;border:1px solid #2A2A3A">✏️ Editar Pasos</button>
+          <button onclick="wsp('${c.telefono}','','0')" style="padding:5px 10px;border-radius:7px;font-family:Nunito,sans-serif;font-size:11px;font-weight:700;cursor:pointer;background:#1A2E1A;color:#81C784;border:1px solid #2A3A2A">💬 WhatsApp</button>
+          <button onclick="editarPuntos('${c.id}',${pts},'${c.nombre}')" style="padding:5px 10px;border-radius:7px;font-family:Nunito,sans-serif;font-size:11px;font-weight:700;cursor:pointer;background:#1A1A2E;color:#64B5F6;border:1px solid #2A2A3A">✏️ Editar Pasos</button>
         </div>
       </div>`;
     }).join('');
@@ -3041,14 +3162,14 @@ async function buscarPorCodigo(cod) {
             <div style="font-size:13px;font-weight:800;color:#fff;margin-bottom:3px">${p.nombre}</div>
             <div style="font-size:11px;color:#555">${p.cat||'Sin cat.'} · ${fmt(p.precio_venta)} · ${p.activo?'<span style="color:#43A047">✅ Activo</span>':'<span style="color:#555">⭕ Inactivo</span>'}</div>
           </div>
-          <button onclick="abrirEditar(${p.id})" style="padding:8px 14px;border-radius:9px;font-family:'Nunito';font-size:12px;font-weight:800;cursor:pointer;background:#C9A84C;color:#0A0A0A;border:none">✏️ Editar</button>
+          <button onclick="abrirEditar(${p.id})" style="padding:8px 14px;border-radius:9px;font-family:Nunito,sans-serif;font-size:12px;font-weight:800;cursor:pointer;background:#C9A84C;color:#0A0A0A;border:none">✏️ Editar</button>
         </div>
       </div>`;
       $('scan-form').style.display = 'none';
     } else {
       res.innerHTML = `<div class="card" style="margin-bottom:0">
         <div style="font-size:12px;color:#555;margin-bottom:10px">⭕ Producto no encontrado con código <strong style="color:#fff">${cod}</strong></div>
-        <button onclick="abrirNuevo('${cod}')" style="width:100%;padding:10px;border-radius:9px;font-family:'Nunito';font-size:13px;font-weight:800;cursor:pointer;background:#C9A84C;color:#0A0A0A;border:none">+ Crear producto nuevo</button>
+        <button onclick="abrirNuevo('${cod}')" style="width:100%;padding:10px;border-radius:9px;font-family:Nunito,sans-serif;font-size:13px;font-weight:800;cursor:pointer;background:#C9A84C;color:#0A0A0A;border:none">+ Crear producto nuevo</button>
       </div>`;
       $('scan-form').style.display = 'none';
     }
@@ -3289,8 +3410,8 @@ async function loadEmpleados() {
         <div style="font-size:13px;font-weight:700;color:${e.activo?'#fff':'#444'}">${e.nombre}</div>
         <div style="font-size:10px;color:#555">PIN: ${e.pin} · ${e.activo?'<span style="color:#43A047">Activo</span>':'<span style="color:#555">Inactivo</span>'}</div>
       </div>
-      <button data-eid="${e.id}" data-enombre="${e.nombre.replace(/"/g,'&quot;')}" data-epin="${e.pin}" data-eactivo="${e.activo}" class="emp-editar-btn" style="padding:5px 10px;border-radius:7px;font-family:'Nunito';font-size:11px;font-weight:700;cursor:pointer;background:#1A1A2E;color:#64B5F6;border:1px solid #2A2A3A">✏️</button>
-        style="padding:5px 10px;border-radius:7px;font-family:'Nunito';font-size:11px;font-weight:700;cursor:pointer;background:#1A1A2E;color:#64B5F6;border:1px solid #2A2A3A">✏️</button>
+      <button data-eid="${e.id}" data-enombre="${e.nombre.replace(/"/g,'&quot;')}" data-epin="${e.pin}" data-eactivo="${e.activo}" class="emp-editar-btn" style="padding:5px 10px;border-radius:7px;font-family:Nunito,sans-serif;font-size:11px;font-weight:700;cursor:pointer;background:#1A1A2E;color:#64B5F6;border:1px solid #2A2A3A">✏️</button>
+        style="padding:5px 10px;border-radius:7px;font-family:Nunito,sans-serif;font-size:11px;font-weight:700;cursor:pointer;background:#1A1A2E;color:#64B5F6;border:1px solid #2A2A3A">✏️</button>
     </div>`).join('') + '<div style="height:8px"></div>';
   loadPlantillas();
 }
@@ -3480,7 +3601,7 @@ async function loadFaltantesPanel() {
         ${f.notas ? `<div style="font-size:10px;color:#C9A84C;margin-top:2px">📝 ${f.notas}</div>` : ''}
       </div>
       <select onchange="cambiarEstadoFaltante(${f.id},this.value)"
-        style="background:#1A1A1A;border:1px solid #333;border-radius:7px;padding:4px 8px;font-family:'Nunito';font-size:10px;color:#9CA3AF;outline:none;flex-shrink:0">
+        style="background:#1A1A1A;border:1px solid #333;border-radius:7px;padding:4px 8px;font-family:Nunito,sans-serif;font-size:10px;color:#9CA3AF;outline:none;flex-shrink:0">
         <option value="pendiente" ${f.estado==='pendiente'?'selected':''}>Pendiente</option>
         <option value="en_pedido" ${f.estado==='en_pedido'?'selected':''}>En pedido</option>
         <option value="recibido"  ${f.estado==='recibido' ?'selected':''}>Recibido</option>
@@ -3590,10 +3711,10 @@ function renderPedidoItems() {
         <div style="font-size:12px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${it.producto_nombre}</div>
         <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
           <input type="number" value="${it.cantidad}" min="1" onchange="pedidoItems[${idx}].cantidad=parseFloat(this.value)"
-            style="width:60px;background:#1A1A1A;border:1px solid #333;border-radius:7px;padding:4px 8px;font-family:'Nunito';font-size:13px;font-weight:800;color:#C9A84C;outline:none;text-align:center">
+            style="width:60px;background:#1A1A1A;border:1px solid #333;border-radius:7px;padding:4px 8px;font-family:Nunito,sans-serif;font-size:13px;font-weight:800;color:#C9A84C;outline:none;text-align:center">
           <span style="font-size:11px;color:#555">${it.unidad}</span>
           <input type="number" placeholder="Costo" onchange="pedidoItems[${idx}].precio_costo=parseFloat(this.value)"
-            style="width:80px;background:#1A1A1A;border:1px solid #333;border-radius:7px;padding:4px 8px;font-family:'Nunito';font-size:11px;color:#9CA3AF;outline:none">
+            style="width:80px;background:#1A1A1A;border:1px solid #333;border-radius:7px;padding:4px 8px;font-family:Nunito,sans-serif;font-size:11px;color:#9CA3AF;outline:none">
         </div>
       </div>
       <button onclick="quitarItemPedido(${idx})" style="padding:6px;background:#2E1A1A;border:none;border-radius:7px;color:#EF9A9A;font-size:14px;cursor:pointer">✕</button>
@@ -3709,7 +3830,7 @@ async function loadProveedores() {
         <div style="font-size:10px;color:#555;margin-top:2px">${p.contacto||'—'} · Pedidos: ${dias||'no config.'} · Límite: ${p.hora_limite||'—'}</div>
         ${p.whatsapp ? `<div style="font-size:10px;color:#25D366;margin-top:1px">📱 ${p.whatsapp}</div>` : ''}
       </div>
-      <button onclick="editarProveedor(${p.id})" style="padding:5px 10px;border-radius:7px;font-family:'Nunito';font-size:11px;font-weight:700;cursor:pointer;background:#1A1A2E;color:#64B5F6;border:1px solid #2A2A3A">✏️</button>
+      <button onclick="editarProveedor(${p.id})" style="padding:5px 10px;border-radius:7px;font-family:Nunito,sans-serif;font-size:11px;font-weight:700;cursor:pointer;background:#1A1A2E;color:#64B5F6;border:1px solid #2A2A3A">✏️</button>
     </div>`;
   }).join('') + '<div style="height:8px"></div>';
 }
@@ -5709,105 +5830,9 @@ async function analizarFinanzasIA() {
 // ══════════════════════════════════════════════════
 let loteBuscarTimeout = null;
 
-function mermaSubTab(btn, id) {
-  document.querySelectorAll('.merma-stab').forEach(b => {
-    b.style.background = '#1E1E1E'; b.style.color = '#aaa'; b.style.border = '1px solid #2A2A2A';
-  });
-  btn.style.background = '#C9A84C'; btn.style.color = '#0A0A0A'; btn.style.border = 'none';
-  const pm = $('mermas-panel-mermas');
-  const pl = $('mermas-panel-lotes');
-  if (pm) pm.style.display = id === 'mermas' ? 'block' : 'none';
-  if (pl) pl.style.display = id === 'lotes'  ? 'block' : 'none';
-  if (id === 'mermas') loadMermas();
-  if (id === 'lotes')  loadLotes();
-}
 
-async function loadLotes() {
-  const el     = $('lotes-list');
-  const filtro = $('lote-filtro')?.value || '';
-  if (!el) return;
-  el.innerHTML = '<div class="loading-panel">⏳</div>';
 
-  let query = db.from('lotes_con_estado').select('*').order('dias_para_vencer');
-  if (filtro === 'urgente') query = query.lte('dias_para_vencer', 3).gte('dias_para_vencer', 0);
-  if (filtro === 'proximo') query = query.lte('dias_para_vencer', 7).gte('dias_para_vencer', 0);
-  if (filtro === 'ok')      query = query.gt('dias_para_vencer', 7);
 
-  const { data, error } = await query;
-  if (error) { el.innerHTML = '<div class="loading-panel" style="color:#E53935">Error: ' + error.message + '</div>'; return; }
-  if (!data?.length) { el.innerHTML = '<div class="loading-panel" style="color:#555">Sin lotes activos</div>'; return; }
-
-  const PRIO_COL = { critica:'#E53935', alta:'#FFB74D', media:'#C9A84C', normal:'#555' };
-
-  el.innerHTML = data.map(l => {
-    const color = PRIO_COL[l.prioridad] || '#555';
-    const fecha = new Date(l.fecha_vto + 'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'});
-    return '<div style="background:#161616;border:1px solid #222;border-left:3px solid ' + color + ';border-radius:10px;padding:13px;margin-bottom:8px">' +
-      '<div style="display:flex;align-items:flex-start;gap:10px">' +
-        '<div style="flex:1;min-width:0">' +
-          '<div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:2px">' + l.producto_nombre + '</div>' +
-          '<div style="font-size:11px;color:#555">' + l.cantidad + ' ' + (l.estado||'') + ' · Vto: ' + fecha + '</div>' +
-          (l.dias_para_vencer >= 0 ?
-            '<div style="font-size:11px;font-weight:700;color:' + color + ';margin-top:3px">' +
-              (l.dias_para_vencer === 0 ? '🔴 Vence HOY' :
-               l.dias_para_vencer === 1 ? '🔴 Vence MAÑANA' :
-               '📅 Vence en ' + l.dias_para_vencer + ' días') +
-              (l.descuento_sugerido > 0 ? ' — sugerir -' + l.descuento_sugerido + '%' : '') +
-            '</div>' : '<div style="font-size:11px;color:#E53935">⚠️ VENCIDO hace ' + Math.abs(l.dias_para_vencer) + ' días</div>') +
-        '</div>' +
-        '<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">' +
-          (l.descuento_sugerido > 0 ?
-          '<button data-pid="' + l.producto_id + '" data-precio="' + (l.precio_venta||0) + '" data-desc="' + l.descuento_sugerido + '" data-nombre="' + (l.producto_nombre||'').replace(/"/g,'&quot;') + '" class="vto-cartel-btn" style="padding:5px 8px;border-radius:7px;background:#E5393522;color:#EF9A9A;border:1px solid #E5393544;font-size:10px;font-weight:700;cursor:pointer">🖨 Cartel</button>' +
-              'style="padding:5px 8px;border-radius:7px;background:#E5393522;color:#EF9A9A;border:1px solid #E5393544;font-family:Nunito;font-size:10px;font-weight:700;cursor:pointer">🖨 Cartel</button>' : '') +
-          '<button onclick="cerrarLote(' + l.id + ')" style="padding:5px 8px;border-radius:7px;background:#1A1A1A;color:#555;border:1px solid #222;font-family:Nunito;font-size:10px;cursor:pointer">✓ Cerrar</button>' +
-        '</div>' +
-      '</div>' +
-    '</div>';
-  }).join('') + '<div style="height:8px"></div>';
-}
-
-async function abrirNuevoLote() {
-  $('lote-form-titulo').textContent = '➕ Nuevo lote';
-  $('lote-id').value = ''; $('lote-prod-id').value = ''; $('lote-prod-nombre').value = '';
-  $('lote-buscar').value = ''; $('lote-cantidad').value = ''; $('lote-precio-compra').value = '';
-  $('lote-notas').value = ''; $('lote-fecha-vto').value = ''; $('lote-dias-hint').textContent = '';
-  $('lote-unidad').value = 'unidad'; $('lote-buscar-result').innerHTML = '';
-
-  // Cargar proveedores
-  const { data: provs } = await db.from('proveedores').select('id,nombre').eq('activo',true).order('nombre');
-  const sel = $('lote-proveedor');
-  if (sel) sel.innerHTML = '<option value="">Sin proveedor</option>' +
-    (provs||[]).map(p => '<option value="' + p.id + '">' + p.nombre + '</option>').join('');
-
-  $('lote-form').style.display = 'block';
-  $('lote-form').scrollIntoView({behavior:'smooth'});
-}
-
-async function buscarProdLote(q) {
-  clearTimeout(loteBuscarTimeout);
-  const res = $('lote-buscar-result');
-  if (!res || !q || q.length < 3) { if(res) res.innerHTML = ''; return; }
-  loteBuscarTimeout = setTimeout(async () => {
-    const { data } = await db.from('productos').select('id,nombre,cat,precio_venta')
-      .or('nombre.ilike.%' + q + '%,cod_barras.ilike.%' + q + '%').eq('activo',true).limit(6);
-    if (!data?.length) { res.innerHTML = '<div style="font-size:11px;color:#555">Sin resultados</div>'; return; }
-    const box = document.createElement('div');
-    box.style.cssText = 'background:#1A1A1A;border-radius:9px;overflow:hidden';
-    data.forEach(p => {
-      const div = document.createElement('div');
-      div.style.cssText = 'padding:9px 12px;border-bottom:1px solid #222;cursor:pointer;display:flex;justify-content:space-between';
-      div.innerHTML = '<span style="font-size:12px;font-weight:700;color:#fff">' + p.nombre + '</span><span style="font-size:11px;color:#555">' + (p.cat||'') + '</span>';
-      div.onclick = () => {
-        $('lote-prod-id').value     = p.id;
-        $('lote-prod-nombre').value = p.nombre;
-        $('lote-buscar').value      = '';
-        res.innerHTML = '';
-      };
-      box.appendChild(div);
-    });
-    res.innerHTML = ''; res.appendChild(box);
-  }, 350);
-}
 
 // Actualizar hint de días al cambiar fecha
 document.addEventListener('change', function(e) {
@@ -5821,49 +5846,7 @@ document.addEventListener('change', function(e) {
   }
 });
 
-async function guardarLote() {
-  const prodId    = $('lote-prod-id')?.value;
-  const prodNom   = $('lote-prod-nombre')?.value.trim();
-  const cantidad  = parseFloat($('lote-cantidad')?.value) || 0;
-  const fechaVto  = $('lote-fecha-vto')?.value;
-  const unidad    = $('lote-unidad')?.value || 'unidad';
-  const precCompra= parseFloat($('lote-precio-compra')?.value) || null;
-  const provId    = $('lote-proveedor')?.value || null;
-  const notas     = $('lote-notas')?.value.trim() || null;
-  const id        = $('lote-id')?.value;
 
-  if (!prodNom || prodNom.trim().length < 2) { toast('⚠️ Seleccioná un producto'); return; }
-  if (!cantidad || isNaN(cantidad) || cantidad <= 0) { toast('⚠️ Ingresá una cantidad válida mayor a 0'); return; }
-  if (!fechaVto) { toast('⚠️ Ingresá la fecha de vencimiento'); return; }
-  const diasVto = Math.ceil((new Date(fechaVto) - new Date()) / 86400000);
-  if (diasVto < -365) { toast('⚠️ La fecha de vencimiento es muy antigua'); return; }
-
-  const payload = {
-    producto_id:    prodId ? parseInt(prodId) : null,
-    producto_nombre: prodNom,
-    cantidad, fecha_vto: fechaVto,
-    estado: 'activo',
-    proveedor_id:  provId ? parseInt(provId) : null,
-    precio_compra: precCompra,
-    notas,
-  };
-
-  let error;
-  if (id) { ({error} = await db.from('lotes').update(payload).eq('id',id)); }
-  else    { ({error} = await db.from('lotes').insert(payload)); }
-
-  if (error) { toast('⚠️ Error: ' + error.message); return; }
-  toast('✅ Lote guardado');
-  $('lote-form').style.display = 'none';
-  loadLotes();
-}
-
-async function cerrarLote(id) {
-  const okL = await confirmar('¿Marcar este lote como vendido/cerrado?'); if (!okL) return;
-  await db.from('lotes').update({estado:'vendido'}).eq('id',id);
-  toast('✅ Lote cerrado');
-  loadLotes();
-}
 
 
 
@@ -9068,6 +9051,404 @@ var CarnSim = (function() {
 })();
 
 
+
+
+
+
+
+
+// ══════════════════════════════════════════════════
+// LOTES Y VENCIMIENTOS CON DESCUENTOS
+// ══════════════════════════════════════════════════
+
+// Config de descuentos (defaults, se sobreescribe con localStorage)
+var _descuentosCfg = [
+  { dias: 7,  pct: 10 },
+  { dias: 5,  pct: 20 },
+  { dias: 3,  pct: 30 },
+  { dias: 1,  pct: 50 },
+];
+
+function loadDescuentosCfg() {
+  try {
+    var saved = localStorage.getItem('alpaso_descuentos_vto');
+    if (saved) _descuentosCfg = JSON.parse(saved);
+  } catch(e) {}
+}
+
+function guardarConfigDescuentos() {
+  try {
+    localStorage.setItem('alpaso_descuentos_vto', JSON.stringify(_descuentosCfg));
+    toast('✅ Configuración guardada');
+    renderDescuentosCfg();
+  } catch(e) {}
+}
+
+function getDescuentoParaDias(dias) {
+  if (dias < 0) return null; // vencido
+  // Ordenar por días ascendente y encontrar el primer umbral que aplica
+  var sorted = _descuentosCfg.slice().sort(function(a,b){ return a.dias - b.dias; });
+  for (var i = 0; i < sorted.length; i++) {
+    if (dias <= sorted[i].dias) return sorted[i].pct;
+  }
+  return 0; // sin descuento
+}
+
+function renderDescuentosCfg() {
+  var el = $('descuentos-cfg-lista'); if (!el) return;
+  loadDescuentosCfg();
+  if (!_descuentosCfg.length) {
+    el.innerHTML = '<div style="color:#9CA3AF;text-align:center;padding:12px">Sin reglas configuradas</div>';
+    return;
+  }
+  var sorted = _descuentosCfg.slice().sort(function(a,b){ return a.dias - b.dias; });
+  el.innerHTML = sorted.map(function(r, i) {
+    var urgColor = r.dias <= 2 ? '#EF4444' : r.dias <= 5 ? '#D97706' : '#6B7280';
+    return '<div style="background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px">' +
+      '<div style="flex:1">' +
+        '<div style="font-size:13px;font-weight:700;color:#1A1A2E">≤ ' + r.dias + ' días para vencer</div>' +
+        '<div style="font-size:10px;color:#9CA3AF">Descuento automático sugerido</div>' +
+      '</div>' +
+      '<div style="font-size:22px;font-weight:900;color:' + urgColor + '">' + r.pct + '%</div>' +
+      '<button onclick="eliminarReglaDescuento(' + i + ')" ' +
+        'style="padding:4px 8px;border-radius:6px;background:#FEE2E2;color:#EF4444;border:none;cursor:pointer;font-size:11px">🗑</button>' +
+    '</div>';
+  }).join('');
+}
+
+function eliminarReglaDescuento(i) {
+  _descuentosCfg.splice(i, 1);
+  renderDescuentosCfg();
+}
+
+function agregarReglaDescuento() {
+  var dias = parseInt($('cfg-dias')?.value) || 0;
+  var pct  = parseInt($('cfg-pct')?.value) || 0;
+  if (!dias || !pct) { toast('⚠️ Ingresá días y porcentaje'); return; }
+  if (dias < 1 || dias > 365) { toast('⚠️ Días debe ser entre 1 y 365'); return; }
+  if (pct < 1 || pct > 99)   { toast('⚠️ Descuento debe ser entre 1% y 99%'); return; }
+  // Check if rule for same days already exists
+  var exists = _descuentosCfg.find(function(r){ return r.dias === dias; });
+  if (exists) { exists.pct = pct; } else { _descuentosCfg.push({ dias: dias, pct: pct }); }
+  if ($('cfg-dias'))  $('cfg-dias').value  = '';
+  if ($('cfg-pct'))   $('cfg-pct').value   = '';
+  renderDescuentosCfg();
+  toast('✅ Regla agregada');
+}
+
+// ── MERMA SUB-TABS ────────────────────────────────
+function mermaSubTab(btn, id) {
+  document.querySelectorAll('.merma-stab').forEach(function(b) {
+    b.style.background='#F4F5F7'; b.style.color='#4B5563'; b.style.border='1px solid #E5E7EB';
+  });
+  btn.style.background='#E53935'; btn.style.color='#fff'; btn.style.border='none';
+  var panels = ['mermas','lotes','descuentos-cfg'];
+  panels.forEach(function(p) {
+    var el = $('mermas-panel-' + p);
+    if (el) el.style.display = p === id ? 'block' : 'none';
+  });
+  if (id === 'lotes')           { loadDescuentosCfg(); loadLotes(); }
+  if (id === 'mermas')          loadMermas && loadMermas();
+  if (id === 'descuentos-cfg')  renderDescuentosCfg();
+}
+
+// ── LOTES ─────────────────────────────────────────
+var _loteBuscarTimeout = null;
+
+function abrirNuevoLote() {
+  $('lote-form').style.display = 'block';
+  $('lote-form').scrollIntoView({ behavior: 'smooth' });
+  // Load proveedores
+  db.from('proveedores').select('id,nombre').eq('activo', true).order('nombre').then(function(res) {
+    var sel = $('lote-proveedor'); if (!sel) return;
+    sel.innerHTML = '<option value="">Sin proveedor</option>' +
+      (res.data||[]).map(function(p) { return '<option value="' + p.id + '">' + p.nombre + '</option>'; }).join('');
+  });
+}
+
+async function buscarProdLote(q) {
+  clearTimeout(_loteBuscarTimeout);
+  var res = $('lote-buscar-result'); if (!res) return;
+  if (!q || q.length < 2) { res.innerHTML = ''; return; }
+  _loteBuscarTimeout = setTimeout(async function() {
+    var { data } = await db.from('productos')
+      .select('id,nombre,precio_venta,cat')
+      .ilike('nombre', '%' + q + '%')
+      .eq('activo', true)
+      .limit(6);
+    res.innerHTML = (data||[]).map(function(p) {
+            return '<div onclick="seleccionarProdLoteIdx(' + i + ')" ' +
+        'style="padding:9px 12px;cursor:pointer;border-bottom:1px solid #F3F4F6;font-size:13px;color:#1A1A2E;background:#fff;border-radius:8px;margin-bottom:4px">' +
+        '<strong>' + p.nombre + '</strong> <span style="color:#9CA3AF;font-size:11px">' + p.cat + ' · $' + (p.precio_venta||0).toLocaleString('es-AR') + '</span>' +
+      '</div>';
+    }).join('') || '<div style="padding:8px;color:#9CA3AF;font-size:12px">Sin resultados</div>';
+  }, 300);
+}
+
+
+function seleccionarProdLoteIdx(i) {
+  var p = (window._loteSearchResults || [])[i];
+  if (!p) return;
+  seleccionarProdLote(p.id, p.nombre, p.precio_venta || 0);
+}
+function seleccionarProdLote(id, nombre, precio) {
+  if ($('lote-prod-id'))     $('lote-prod-id').value     = id;
+  if ($('lote-prod-nombre')) $('lote-prod-nombre').value = nombre;
+  if ($('lote-buscar-result')) $('lote-buscar-result').innerHTML = '';
+  if ($('lote-buscar'))      $('lote-buscar').value      = '';
+  // Store precio for discount calculation
+  $('lote-prod-nombre').dataset.precio = precio;
+  calcularDescuentoSugerido();
+}
+
+function calcularDescuentoSugerido() {
+  var fechaEl = $('lote-fecha-vto');
+  var hint    = $('lote-dias-hint');
+  var wrap    = $('lote-descuento-wrap');
+  if (!fechaEl || !fechaEl.value) {
+    if (wrap) wrap.style.display = 'none';
+    return;
+  }
+
+  var hoy   = new Date(); hoy.setHours(0,0,0,0);
+  var vto   = new Date(fechaEl.value + 'T12:00:00');
+  var dias  = Math.ceil((vto - hoy) / (1000 * 60 * 60 * 24));
+  var pct   = getDescuentoParaDias(dias);
+  var precio = parseFloat($('lote-prod-nombre')?.dataset?.precio) || 0;
+
+  // Update hint
+  if (hint) {
+    if (dias < 0) {
+      hint.textContent = '⚠️ Ya venció hace ' + Math.abs(dias) + ' días';
+      hint.style.color = '#EF4444';
+    } else if (dias === 0) {
+      hint.textContent = '🔴 Vence HOY';
+      hint.style.color = '#EF4444';
+    } else {
+      hint.textContent = 'Quedan ' + dias + ' día' + (dias !== 1 ? 's' : '');
+      hint.style.color = dias <= 3 ? '#EF4444' : dias <= 7 ? '#D97706' : '#6B7280';
+    }
+  }
+
+  if (!wrap) return;
+
+  if (dias < 0) {
+    // Vencido - no sugerir
+    wrap.style.display = 'none';
+    return;
+  }
+
+  if (pct > 0) {
+    wrap.style.display = 'block';
+    var pctEl    = $('lote-pct-sugerido');
+    var origEl   = $('lote-precio-original');
+    var rebajEl  = $('lote-precio-rebajado');
+    if (pctEl)   pctEl.textContent   = pct + '% OFF';
+    if (origEl)  origEl.textContent  = precio > 0 ? 'Precio original: $' + precio.toLocaleString('es-AR') : '';
+    if (rebajEl) {
+      var precioRebaj = precio > 0 ? Math.round(precio * (1 - pct/100)) : 0;
+      rebajEl.textContent = precio > 0 ? 'Precio con descuento: $' + precioRebaj.toLocaleString('es-AR') : '';
+    }
+  } else {
+    wrap.style.display = 'none';
+  }
+}
+
+async function guardarLote() {
+  var prodId  = $('lote-prod-id')?.value;
+  var nombre  = $('lote-prod-nombre')?.value?.trim();
+  var cant    = parseFloat($('lote-cantidad')?.value) || 0;
+  var unidad  = $('lote-unidad')?.value || 'unidad';
+  var fechaVto = $('lote-fecha-vto')?.value;
+  var precioCompra = parseFloat($('lote-precio-compra')?.value) || null;
+  var prov    = $('lote-proveedor')?.value || null;
+  var notas   = $('lote-notas')?.value?.trim() || null;
+
+  if (!nombre)  { toast('⚠️ Seleccioná un producto'); return; }
+  if (!cant)    { toast('⚠️ Ingresá la cantidad'); return; }
+  if (!fechaVto){ toast('⚠️ Ingresá la fecha de vencimiento'); return; }
+
+  var hoy  = new Date(); hoy.setHours(0,0,0,0);
+  var vto  = new Date(fechaVto + 'T12:00:00');
+  var dias = Math.ceil((vto - hoy) / (1000*60*60*24));
+  var pct  = getDescuentoParaDias(dias);
+
+  var { error } = await db.from('lotes').insert({
+    producto_id:    prodId ? parseInt(prodId) : null,
+    producto_nombre: nombre,
+    cantidad:       cant,
+    unidad:         unidad,
+    fecha_vto:      fechaVto,
+    precio_compra:  precioCompra,
+    proveedor_id:   prov ? parseInt(prov) : null,
+    notas:          notas,
+    activo:         true,
+    descuento_sugerido_pct: pct || 0,
+  });
+
+  if (error) { toast('⚠️ Error: ' + error.message); return; }
+  toast('✅ Lote guardado');
+  $('lote-form').style.display = 'none';
+  // Reset form
+  ['lote-prod-id','lote-prod-nombre','lote-cantidad','lote-fecha-vto',
+   'lote-precio-compra','lote-notas','lote-dias-hint'].forEach(function(id) {
+    var el = $(id); if (el) { el.value = ''; if (el.textContent !== undefined) el.textContent = ''; }
+  });
+  if ($('lote-descuento-wrap')) $('lote-descuento-wrap').style.display = 'none';
+  loadLotes();
+}
+
+
+function _criarCartelLote(loteId) {
+  // Find lote in rendered list by id
+  var lote = (window._lotesData || []).find(function(l){ return l.id === loteId; });
+  if (!lote) return;
+  crearCartelDesdeId(lote.producto_id || '', lote.producto_nombre, lote.precio_venta || 0, lote.descuento_calc || 0);
+}
+async function loadLotes() {
+  var el = $('lotes-list'); if (!el) return;
+  el.innerHTML = '<div class="loading-panel">⏳</div>';
+  loadDescuentosCfg();
+
+  var filtro = $('lote-filtro')?.value || '';
+  var hoy = new Date(); hoy.setHours(0,0,0,0);
+
+  var { data, error } = await db.from('lotes')
+    .select('*')
+    .eq('activo', true)
+    .order('fecha_vto', { ascending: true });
+
+  if (error || !data?.length) {
+    el.innerHTML = '<div style="color:#9CA3AF;text-align:center;padding:20px">Sin lotes registrados</div>';
+    return;
+  }
+
+  // Filter and enrich
+  window._lotesData = []; // will populate after enrichment
+  var lotes = data.map(function(l) {
+    var vto  = new Date(l.fecha_vto + 'T12:00:00');
+    var dias = Math.ceil((vto - hoy) / (1000*60*60*24));
+    var pct  = getDescuentoParaDias(dias);
+    return Object.assign({}, l, { dias_restantes: dias, descuento_calc: pct });
+  }).filter(function(l) {
+    if (filtro === 'urgente') return l.dias_restantes >= 0 && l.dias_restantes <= 3;
+    if (filtro === 'proximo') return l.dias_restantes >= 0 && l.dias_restantes <= 7;
+    if (filtro === 'ok')      return l.dias_restantes > 7;
+    return l.dias_restantes >= -7; // show recently expired too
+  });
+
+  window._lotesData = lotes;
+  if (!lotes.length) {
+    el.innerHTML = '<div style="color:#9CA3AF;text-align:center;padding:20px">Sin lotes para este filtro</div>';
+    return;
+  }
+
+  el.innerHTML = lotes.map(function(l) {
+    var dias = l.dias_restantes;
+    var pct  = l.descuento_calc;
+    var urgColor = dias < 0 ? '#EF4444' : dias <= 3 ? '#EF4444' : dias <= 7 ? '#D97706' : '#16A34A';
+    var urgBg    = dias < 0 ? '#FEF2F2' : dias <= 3 ? '#FEF2F2' : dias <= 7 ? '#FFFBEB' : '#F0FDF4';
+    var diasTxt  = dias < 0 ? 'Venció hace ' + Math.abs(dias) + 'd' :
+                   dias === 0 ? 'Vence HOY' : 'Vence en ' + dias + 'd';
+
+    return '<div style="background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:13px;margin-bottom:8px">' +
+      '<div style="display:flex;align-items:flex-start;gap:10px">' +
+        '<div style="flex:1">' +
+          '<div style="font-size:13px;font-weight:700;color:#1A1A2E">' + l.producto_nombre + '</div>' +
+          '<div style="font-size:11px;color:#9CA3AF">' + l.cantidad + ' ' + (l.unidad||'u') +
+            (l.notas ? ' · ' + l.notas : '') + '</div>' +
+        '</div>' +
+        '<div style="background:' + urgBg + ';border-radius:8px;padding:6px 10px;text-align:center;min-width:90px">' +
+          '<div style="font-size:11px;font-weight:800;color:' + urgColor + '">' + diasTxt + '</div>' +
+          '<div style="font-size:10px;color:#1A1A2E">' + new Date(l.fecha_vto + 'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'short'}) + '</div>' +
+        '</div>' +
+      '</div>' +
+      // Descuento sugerido
+      (pct > 0 ?
+        '<div style="margin-top:10px;background:#FEF3C7;border-radius:8px;padding:10px;display:flex;align-items:center;justify-content:space-between">' +
+          '<div>' +
+            '<div style="font-size:11px;color:#D97706;font-weight:700">💡 Descuento sugerido: ' + pct + '% OFF</div>' +
+            (l.precio_venta > 0 ?
+              '<div style="font-size:10px;color:#9CA3AF">Original: $' + (l.precio_venta||0).toLocaleString('es-AR') +
+              ' → <strong style="color:#1A1A2E">$' + Math.round((l.precio_venta||0)*(1-pct/100)).toLocaleString('es-AR') + '</strong></div>'
+              : '') +
+          '</div>' +
+          '<button onclick="_criarCartelLote(' + l.id + ')" ' +
+            'style="padding:7px 12px;border-radius:8px;background:#C9A84C;border:none;color:#fff;font-family:\'Nunito\';font-size:11px;font-weight:800;cursor:pointer">🖨️ Crear cartel</button>' +
+        '</div>' : '') +
+      // Actions
+      '<div style="display:flex;gap:6px;margin-top:8px">' +
+        '<button onclick="cerrarLote(' + l.id + ')" ' +
+          'style="flex:1;padding:6px;border-radius:7px;background:#F4F5F7;border:1px solid #E5E7EB;color:#6B7280;font-family:Nunito,sans-serif;font-size:10px;font-weight:700;cursor:pointer">✅ Cerrar lote</button>' +
+        (dias < 0 ?
+          '<button onclick="_registrarMermaLote(' + l.id + ')" ' +
+            'style="flex:1;padding:6px;border-radius:7px;background:#FEE2E2;border:1px solid #FECACA;color:#EF4444;font-family:Nunito,sans-serif;font-size:10px;font-weight:700;cursor:pointer">⚠️ Registrar merma</button>' : '') +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+async function cerrarLote(id) {
+  await db.from('lotes').update({ activo: false }).eq('id', id);
+  toast('✅ Lote cerrado');
+  loadLotes();
+}
+
+
+function _registrarMermaLote(loteId) {
+  var lote = (window._lotesData || []).find(function(l){ return l.id === loteId; });
+  if (!lote) return;
+  registrarMermaDesdeVto(lote.producto_nombre, lote.producto_id || null, lote.cantidad);
+}
+async function registrarMermaDesdeVto(nombre, prodId, cantidad) {
+  var { error } = await db.from('mermas').insert({
+    producto_nombre: nombre,
+    producto_id: prodId,
+    cantidad: cantidad,
+    tipo: 'vencido',
+    fecha: new Date().toISOString().split('T')[0],
+    notas: 'Registrado automáticamente desde vencimiento de lote',
+  });
+  if (!error) { toast('✅ Merma registrada'); loadLotes(); }
+  else toast('⚠️ Error: ' + error.message);
+}
+
+// ── CREAR CARTEL DESDE LOTE ───────────────────────
+function crearCartelDesdeId(prodId, nombre, precioOriginal, descuentoPct) {
+  var precioRebaj = Math.round(precioOriginal * (1 - descuentoPct/100));
+  // Switch to carteles tab and pre-fill
+  navTo('carteles', null);
+  setTimeout(function() {
+    // Pre-fill the cartel form
+    var buscarEl = $('cartel-buscar');
+    if (buscarEl) buscarEl.value = nombre;
+    // Store data for the cartel
+    window._cartelPendiente = {
+      producto_id: prodId ? parseInt(prodId) : null,
+      nombre: nombre,
+      precio_original: precioOriginal,
+      precio_oferta: precioRebaj,
+      descuento_pct: descuentoPct,
+      tipo: 'OFERTA POR VENCIMIENTO',
+    };
+    toast('💡 Completá el cartel con el precio rebajado: $' + precioRebaj.toLocaleString('es-AR'));
+  }, 300);
+}
+
+function crearCartelDesdeForm() {
+  var nombre      = $('lote-prod-nombre')?.value || '';
+  var prodId      = $('lote-prod-id')?.value || '';
+  var precio      = parseFloat($('lote-prod-nombre')?.dataset?.precio) || 0;
+  var pctTxt      = $('lote-pct-sugerido')?.textContent || '0% OFF';
+  var pct         = parseInt(pctTxt) || 0;
+  crearCartelDesdeId(prodId, nombre, precio, pct);
+}
+
+// ── LOAD MERMAS (override to use new mermaSubTab) ─
+function loadMermasTab() {
+  loadDescuentosCfg();
+  loadMermas && loadMermas();
+}
 
 
 
