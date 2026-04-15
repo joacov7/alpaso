@@ -1480,101 +1480,165 @@ input::placeholder { color: #9CA3AF !important; }
 <!-- ═══ IA ══════════════════════════════════════════ -->
 <div id="tab-ia" class="sec" style="display:none">
 
-  <div style="background:linear-gradient(135deg,#0A0A1A,#1A1500);border:1px solid #C9A84C33;border-radius:12px;padding:16px;margin-bottom:16px">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-      <div style="font-size:24px">🤖</div>
-      <div>
-        <div style="font-size:14px;font-weight:800;color:#fff">Análisis inteligente con IA</div>
-        <div style="font-size:11px;color:#6B7280">Claude analiza tu negocio y sugiere acciones concretas</div>
+  <!-- Sub-tabs -->
+  <div style="display:flex;gap:6px;margin-bottom:14px">
+    <button class="ia-stab on" onclick="iaSubTab(this,'agentes')" style="flex:1;padding:9px 6px;border-radius:10px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#E53935;color:#fff;border:none">🤖 Agentes</button>
+    <button class="ia-stab" onclick="iaSubTab(this,'analisis')" style="flex:1;padding:9px 6px;border-radius:10px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#F4F5F7;color:#4B5563;border:1px solid #E5E7EB">🔍 Análisis</button>
+    <button class="ia-stab" onclick="iaSubTab(this,'uso')" style="flex:1;padding:9px 6px;border-radius:10px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#F4F5F7;color:#4B5563;border:1px solid #E5E7EB">📊 Uso</button>
+  </div>
+
+  <!-- ══ AGENTES ══════════════════════════════════ -->
+  <div id="ia-panel-agentes">
+
+    <!-- Selector de agente -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      <button class="agente-btn on" onclick="selAgente(this,'compras')"
+        style="padding:14px 8px;border-radius:12px;border:2px solid #E53935;background:#FEF2F2;cursor:pointer;text-align:center">
+        <div style="font-size:24px;margin-bottom:4px">🛒</div>
+        <div style="font-size:12px;font-weight:800;color:#E53935">Compras y Stock</div>
+        <div style="font-size:9px;color:#9CA3AF;margin-top:2px">Qué pedir, cuánto y a quién</div>
+      </button>
+      <button class="agente-btn" onclick="selAgente(this,'marketing')"
+        style="padding:14px 8px;border-radius:12px;border:2px solid #E5E7EB;background:#F9FAFB;cursor:pointer;text-align:center">
+        <div style="font-size:24px;margin-bottom:4px">📣</div>
+        <div style="font-size:12px;font-weight:800;color:#6B7280">Marketing</div>
+        <div style="font-size:9px;color:#9CA3AF;margin-top:2px">Ofertas, textos y campañas</div>
+      </button>
+      <button class="agente-btn" onclick="selAgente(this,'precios')"
+        style="padding:14px 8px;border-radius:12px;border:2px solid #E5E7EB;background:#F9FAFB;cursor:pointer;text-align:center">
+        <div style="font-size:24px;margin-bottom:4px">💰</div>
+        <div style="font-size:12px;font-weight:800;color:#6B7280">Precios</div>
+        <div style="font-size:9px;color:#9CA3AF;margin-top:2px">Márgenes y ajustes</div>
+      </button>
+      <button class="agente-btn" onclick="selAgente(this,'carniceria')"
+        style="padding:14px 8px;border-radius:12px;border:2px solid #E5E7EB;background:#F9FAFB;cursor:pointer;text-align:center">
+        <div style="font-size:24px;margin-bottom:4px">🥩</div>
+        <div style="font-size:12px;font-weight:800;color:#6B7280">Carnicería</div>
+        <div style="font-size:9px;color:#9CA3AF;margin-top:2px">Romaneo y cortes</div>
+      </button>
+    </div>
+
+    <!-- Chat -->
+    <div style="background:#fff;border:1px solid #E5E7EB;border-radius:14px;overflow:hidden">
+      <!-- Header agente activo -->
+      <div id="agente-header" style="background:#1A1A2E;padding:12px 14px;display:flex;align-items:center;gap:10px">
+        <div style="font-size:22px" id="agente-icono">🛒</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:800;color:#fff" id="agente-nombre">Agente de Compras y Stock</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.5)" id="agente-desc">Analizá tu stock y armá el pedido ideal</div>
+        </div>
+        <div style="width:8px;height:8px;border-radius:50%;background:#22C55E" id="agente-estado-dot"></div>
+      </div>
+
+      <!-- Mensajes -->
+      <div id="agente-chat" style="height:340px;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:#F9FAFB">
+        <div id="agente-bienvenida" style="background:#fff;border:1px solid #E5E7EB;border-radius:12px 12px 12px 3px;padding:12px;max-width:85%">
+          <div style="font-size:12px;color:#1A1A2E;line-height:1.6">Hola 👋 Soy tu agente de <strong>Compras y Stock</strong>.<br>Puedo analizar tu stock en tiempo real y decirte exactamente qué comprar, cuánto y a qué proveedor pedirlo.<br><br>¿Querés que analice el stock ahora?</div>
+          <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px">
+            <button onclick="enviarMsgRapido('Analizá el stock y decime qué hay que pedir esta semana')" style="padding:6px 10px;border-radius:20px;background:#FEF2F2;border:1px solid #FECACA;color:#E53935;font-family:Nunito,sans-serif;font-size:10px;font-weight:700;cursor:pointer">📦 Qué pedir esta semana</button>
+            <button onclick="enviarMsgRapido('¿Qué productos están por debajo del stock mínimo?')" style="padding:6px 10px;border-radius:20px;background:#FEF2F2;border:1px solid #FECACA;color:#E53935;font-family:Nunito,sans-serif;font-size:10px;font-weight:700;cursor:pointer">🚨 Stock crítico</button>
+            <button onclick="enviarMsgRapido('Armame el pedido para el proveedor de bebidas')" style="padding:6px 10px;border-radius:20px;background:#FEF2F2;border:1px solid #FECACA;color:#E53935;font-family:Nunito,sans-serif;font-size:10px;font-weight:700;cursor:pointer">🚚 Pedido bebidas</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Typing indicator -->
+      <div id="agente-typing" style="display:none;padding:8px 14px;background:#F9FAFB;border-top:1px solid #F3F4F6">
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="display:flex;gap:3px">
+            <div class="typing-dot"></div><div class="typing-dot" style="animation-delay:.15s"></div><div class="typing-dot" style="animation-delay:.3s"></div>
+          </div>
+          <span style="font-size:10px;color:#9CA3AF" id="agente-typing-txt">Analizando stock...</span>
+        </div>
+      </div>
+
+      <!-- Input -->
+      <div style="padding:10px;background:#fff;border-top:1px solid #E5E7EB;display:flex;gap:8px;align-items:flex-end">
+        <textarea id="agente-input" placeholder="Preguntale algo al agente..." rows="1"
+          style="flex:1;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:10px;padding:10px 12px;font-family:Nunito,sans-serif;font-size:13px;color:#1A1A2E;outline:none;resize:none;max-height:100px;overflow-y:auto"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviarMsgAgente()}"
+          oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+        <button onclick="enviarMsgAgente()" id="agente-send-btn"
+          style="padding:10px 14px;background:#E53935;border:none;border-radius:10px;color:#fff;font-size:16px;cursor:pointer;flex-shrink:0">↑</button>
       </div>
     </div>
-    <div style="font-size:10px;color:#E53935;background:rgba(201,168,76,.08);border-radius:8px;padding:8px 10px">
-      ⚡ La IA solo sugiere — vos decidís qué hacer
-    </div>
-    <div style="font-size:10px;color:#6B7280;margin-top:8px;text-align:center" id="ia-contador">Cargando límites...</div>
-  </div>
 
-  <!-- Modo de análisis -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
-    <button onclick="correrIA('completo')" id="ia-btn-completo"
-      style="padding:12px 8px;background:#FEF2F2;border:1.5px solid #C9A84C44;border-radius:10px;font-family:'Nunito';font-size:11px;font-weight:800;color:#E53935;cursor:pointer;text-align:center">
-      🔍 Análisis completo
-    </button>
-    <button onclick="correrIA('stock')" id="ia-btn-stock"
-      style="padding:12px 8px;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:10px;font-family:'Nunito';font-size:11px;font-weight:800;color:#9CA3AF;cursor:pointer;text-align:center">
-      📦 Solo stock
-    </button>
-    <button onclick="correrIA('precios')" id="ia-btn-precios"
-      style="padding:12px 8px;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:10px;font-family:'Nunito';font-size:11px;font-weight:800;color:#9CA3AF;cursor:pointer;text-align:center">
-      💰 Solo precios
-    </button>
-    <button onclick="correrIA('compras')" id="ia-btn-compras"
-      style="padding:12px 8px;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:10px;font-family:'Nunito';font-size:11px;font-weight:800;color:#9CA3AF;cursor:pointer;text-align:center">
-      🛍️ Sugerir compras
-    </button>
-  </div>
-
-  <!-- Contexto adicional -->
-  <div class="fg" style="margin-bottom:12px">
-    <label>Contexto adicional (opcional)</label>
-    <input id="ia-contexto" placeholder="Ej: Esta semana hay feria, esperamos más ventas de bebidas...">
-  </div>
-
-  <!-- Loading -->
-  <div id="ia-loading" style="display:none;text-align:center;padding:32px">
-    <div style="font-size:32px;margin-bottom:12px;animation:spin 2s linear infinite;display:inline-block">⚙️</div>
-    <div style="font-size:13px;color:#E53935;font-weight:700">Analizando tu negocio...</div>
-    <div style="font-size:11px;color:#6B7280;margin-top:4px" id="ia-loading-txt">Recopilando datos</div>
-  </div>
-
-  <!-- Resultado IA -->
-  <div id="ia-resultado" style="display:none">
-
-    <!-- Alertas -->
-    <div id="ia-alertas-wrap" style="display:none;margin-bottom:14px">
-      <div style="font-size:11px;font-weight:800;color:#E53935;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">🚨 Alertas</div>
-      <div id="ia-alertas-list"></div>
+    <!-- Acciones rápidas sugeridas por el agente -->
+    <div id="agente-acciones" style="display:none;margin-top:12px">
+      <div style="font-size:10px;font-weight:800;color:#6B7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">⚡ Acciones sugeridas</div>
+      <div id="agente-acciones-lista"></div>
     </div>
 
-    <!-- Recomendaciones -->
-    <div id="ia-recom-wrap" style="display:none;margin-bottom:14px">
-      <div style="font-size:11px;font-weight:800;color:#E53935;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">💡 Recomendaciones</div>
-      <div id="ia-recom-list"></div>
-    </div>
-
-    <!-- Acciones -->
-    <div id="ia-acciones-wrap" style="display:none;margin-bottom:14px">
-      <div style="font-size:11px;font-weight:800;color:#43A047;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">⚡ Acciones sugeridas</div>
-      <div id="ia-acciones-list"></div>
-    </div>
-
-    <!-- Resumen -->
-    <div id="ia-resumen-wrap" style="display:none">
-      <div style="font-size:11px;font-weight:800;color:#64B5F6;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">📊 Resumen del análisis</div>
-      <div id="ia-resumen-txt" style="font-size:12px;color:#9CA3AF;line-height:1.7;background:#fff;border-radius:10px;padding:14px"></div>
-    </div>
-
-    <div style="margin-top:12px;font-size:10px;color:#4B5563;text-align:center" id="ia-timestamp"></div>
   </div>
 
-  <!-- Historial de análisis -->
-  <div id="ia-historial-wrap" style="margin-top:16px;display:none">
-    <div style="font-size:11px;font-weight:800;color:#6B7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Análisis anteriores</div>
-    <div id="ia-historial-list"></div>
+  <!-- ══ ANÁLISIS ══════════════════════════════════ -->
+  <div id="ia-panel-analisis" style="display:none">
+    <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:12px;padding:14px;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:800;color:#1A1A2E;margin-bottom:4px">🔍 Análisis completo del negocio</div>
+      <div style="font-size:11px;color:#6B7280">Claude analiza todos tus datos y sugiere acciones concretas</div>
+      <div style="font-size:10px;color:#9CA3AF;margin-top:6px" id="ia-contador">Cargando límites...</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <button onclick="correrIA('completo')" style="padding:12px 8px;background:#FEF2F2;border:1.5px solid #FECACA;border-radius:10px;font-family:Nunito,sans-serif;font-size:11px;font-weight:800;color:#E53935;cursor:pointer;text-align:center">🔍 Análisis completo</button>
+      <button onclick="correrIA('stock')" style="padding:12px 8px;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:10px;font-family:Nunito,sans-serif;font-size:11px;font-weight:800;color:#6B7280;cursor:pointer;text-align:center">📦 Solo stock</button>
+      <button onclick="correrIA('precios')" style="padding:12px 8px;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:10px;font-family:Nunito,sans-serif;font-size:11px;font-weight:800;color:#6B7280;cursor:pointer;text-align:center">💰 Solo precios</button>
+      <button onclick="correrIA('compras')" style="padding:12px 8px;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:10px;font-family:Nunito,sans-serif;font-size:11px;font-weight:800;color:#6B7280;cursor:pointer;text-align:center">🛍️ Sugerir compras</button>
+    </div>
+
+    <div class="fg" style="margin-bottom:12px">
+      <label>Contexto adicional (opcional)</label>
+      <input id="ia-contexto" placeholder="Ej: Esta semana hay feria, esperamos más ventas de bebidas...">
+    </div>
+
+    <div id="ia-loading" style="display:none;text-align:center;padding:32px">
+      <div style="font-size:32px;margin-bottom:12px;animation:spin 2s linear infinite;display:inline-block">⚙️</div>
+      <div style="font-size:13px;color:#E53935;font-weight:700">Analizando tu negocio...</div>
+      <div style="font-size:11px;color:#6B7280;margin-top:4px" id="ia-loading-txt">Recopilando datos</div>
+    </div>
+
+    <div id="ia-resultado" style="display:none">
+      <div id="ia-alertas-wrap" style="display:none;margin-bottom:14px">
+        <div style="font-size:11px;font-weight:800;color:#E53935;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">🚨 Alertas</div>
+        <div id="ia-alertas-list"></div>
+      </div>
+      <div id="ia-recom-wrap" style="display:none;margin-bottom:14px">
+        <div style="font-size:11px;font-weight:800;color:#E53935;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">💡 Recomendaciones</div>
+        <div id="ia-recom-list"></div>
+      </div>
+      <div id="ia-acciones-wrap" style="display:none;margin-bottom:14px">
+        <div style="font-size:11px;font-weight:800;color:#43A047;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">⚡ Acciones sugeridas</div>
+        <div id="ia-acciones-list"></div>
+      </div>
+      <div id="ia-resumen-wrap" style="display:none">
+        <div style="font-size:11px;font-weight:800;color:#3B82F6;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">📊 Resumen</div>
+        <div id="ia-resumen-txt" style="font-size:12px;color:#4B5563;line-height:1.7;background:#fff;border-radius:10px;padding:14px;border:1px solid #E5E7EB"></div>
+      </div>
+      <div style="margin-top:12px;font-size:10px;color:#9CA3AF;text-align:center" id="ia-timestamp"></div>
+    </div>
+
+    <div id="ia-historial-wrap" style="margin-top:16px;display:none">
+      <div style="font-size:11px;font-weight:800;color:#6B7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Análisis anteriores</div>
+      <div id="ia-historial-list"></div>
+    </div>
   </div>
 
-  <!-- Uso y costos -->
-  <div style="margin-top:20px">
+  <!-- ══ USO ══════════════════════════════════════ -->
+  <div id="ia-panel-uso" style="display:none">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <div style="font-size:11px;font-weight:800;color:#6B7280;text-transform:uppercase;letter-spacing:1px">📊 Uso y costos</div>
-      <button onclick="editarLimitesIA()" style="padding:4px 10px;border-radius:7px;background:#FEF2F2;border:1px solid #C9A84C44;color:#E53935;font-family:'Nunito';font-size:10px;font-weight:700;cursor:pointer">⚙️ Editar límites</button>
+      <div style="font-size:13px;font-weight:800;color:#1A1A2E">Uso y costos IA</div>
+      <button onclick="editarLimitesIA()" style="padding:5px 10px;border-radius:7px;background:#FEF2F2;border:1px solid #FECACA;color:#E53935;font-family:Nunito,sans-serif;font-size:10px;font-weight:700;cursor:pointer">⚙️ Editar límites</button>
     </div>
-    <div id="ia-uso-list"><div style="color:#4B5563;font-size:12px;text-align:center;padding:12px">Sin datos de uso</div></div>
+    <div id="ia-uso-list"><div style="color:#9CA3AF;font-size:12px;text-align:center;padding:12px">Sin datos de uso</div></div>
   </div>
 
 </div>
 <style>
 @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+@keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }
+.typing-dot{width:6px;height:6px;border-radius:50%;background:#9CA3AF;animation:bounce 1.2s infinite}
+.agente-btn.on{border-color:#E53935!important;background:#FEF2F2!important}
+.agente-btn.on div:nth-child(2){color:#E53935!important}
 </style>
 
 <!-- ═══ FINANZAS ════════════════════════════════════ -->
@@ -2180,6 +2244,15 @@ input::placeholder { color: #9CA3AF !important; }
 <div class="toast" id="toast"></div>
 
 <script>
+
+
+
+
+
+
+
+
+
 
 
 
@@ -5202,11 +5275,6 @@ async function verificarLimiteIA() {
   } catch(e) { return true; }
 }
 
-function initIA() {
-  actualizarContadorIA();
-  if (iaHistorial.length) renderIAHistorial();
-  loadIAUso();
-}
 
 async function correrIA(modo) {
   // Verificar límite y mostrar aviso de costo
@@ -9449,6 +9517,358 @@ function loadMermasTab() {
   loadDescuentosCfg();
   loadMermas && loadMermas();
 }
+
+
+
+
+
+
+// ══════════════════════════════════════════════════
+// SISTEMA DE AGENTES IA
+// ══════════════════════════════════════════════════
+
+var _agenteActual = 'compras';
+var _agenteMsgs   = { compras:[], marketing:[], precios:[], carniceria:[] };
+var _agenteThinking = false;
+
+var _AGENTES = {
+  compras: {
+    icono: '🛒', nombre: 'Agente de Compras y Stock',
+    desc: 'Analizá tu stock y armá el pedido ideal',
+    color: '#E53935',
+    system: `Sos el agente de compras y stock del supermercado de barrio "Al Paso" en Argentina.
+Tu rol es analizar el stock actual, detectar faltantes, proyectar necesidades y armar pedidos concretos.
+Cuando recibas datos de stock, sé específico: decí exactamente qué productos pedir, en qué cantidad y a qué proveedor.
+Usá pesos argentinos ($). Sé directo y práctico. Respondé en español rioplatense.
+Si el stock mínimo es 0 en todos los productos, avisale al dueño que necesita configurar los mínimos.
+Cuando sugerís un pedido, presentalo en formato de lista clara por proveedor.
+Podés sugerir acciones concretas que el dueño pueda tomar de inmediato.`,
+    bienvenida: 'Hola 👋 Soy tu agente de <strong>Compras y Stock</strong>.<br>Analizo tu stock en tiempo real y te digo exactamente qué comprar, cuánto y a quién pedirlo.',
+    sugerencias: ['📦 Qué pedir esta semana','🚨 Stock crítico','🚚 Pedido bebidas','📊 Resumen de faltantes'],
+  },
+  marketing: {
+    icono: '📣', nombre: 'Agente de Marketing',
+    desc: 'Ofertas, textos y campañas para WhatsApp e Instagram',
+    color: '#7C3AED',
+    system: `Sos el agente de marketing del supermercado de barrio "Al Paso" en Argentina.
+Tu rol es sugerir ofertas, generar textos para WhatsApp e Instagram, y ayudar a promocionar productos.
+Conocés el negocio: es un supermercado de barrio con carnicería, fiambrería, almacén, bebidas y kiosco.
+Usá un tono cercano y argentino. Podés usar emojis pero sin exagerar.
+Cuando sugerís una oferta, indicá precio sugerido, texto listo para copiar y a qué horario publicarlo.`,
+    bienvenida: 'Hola 👋 Soy tu agente de <strong>Marketing</strong>.<br>Te ayudo a crear textos para WhatsApp, ideas de ofertas y campañas para el supermercado.',
+    sugerencias: ['💡 Sugerir oferta del día','📱 Texto para WhatsApp','🎯 Qué producto promocionar hoy','📸 Idea para Instagram'],
+  },
+  precios: {
+    icono: '💰', nombre: 'Agente de Precios',
+    desc: 'Márgenes, ajustes y oportunidades de ganancia',
+    color: '#D97706',
+    system: `Sos el agente de precios del supermercado "Al Paso" en Argentina.
+Tu rol es analizar márgenes, detectar productos con precios desactualizados y sugerir ajustes.
+Tenés en cuenta la inflación argentina. Sé específico con los precios y márgenes.
+Cuando detectes un problema de margen, indicá el precio actual, el costo estimado y el precio sugerido.`,
+    bienvenida: 'Hola 👋 Soy tu agente de <strong>Precios</strong>.<br>Analizo los márgenes de tus productos y te digo dónde estás dejando plata sobre la mesa.',
+    sugerencias: ['📉 Productos con margen bajo','📈 Ajustar precios por inflación','🔍 Analizar una categoría','💡 Dónde mejorar margen'],
+  },
+  carniceria: {
+    icono: '🥩', nombre: 'Agente de Carnicería',
+    desc: 'Romaneo, cortes y precios óptimos',
+    color: '#DC2626',
+    system: `Sos el agente de carnicería del supermercado "Al Paso" en Argentina.
+Conocés en detalle el romaneo de mocho y media res, los rendimientos reales por corte y los precios de mercado.
+Tu rol es ayudar a maximizar la rentabilidad de la carnicería: precios por corte, decisiones de compra, análisis de romaneo.
+Usá datos concretos. Mocho: costo real ~$15.784/kg vendible a $11.600/kg compra (32.5% merma).
+Precios de mercado de referencia: nalga $17.500, lomo $31.000, vacío $17.500, cuadrada $15.500.`,
+    bienvenida: 'Hola 👋 Soy tu agente de <strong>Carnicería</strong>.<br>Te ayudo con el romaneo, precios por corte y análisis de rentabilidad de la carnicería.',
+    sugerencias: ['🔪 Analizar el romaneo de esta semana','💰 Precios óptimos por corte','⚖️ Conviene mocho o media res','📊 Resultado de la semana'],
+  },
+};
+
+// ── SUB-TABS IA ────────────────────────────────────
+function iaSubTab(btn, id) {
+  document.querySelectorAll('.ia-stab').forEach(function(b) {
+    b.style.background='#F4F5F7'; b.style.color='#4B5563'; b.style.border='1px solid #E5E7EB';
+  });
+  btn.style.background='#E53935'; btn.style.color='#fff'; btn.style.border='none';
+  ['agentes','analisis','uso'].forEach(function(p) {
+    var el = $('ia-panel-'+p);
+    if (el) el.style.display = p===id ? 'block' : 'none';
+  });
+  if (id==='uso') loadIAUso && loadIAUso();
+}
+
+// ── SELECTOR DE AGENTE ────────────────────────────
+function selAgente(btn, tipo) {
+  document.querySelectorAll('.agente-btn').forEach(function(b) {
+    b.classList.remove('on');
+    b.style.borderColor='#E5E7EB'; b.style.background='#F9FAFB';
+  });
+  btn.classList.add('on');
+  _agenteActual = tipo;
+  var ag = _AGENTES[tipo];
+  if (!ag) return;
+  // Update header
+  if ($('agente-icono'))  $('agente-icono').textContent  = ag.icono;
+  if ($('agente-nombre')) $('agente-nombre').textContent = ag.nombre;
+  if ($('agente-desc'))   $('agente-desc').textContent   = ag.desc;
+  // Restore chat history for this agent
+  _renderChat();
+  // If no history, show welcome message
+  if (!_agenteMsgs[tipo].length) _mostrarBienvenida(tipo);
+}
+
+function _mostrarBienvenida(tipo) {
+  var ag = _AGENTES[tipo]; if (!ag) return;
+  var chat = $('agente-chat'); if (!chat) return;
+  chat.innerHTML = '';
+  var sugs = (ag.sugerencias||[]).map(function(s) {
+          return '<button onclick="_agSugClick(' + i + ')" ' +
+      'style="padding:6px 10px;border-radius:20px;background:#FEF2F2;border:1px solid #FECACA;color:#E53935;font-family:Nunito,sans-serif;font-size:10px;font-weight:700;cursor:pointer">' + s + '</button>';
+  }).join('');
+  var msgEl = document.createElement('div');
+  msgEl.style.cssText = 'background:#fff;border:1px solid #E5E7EB;border-radius:12px 12px 12px 3px;padding:12px;max-width:85%';
+  msgEl.innerHTML = '<div style="font-size:12px;color:#1A1A2E;line-height:1.6">' + ag.bienvenida + '</div>' +
+    (sugs ? '<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px">' + sugs + '</div>' : '');
+  chat.appendChild(msgEl);
+}
+
+// ── RENDER CHAT ───────────────────────────────────
+function _renderChat() {
+  var chat = $('agente-chat'); if (!chat) return;
+  var msgs = _agenteMsgs[_agenteActual] || [];
+  if (!msgs.length) { _mostrarBienvenida(_agenteActual); return; }
+  chat.innerHTML = msgs.map(function(m) {
+    if (m.role === 'user') {
+      return '<div style="align-self:flex-end;background:#E53935;color:#fff;border-radius:12px 12px 3px 12px;padding:10px 13px;max-width:80%;font-size:12px;line-height:1.5;margin-left:auto">' +
+        escHtml(m.content) + '</div>';
+    } else {
+      return '<div style="background:#fff;border:1px solid #E5E7EB;border-radius:12px 12px 12px 3px;padding:12px;max-width:88%;font-size:12px;color:#1A1A2E;line-height:1.7;white-space:pre-wrap">' +
+        m.content + '</div>';
+    }
+  }).join('');
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── ENVIAR MENSAJE ────────────────────────────────
+function enviarMsgRapido(texto) {
+  var inp = $('agente-input'); if (inp) inp.value = texto;
+  enviarMsgAgente();
+}
+
+
+function _agSugClick(i) {
+  var s = (window._agSugs||[])[i];
+  if (s) enviarMsgRapido(s);
+}
+async function enviarMsgAgente() {
+  var inp = $('agente-input'); if (!inp) return;
+  var texto = inp.value.trim();
+  if (!texto || _agenteThinking) return;
+  inp.value = ''; inp.style.height = 'auto';
+
+  var ag = _AGENTES[_agenteActual];
+  if (!ag) return;
+
+  // Add user message
+  if (!_agenteMsgs[_agenteActual]) _agenteMsgs[_agenteActual] = [];
+  _agenteMsgs[_agenteActual].push({ role:'user', content: texto });
+  _renderChat();
+
+  // Show typing
+  _agenteThinking = true;
+  var typingEl = $('agente-typing');
+  if (typingEl) typingEl.style.display='block';
+  if ($('agente-typing-txt')) $('agente-typing-txt').textContent = 'Analizando...';
+  if ($('agente-send-btn'))   $('agente-send-btn').disabled = true;
+
+  try {
+    // Build context from Supabase
+    var contexto = await _buildAgenteContext(_agenteActual, texto);
+
+    var mensajesApi = [
+      { role:'user', content: 'CONTEXTO:\n' + contexto + '\n\nPREGUNTA:\n' + texto }
+    ];
+
+    // Add conversation history (last 6 messages excluding the just-added user msg)
+    var hist = _agenteMsgs[_agenteActual].slice(-8, -1);
+    if (hist.length > 0) {
+      mensajesApi = hist.concat([{ role:'user', content: 'CONTEXTO:\n' + contexto + '\n\nPREGUNTA:\n' + texto }]);
+    }
+
+    var SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRsc3lha2JoY2VvbGN6anphZHBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1ODIxMTUsImV4cCI6MjA5MDE1ODExNX0.snm7nQuLEagVKIofUxhGa6ISCrVGK96SH_N-zzQRgBg';
+
+    var resp = await fetch('https://tlsyakbhceolczjzadpc.supabase.co/functions/v1/ia-alpaso', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + SUPA_ANON,
+      },
+      body: JSON.stringify({
+        system: ag.system,
+        messages: mensajesApi,
+        max_tokens: 1500,
+      }),
+    });
+
+    var data = await resp.json();
+
+    // Parse response
+    var respText = '';
+    if (data.content && Array.isArray(data.content)) {
+      respText = data.content.filter(function(b){ return b.type==='text'; }).map(function(b){ return b.text; }).join('');
+    } else if (data.error) {
+      respText = '⚠️ Error: ' + (typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
+    } else {
+      respText = JSON.stringify(data);
+    }
+
+    _agenteMsgs[_agenteActual].push({ role:'assistant', content: respText });
+    _renderChat();
+
+    // Parse actions from response
+    _parsearAcciones(respText);
+
+  } catch(e) {
+    _agenteMsgs[_agenteActual].push({ role:'assistant', content: '⚠️ Error al conectar con el agente: ' + e.message });
+    _renderChat();
+  } finally {
+    _agenteThinking = false;
+    if (typingEl) typingEl.style.display='none';
+    if ($('agente-send-btn')) $('agente-send-btn').disabled = false;
+  }
+}
+
+// ── BUILD CONTEXT ─────────────────────────────────
+async function _buildAgenteContext(tipo, pregunta) {
+  var lines = [];
+  var hoy = new Date().toISOString().split('T')[0];
+
+  try {
+    lines.push('Fecha: ' + hoy);
+    lines.push('Negocio: Supermercado Al Paso, Argentina');
+
+    if (tipo === 'compras' || tipo === 'carniceria' || /stock|falt|ped|compr/i.test(pregunta)) {
+      if ($('agente-typing-txt')) $('agente-typing-txt').textContent = 'Cargando stock...';
+      var { data: sc } = await db.from('productos')
+        .select('nombre,cat,stock_gondola,stock_deposito,stock_minimo_gondola')
+        .eq('activo', true).lt('stock_gondola', 5).order('stock_gondola').limit(30);
+      if (sc && sc.length) {
+        lines.push('');
+        lines.push('STOCK BAJO (' + sc.length + ' productos):');
+        sc.forEach(function(p) {
+          lines.push('- ' + p.nombre + ' | Gondola: ' + (p.stock_gondola||0) + ' | Deposito: ' + (p.stock_deposito||0) + ' | Minimo: ' + (p.stock_minimo_gondola||0) + ' | Cat: ' + p.cat);
+        });
+      }
+      var { data: pv } = await db.from('proveedores')
+        .select('nombre,categoria,dias_pedido,hora_limite').eq('activo', true).limit(15);
+      if (pv && pv.length) {
+        lines.push('');
+        lines.push('PROVEEDORES:');
+        pv.forEach(function(p) {
+          lines.push('- ' + p.nombre + ' | Cat: ' + (p.categoria||'-') + ' | Dias: ' + (p.dias_pedido||'-') + ' | Limite: ' + (p.hora_limite||'-'));
+        });
+      }
+    }
+
+    if (/venta|semana|dias|product/i.test(pregunta) || tipo === 'compras' || tipo === 'marketing') {
+      if ($('agente-typing-txt')) $('agente-typing-txt').textContent = 'Cargando ventas...';
+      var hace7 = new Date(Date.now()-7*24*60*60*1000).toISOString().split('T')[0];
+      var { data: vv } = await db.from('pedidos')
+        .select('total').gte('created_at', hace7+'T00:00:00').not('estado','eq','cancelado');
+      if (vv && vv.length) {
+        var tv = vv.reduce(function(s,p){ return s+(p.total||0); }, 0);
+        lines.push('');
+        lines.push('VENTAS 7 DIAS: $' + Math.round(tv).toLocaleString('es-AR') + ' (' + vv.length + ' pedidos, prom dia $' + Math.round(tv/7).toLocaleString('es-AR') + ')');
+      }
+    }
+
+    if (tipo === 'precios' || /margen|precio|costo|ganancia/i.test(pregunta)) {
+      if ($('agente-typing-txt')) $('agente-typing-txt').textContent = 'Cargando margenes...';
+      var { data: pm } = await db.from('productos')
+        .select('nombre,cat,precio_venta,precio_costo').eq('activo', true).gt('precio_costo', 0).limit(20);
+      if (pm && pm.length) {
+        lines.push('');
+        lines.push('MARGENES (muestra):');
+        pm.forEach(function(p) {
+          var m = p.precio_costo > 0 ? Math.round((p.precio_venta-p.precio_costo)/p.precio_costo*100) : null;
+          lines.push('- ' + p.nombre + ' | Venta: $' + (p.precio_venta||0) + ' | Costo: $' + (p.precio_costo||0) + ' | Margen: ' + (m!==null ? m+'%' : 'sin costo'));
+        });
+      }
+    }
+
+    if (tipo === 'carniceria' || /carn|mocho|res|corte|roman/i.test(pregunta)) {
+      if ($('agente-typing-txt')) $('agente-typing-txt').textContent = 'Cargando romaneos...';
+      var { data: rr } = await db.from('carn_romaneos')
+        .select('semana_label,costo_total,ingresos_estimados,kg_total')
+        .order('created_at', {ascending:false}).limit(3);
+      if (rr && rr.length) {
+        lines.push('');
+        lines.push('ULTIMOS ROMANEOS:');
+        rr.forEach(function(r) {
+          var mg = r.costo_total > 0 ? Math.round((r.ingresos_estimados-r.costo_total)/r.costo_total*100) : null;
+          lines.push('- ' + (r.semana_label||'-') + ' | Costo: $' + Math.round(r.costo_total||0).toLocaleString('es-AR') + ' | Ingresos: $' + Math.round(r.ingresos_estimados||0).toLocaleString('es-AR') + (mg!==null ? ' | ' + mg + '% margen' : ''));
+        });
+      }
+    }
+
+    if (tipo === 'compras' || tipo === 'marketing') {
+      var en7 = new Date(Date.now()+7*24*60*60*1000).toISOString().split('T')[0];
+      var { data: ll } = await db.from('lotes')
+        .select('producto_nombre,fecha_vto,cantidad').eq('activo', true).lte('fecha_vto', en7).order('fecha_vto');
+      if (ll && ll.length) {
+        lines.push('');
+        lines.push('LOTES POR VENCER (7 dias):');
+        ll.forEach(function(l) {
+          lines.push('- ' + l.producto_nombre + ' | Vence: ' + l.fecha_vto + ' | Cantidad: ' + l.cantidad);
+        });
+      }
+    }
+
+  } catch(e) {
+    lines.push('[Error cargando datos: ' + e.message + ']');
+  }
+
+  return lines.join('\n');
+}
+
+
+// ── PARSEAR ACCIONES SUGERIDAS ─────────────────────
+function _parsearAcciones(texto) {
+  var wrap = $('agente-acciones');
+  var lista = $('agente-acciones-lista');
+  if (!wrap || !lista) return;
+
+  // Look for action patterns in the response
+  var acciones = [];
+  var lines = texto.split('\n');
+  lines.forEach(function(line) {
+    if (line.match(/^[▶→•\-\*]\s*(crear cartel|ir a|armar pedido|registrar|abrir)/i)) {
+      acciones.push(line.replace(/^[▶→•\-\*]\s*/,'').trim());
+    }
+  });
+
+  if (!acciones.length) { wrap.style.display='none'; return; }
+  wrap.style.display = 'block';
+  lista.innerHTML = acciones.map(function(a) {
+    return '<div style="background:#fff;border:1px solid #E5E7EB;border-radius:9px;padding:10px 12px;margin-bottom:6px;font-size:12px;color:#1A1A2E">' + a + '</div>';
+  }).join('');
+}
+
+// ── INIT IA (override) ────────────────────────────
+function initIA() {
+  actualizarContadorIA && actualizarContadorIA();
+  if (typeof iaHistorial !== 'undefined' && iaHistorial.length) renderIAHistorial && renderIAHistorial();
+  loadIAUso && loadIAUso();
+  // Init first agent
+  _mostrarBienvenida('compras');
+}
+
+
+
+
 
 
 
