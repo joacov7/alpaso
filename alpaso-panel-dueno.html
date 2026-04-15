@@ -1131,6 +1131,7 @@ input::placeholder { color: #9CA3AF !important; }
     <div id="caja-historial"><div class="loading-panel" style="padding:20px">⏳</div></div>
   
   </div>
+  </div><!-- /caja-panel-caja -->
 
   <!-- PANEL IMPORTAR XLS -->
   <div id="caja-panel-importar" style="display:none">
@@ -2485,6 +2486,8 @@ input::placeholder { color: #9CA3AF !important; }
 <div class="toast" id="toast"></div>
 
 <script>
+
+
 
 
 
@@ -6564,10 +6567,10 @@ let simDelta          = 0;
 
 // ── SUB-TABS ──────────────────────────────────────
 function carnSubTab(btn, id) {
-  document.querySelectorAll('.carn-stab').forEach(b => {
-    b.style.background='#1E1E1E'; b.style.color='#aaa'; b.style.border='1px solid #2A2A2A';
+  document.querySelectorAll('.carn-stab').forEach(function(b) {
+    b.style.background='#F4F5F7'; b.style.color='#4B5563'; b.style.border='1px solid #E5E7EB';
   });
-  btn.style.background='#C9A84C'; btn.style.color='#0A0A0A'; btn.style.border='none';
+  btn.style.background='#E53935'; btn.style.color='#fff'; btn.style.border='none';
   ['romaneo','comparador-compra','transf','dashboard','simulador','precios-mkt','carn-cfg','sim-avanzado','cierre-semanal'].forEach(t => {
     const el = $('carn-' + t); if (el) el.style.display = t===id ? 'block' : 'none';
   });
@@ -11175,6 +11178,8 @@ function loadScript(src) {
     document.head.appendChild(s);
   });
 }
+
+
 
 </script>
 
