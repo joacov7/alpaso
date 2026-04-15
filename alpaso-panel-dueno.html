@@ -2550,6 +2550,7 @@ input::placeholder { color: #9CA3AF !important; }
 
 
 
+
 // ══════════════════════════════════════════════════
 // SUPABASE
 // ══════════════════════════════════════════════════
@@ -11173,9 +11174,11 @@ async function importarXlsCaja() {
       if (d.com_total > 0) movs.push({tipo:'comision', monto:-d.com_total, fecha, caja_id:cajaId, concepto:'Comisiones tarjeta/MP', fuente:'xls_auto'});
 
       if (movs.length) {
-        var { error } = await db.from('movimientos_caja').upsert(movs, {onConflict:'fecha,tipo,fuente'});
-        if (error) errors++;
-        else imported += movs.length;
+        var { error } = await db.from('movimientos_caja').insert(movs);
+        if (error) {
+          console.log('[XLS] Insert error:', error.message);
+          errors++;
+        } else imported += movs.length;
       }
     } catch(e) { errors++; }
   }
@@ -11243,6 +11246,7 @@ function loadScript(src) {
     document.head.appendChild(s);
   });
 }
+
 
 
 
