@@ -2547,6 +2547,7 @@ input::placeholder { color: #9CA3AF !important; }
 
 
 
+
 // ══════════════════════════════════════════════════
 // SUPABASE
 // ══════════════════════════════════════════════════
@@ -10891,52 +10892,94 @@ function onXlsSelect(input) {
 
 async function procesarXlsCaja(file) {
   var drop = $('xls-drop-zone');
-  if (drop) { drop.innerHTML = '<div style="font-size:28px;margin-bottom:8px;animation:spin 1s linear infinite;display:inline-block">⚙️</div><div style="font-size:13px;color:#9CA3AF">Procesando...</div>'; }
+  if (drop) drop.innerHTML = '<div style="font-size:28px;margin-bottom:8px;animation:spin 1.5s linear infinite;display:inline-block">⚙️</div><div style="font-size:13px;color:#9CA3AF" id="xls-status">Cargando librería...</div>';
+
+  function setStatus(msg) {
+    var el = $('xls-status'); if (el) el.textContent = msg;
+    console.log('[XLS]', msg);
+  }
 
   try {
-    var arrayBuffer = await file.arrayBuffer();
-    // Use SheetJS from CDN
+    // Load SheetJS
+    setStatus('Cargando SheetJS...');
     if (typeof XLSX === 'undefined') {
       await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+      if (typeof XLSX === 'undefined') throw new Error('No se pudo cargar SheetJS');
     }
+    setStatus('Leyendo archivo...');
 
+    var arrayBuffer = await file.arrayBuffer();
     var workbook = XLSX.read(arrayBuffer, {type:'array', cellDates:true});
 
-    // Find the sheet with most data (skip Hoja1, Grafico, etc.)
-    var targetSheet = null;
-    var maxRows = 0;
-    workbook.SheetNames.forEach(function(name) {
-      if (name.match(/Hoja|Gráfico|Grafico|cheques|proveedores|Calculo|dte/i)) return;
-      var ws = workbook.Sheets[name];
-      var range = XLSX.utils.decode_range(ws['!ref'] || 'A1:A1');
-      if (range.e.r > maxRows) { maxRows = range.e.r; targetSheet = name; }
-    });
+    setStatus('Hojas encontradas: ' + workbook.SheetNames.join(', '));
+    console.log('[XLS] Sheets:', workbook.SheetNames);
 
-    // But prefer the sheet name matching current month
+    // Find best sheet - prefer current month name
     var meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
     var mesActual = meses[new Date().getMonth()];
     var añoActual = String(new Date().getFullYear()).slice(2);
+
+    var targetSheet = null;
+    // First try: exact month+year match (e.g. "Abril26")
     workbook.SheetNames.forEach(function(name) {
       var n = name.toLowerCase();
-      if (n.includes(mesActual) || n.includes(mesActual + añoActual)) targetSheet = name;
+      if (n.includes(mesActual) && n.includes(añoActual)) targetSheet = name;
     });
+    // Second try: just month name
+    if (!targetSheet) {
+      workbook.SheetNames.forEach(function(name) {
+        var n = name.toLowerCase();
+        if (n.includes(mesActual) && !n.match(/hoja|grafico|cheque|proveedor|calculo|dte|modelo/i)) targetSheet = name;
+      });
+    }
+    // Third try: largest sheet
+    if (!targetSheet) {
+      var maxRows = 0;
+      workbook.SheetNames.forEach(function(name) {
+        if (name.match(/Hoja|Gráfico|Grafico|cheque|proveedor|Calculo|dte|modelo/i)) return;
+        var ws = workbook.Sheets[name];
+        if (!ws || !ws['!ref']) return;
+        var range = XLSX.utils.decode_range(ws['!ref']);
+        if (range.e.r > maxRows) { maxRows = range.e.r; targetSheet = name; }
+      });
+    }
 
-    if (!targetSheet) { toast('⚠️ No encontré una hoja válida'); return; }
+    if (!targetSheet) {
+      resetDropZone();
+      toast('⚠️ No encontré una hoja válida. Hojas disponibles: ' + workbook.SheetNames.slice(0,5).join(', '));
+      return;
+    }
+
+    setStatus('Procesando hoja: ' + targetSheet + '...');
 
     var ws   = workbook.Sheets[targetSheet];
     var data = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:false, dateNF:'yyyy-mm-dd'});
 
-    // Parse days
+    console.log('[XLS] Sheet rows:', data.length);
+    console.log('[XLS] First rows:', data.slice(0,5));
+
+    setStatus('Parseando ' + data.length + ' filas...');
     _xlsData = _parsearPlanillaCaja(data);
 
-    if (!_xlsData.length) { toast('⚠️ No se encontraron días en la planilla'); resetDropZone(); return; }
+    console.log('[XLS] Parsed days:', _xlsData.length);
 
+    if (!_xlsData.length) {
+      resetDropZone();
+      toast('⚠️ No se encontraron días. Revisá que la hoja tenga el formato correcto.');
+      return;
+    }
+
+    setStatus('');
     renderXlsPreview(targetSheet, _xlsData);
+    resetDropZone();
+
   } catch(e) {
-    toast('⚠️ Error al leer el archivo: ' + e.message);
+    console.error('[XLS] Error:', e);
+    toast('⚠️ Error: ' + e.message);
     resetDropZone();
   }
 }
+
 
 function _parsearPlanillaCaja(rows) {
   loadComisionesCfg();
@@ -10949,18 +10992,26 @@ function _parsearPlanillaCaja(rows) {
       var fechaRaw = row[5];
       if (!fechaRaw) { i++; continue; }
 
-      // Parse date
+      // Parse date - handle multiple formats from SheetJS
       var fecha = null;
-      if (typeof fechaRaw === 'string' && fechaRaw.match(/\d{4}-\d{2}-\d{2}/)) {
-        fecha = fechaRaw.substring(0, 10);
-      } else if (fechaRaw instanceof Date) {
-        fecha = fechaRaw.toISOString().substring(0, 10);
-      } else if (typeof fechaRaw === 'number') {
-        // Excel serial date
-        var d = new Date((fechaRaw - 25569) * 86400 * 1000);
-        fecha = d.toISOString().substring(0, 10);
-      }
-      if (!fecha || fecha === '1970-01-01') { i++; continue; }
+      try {
+        if (!fechaRaw) { i++; continue; }
+        if (typeof fechaRaw === 'string') {
+          // Try yyyy-mm-dd
+          var m1 = fechaRaw.match(/(\d{4})-(\d{2})-(\d{2})/);
+          if (m1) fecha = m1[0];
+          // Try dd/mm/yyyy
+          var m2 = fechaRaw.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+          if (!fecha && m2) fecha = m2[3] + '-' + m2[2].padStart(2,'0') + '-' + m2[1].padStart(2,'0');
+        } else if (fechaRaw instanceof Date) {
+          fecha = fechaRaw.toISOString().substring(0, 10);
+        } else if (typeof fechaRaw === 'number' && fechaRaw > 40000) {
+          // Excel serial
+          var d = new Date((fechaRaw - 25569) * 86400 * 1000);
+          fecha = d.toISOString().substring(0, 10);
+        }
+      } catch(e2) {}
+      if (!fecha || fecha < '2020-01-01') { i++; continue; }
 
       try {
         var toFloat = function(v) { 
@@ -11178,6 +11229,7 @@ function loadScript(src) {
     document.head.appendChild(s);
   });
 }
+
 
 
 
