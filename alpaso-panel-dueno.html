@@ -1172,6 +1172,28 @@ input::placeholder { color: #9CA3AF !important; }
         <div id="xls-comisiones-lista"></div>
       </div>
 
+      <!-- Rango de fechas -->
+      <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;padding:12px;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:800;color:#6B7280;text-transform:uppercase;margin-bottom:8px">📅 Rango a importar (opcional)</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div style="flex:1">
+            <div style="font-size:10px;color:#9CA3AF;margin-bottom:3px">Desde</div>
+            <input type="date" id="xls-desde"
+              style="width:100%;background:#fff;border:1.5px solid #E5E7EB;border-radius:8px;padding:8px;font-family:Nunito,sans-serif;font-size:13px;color:#1A1A2E;outline:none">
+          </div>
+          <div style="flex:1">
+            <div style="font-size:10px;color:#9CA3AF;margin-bottom:3px">Hasta</div>
+            <input type="date" id="xls-hasta"
+              style="width:100%;background:#fff;border:1.5px solid #E5E7EB;border-radius:8px;padding:8px;font-family:Nunito,sans-serif;font-size:13px;color:#1A1A2E;outline:none">
+          </div>
+          <button onclick="$('xls-desde').value='';$('xls-hasta').value=''" 
+            style="padding:8px 10px;border-radius:8px;background:#F4F5F7;border:1px solid #E5E7EB;color:#9CA3AF;font-family:Nunito,sans-serif;font-size:11px;cursor:pointer;margin-top:16px">
+            Todo
+          </button>
+        </div>
+        <div style="font-size:10px;color:#9CA3AF;margin-top:6px">Si no seleccionás rango, importa todos los días del archivo</div>
+      </div>
+
       <div style="display:flex;gap:8px">
         <button onclick="importarXlsCaja()" class="btn btn-primary" style="flex:1;justify-content:center;padding:12px">
           ✅ Importar al sistema
@@ -2486,6 +2508,8 @@ input::placeholder { color: #9CA3AF !important; }
 <div class="toast" id="toast"></div>
 
 <script>
+
+
 
 
 
@@ -11148,30 +11172,41 @@ function renderXlsPreview(sheetName, days) {
 
 async function importarXlsCaja() {
   if (!_xlsData.length) { toast('⚠️ Nada para importar'); return; }
+
+  // Apply date range filter
+  var desde = $('xls-desde')?.value || '';
+  var hasta = $('xls-hasta')?.value || '';
+  var dataToImport = _xlsData.filter(function(d) {
+    if (desde && d.fecha < desde) return false;
+    if (hasta && d.fecha > hasta) return false;
+    return true;
+  });
+
+  if (!dataToImport.length) { toast('⚠️ Sin días en el rango seleccionado'); return; }
+
   var btn = document.querySelector('[onclick="importarXlsCaja()"]');
-  if (btn) { btn.textContent = '⏳ Importando...'; btn.disabled = true; }
+  if (btn) { btn.textContent = '⏳ Importando ' + dataToImport.length + ' días...'; btn.disabled = true; }
 
   var errors = 0; var imported = 0;
 
-  for (var d of _xlsData) {
+  for (var d of dataToImport) {
     try {
       // Build movimientos for this day
       var movs = [];
       var fecha = d.fecha;
       var cajaId = await _getCajaId();
 
-      // Ingresos
-      if (d.efectivo > 0) movs.push({tipo:'venta_efectivo', monto:d.efectivo, fecha, caja_id:cajaId, concepto:'Efectivo importado', fuente:'xls'});
-      if (d.tarjeta > 0)  movs.push({tipo:'venta_debito',   monto:d.tarjeta,  fecha, caja_id:cajaId, concepto:'Tarjeta importada', fuente:'xls'});
-      if (d.mercadopago > 0) movs.push({tipo:'venta_mp',    monto:d.mercadopago, fecha, caja_id:cajaId, concepto:'MercadoPago importado', fuente:'xls'});
-
-      // Egresos
+      // Ingresos - explicit property names (no ES6 shorthand)
+      var mk = function(tipo, monto, concepto) {
+        return { caja_id: cajaId, fecha: fecha, tipo: tipo, monto: monto, concepto: concepto, fuente: 'xls' };
+      };
+      if (d.efectivo    > 0) movs.push(mk('venta_efectivo', d.efectivo,    'Efectivo importado'));
+      if (d.tarjeta     > 0) movs.push(mk('venta_debito',   d.tarjeta,     'Tarjeta importada'));
+      if (d.mercadopago > 0) movs.push(mk('venta_mp',       d.mercadopago, 'MercadoPago importado'));
       d.egresos.forEach(function(eg) {
-        movs.push({tipo:'egreso', monto:-eg.importe, fecha, caja_id:cajaId, concepto:eg.concepto, fuente:'xls'});
+        movs.push(mk('egreso', -Math.abs(eg.importe), eg.concepto));
       });
-
-      // Comisiones como egreso automático
-      if (d.com_total > 0) movs.push({tipo:'comision', monto:-d.com_total, fecha, caja_id:cajaId, concepto:'Comisiones tarjeta/MP', fuente:'xls_auto'});
+      if (d.com_total > 0) movs.push(mk('comision', -d.com_total, 'Comisiones tarjeta/MP'));
 
       if (movs.length) {
         var { error } = await db.from('movimientos_caja').insert(movs);
@@ -11190,7 +11225,7 @@ async function importarXlsCaja() {
 
   // Save to historial
   var hist = JSON.parse(localStorage.getItem('xls_historial') || '[]');
-  hist.unshift({fecha: new Date().toISOString(), archivo: 'Planilla', dias: _xlsData.length, movs: imported});
+  hist.unshift({fecha: new Date().toISOString(), archivo: 'Planilla', dias: dataToImport.length, movs: imported, desde: desde||'inicio', hasta: hasta||'fin'});
   hist = hist.slice(0, 10);
   localStorage.setItem('xls_historial', JSON.stringify(hist));
 
@@ -11246,6 +11281,8 @@ function loadScript(src) {
     document.head.appendChild(s);
   });
 }
+
+
 
 
 
