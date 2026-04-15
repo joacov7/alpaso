@@ -1131,6 +1131,50 @@ input::placeholder { color: #9CA3AF !important; }
     <div id="caja-historial"><div class="loading-panel" style="padding:20px">⏳</div></div>
   
   </div>
+
+  <!-- MODAL: registrar movimiento -->
+  <div id="modal-movimiento" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:flex-end;justify-content:center">
+    <div style="background:#fff;border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:600px">
+      <div style="font-size:16px;font-weight:800;color:#1A1A2E;margin-bottom:2px" id="mov-titulo">Movimiento</div>
+      <div style="font-size:11px;color:#9CA3AF;margin-bottom:16px" id="mov-subtitulo"></div>
+      <input type="hidden" id="mov-tipo">
+
+      <!-- Contador de billetes (efectivo) -->
+      <div id="mov-billetes-wrap" style="display:none">
+        <div style="font-size:10px;font-weight:800;color:#6B7280;text-transform:uppercase;margin-bottom:8px">Conteo de billetes</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px" id="billetes-filas"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid #F3F4F6">
+          <div style="font-size:13px;font-weight:700;color:#1A1A2E">Total contado</div>
+          <div style="font-size:20px;font-weight:900;color:#E53935" id="billetes-total">$0</div>
+        </div>
+      </div>
+
+      <!-- Monto directo (no efectivo) -->
+      <div id="mov-monto-wrap">
+        <div class="fg">
+          <label>Monto ($)</label>
+          <input id="mov-monto" type="number" placeholder="0" step="100"
+            style="font-size:24px;font-weight:900;color:#E53935;text-align:center"
+            oninput="actualizarMargenReal && actualizarMargenReal()">
+        </div>
+      </div>
+
+      <div class="fg">
+        <label>Concepto / Descripción</label>
+        <input id="mov-concepto" placeholder="Ej: Pago proveedor, Retiro personal...">
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button onclick="guardarMovimiento()" class="btn btn-primary" style="flex:1;justify-content:center;padding:13px">
+          💾 Guardar
+        </button>
+        <button onclick="cerrarModalMov()" class="btn btn-ghost" style="padding:13px 16px">
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+
   </div><!-- /caja-panel-caja -->
 
   <!-- PANEL IMPORTAR XLS -->
@@ -2508,6 +2552,7 @@ input::placeholder { color: #9CA3AF !important; }
 <div class="toast" id="toast"></div>
 
 <script>
+
 
 
 
@@ -11291,6 +11336,12 @@ function loadScript(src) {
 
 
 
+
+
+function cerrarModalMov() {
+  var el = $('modal-movimiento');
+  if (el) el.style.display = 'none';
+}
 
 </script>
 
