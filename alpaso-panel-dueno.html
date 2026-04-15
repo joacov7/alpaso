@@ -2621,6 +2621,7 @@ input::placeholder { color: #9CA3AF !important; }
 
 
 
+
 // ══════════════════════════════════════════════════
 // SUPABASE
 // ══════════════════════════════════════════════════
@@ -11104,6 +11105,8 @@ function _parsearPlanillaCaja(rows) {
         // But actual layout: i+0=SALDO, i+1=blank, i+2=INGRESOS header, i+3=EF MAN...
         // Wait - from log row[2] is SALDO INICIO, so i=2, i+3=row[5]
         // Row[5] should be EFECTIVO MAÑANA with importe at col[2]
+        // Log raw rows - only first day
+        if (days.length === 0) { console.log('[XLS] Row i+3 (EF MAN):', JSON.stringify(rows[i+3])); console.log('[XLS] Row i+4 (TAR MAN):', JSON.stringify(rows[i+4])); console.log('[XLS] Row i+7 (MP):', JSON.stringify(rows[i+7])); }
         var ef_man  = toFloat(rows[i+3] && rows[i+3][2]);
         var tar_man = toFloat(rows[i+4] && rows[i+4][2]);
         var ef_tar  = toFloat(rows[i+5] && rows[i+5][2]);
@@ -11342,6 +11345,7 @@ function cerrarModalMov() {
   var el = $('modal-movimiento');
   if (el) el.style.display = 'none';
 }
+
 
 </script>
 
