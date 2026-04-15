@@ -2575,6 +2575,7 @@ input::placeholder { color: #9CA3AF !important; }
 
 
 
+
 // ══════════════════════════════════════════════════
 // SUPABASE
 // ══════════════════════════════════════════════════
@@ -4420,7 +4421,7 @@ async function loadCaja() {
 
   // Estado
   let cierre = null;
-  try { const _rc = await db.from('cierres_caja').select('*').eq('caja_id', cajaId).eq('fecha', fecha).single(); cierre = _rc.data; } catch(e) {}
+  try { const _rc = await db.from('cierres_caja').select('*').eq('caja_id', cajaId).eq('fecha', fecha).maybeSingle(); cierre = _rc.data; } catch(e) {}
   const estadoTxt = $('caja-estado-txt');
   const cierreFrm = $('caja-cierre-form');
   if (cierre?.estado === 'cerrada') {
@@ -11281,6 +11282,7 @@ function loadScript(src) {
     document.head.appendChild(s);
   });
 }
+
 
 
 
