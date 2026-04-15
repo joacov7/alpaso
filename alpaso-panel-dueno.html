@@ -2549,6 +2549,7 @@ input::placeholder { color: #9CA3AF !important; }
 
 
 
+
 // ══════════════════════════════════════════════════
 // SUPABASE
 // ══════════════════════════════════════════════════
@@ -10994,9 +10995,9 @@ function _parsearPlanillaCaja(rows) {
   for (var i = 0; i < rows.length; i++) {
     var row = rows[i];
     // Detect day block: col[1] = 'SALDO INICIO $' and col[5] has a date
-    if (row && (row[1] === 'SALDO INICIO $' || row[1] === 'SALDO INICIO $'.trim())) {
-      console.log('[XLS] Found day block at row', i, 'fechaRaw=', row[5]);
-      var fechaRaw = row[5];
+    if (row && row[0] === 'SALDO INICIO $') {
+      console.log('[XLS] Found day block at row', i, 'fechaRaw=', row[4]);
+      var fechaRaw = row[4];
       if (!fechaRaw) { i++; continue; }
 
       // Parse date - handle multiple formats from SheetJS
@@ -11027,12 +11028,18 @@ function _parsearPlanillaCaja(rows) {
           return parseFloat(String(v).replace(/[$.]/g,'').replace(',','.')) || 0;
         };
 
-        var ef_man  = toFloat(rows[i+3] && rows[i+3][3]);
-        var tar_man = toFloat(rows[i+4] && rows[i+4][3]);
-        var ef_tar  = toFloat(rows[i+5] && rows[i+5][3]);
-        var tar_tar = toFloat(rows[i+6] && rows[i+6][3]);
-        var mp      = toFloat(rows[i+7] && rows[i+7][3]);
-        var plus    = toFloat(rows[i+8] && rows[i+8][3]);
+        // SheetJS drops leading null col → indices shift -1 vs openpyxl
+        // EFECTIVO MAÑANA = i+3 (skipping: saldo, tickets, header rows)
+        // But actual layout: i+0=SALDO, i+1=blank, i+2=INGRESOS header, i+3=EF MAN...
+        // Wait - from log row[2] is SALDO INICIO, so i=2, i+3=row[5]
+        // Row[5] should be EFECTIVO MAÑANA with importe at col[2]
+        var ef_man  = toFloat(rows[i+3] && rows[i+3][2]);
+        var tar_man = toFloat(rows[i+4] && rows[i+4][2]);
+        var ef_tar  = toFloat(rows[i+5] && rows[i+5][2]);
+        var tar_tar = toFloat(rows[i+6] && rows[i+6][2]);
+        var mp      = toFloat(rows[i+7] && rows[i+7][2]);
+        var plus    = toFloat(rows[i+8] && rows[i+8][2]);
+        console.log('[XLS] Day', fecha, 'ef_man=', ef_man, 'tar_man=', tar_man, 'mp=', mp);
 
         var efectivo = ef_man + ef_tar;
         var tarjeta  = tar_man + tar_tar + plus;
@@ -11043,7 +11050,7 @@ function _parsearPlanillaCaja(rows) {
         for (var j = 3; j <= 8; j++) {
           var er = rows[i+j];
           if (!er) continue;
-          var nom = er[4]; var imp = toFloat(er[5]);
+          var nom = er[3]; var imp = toFloat(er[4]);
           if (nom && imp > 0 && typeof nom === 'string' && !nom.match(/^(EGRESO|IMPORTE|º|Total)/i)) {
             egresos.push({concepto: nom.trim(), importe: imp});
           }
@@ -11236,6 +11243,7 @@ function loadScript(src) {
     document.head.appendChild(s);
   });
 }
+
 
 
 
