@@ -2548,6 +2548,7 @@ input::placeholder { color: #9CA3AF !important; }
 
 
 
+
 // ══════════════════════════════════════════════════
 // SUPABASE
 // ══════════════════════════════════════════════════
@@ -10953,7 +10954,12 @@ async function procesarXlsCaja(file) {
     setStatus('Procesando hoja: ' + targetSheet + '...');
 
     var ws   = workbook.Sheets[targetSheet];
-    var data = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:false, dateNF:'yyyy-mm-dd'});
+    var data = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:true});
+    // Log first few rows to debug
+    console.log('[XLS] Row 0:', data[0]);
+    console.log('[XLS] Row 1:', data[1]);
+    console.log('[XLS] Row 2:', data[2]);
+    console.log('[XLS] Row 3:', data[3]);
 
     console.log('[XLS] Sheet rows:', data.length);
     console.log('[XLS] First rows:', data.slice(0,5));
@@ -10988,7 +10994,8 @@ function _parsearPlanillaCaja(rows) {
   for (var i = 0; i < rows.length; i++) {
     var row = rows[i];
     // Detect day block: col[1] = 'SALDO INICIO $' and col[5] has a date
-    if (row && row[1] === 'SALDO INICIO $') {
+    if (row && (row[1] === 'SALDO INICIO $' || row[1] === 'SALDO INICIO $'.trim())) {
+      console.log('[XLS] Found day block at row', i, 'fechaRaw=', row[5]);
       var fechaRaw = row[5];
       if (!fechaRaw) { i++; continue; }
 
@@ -11229,6 +11236,7 @@ function loadScript(src) {
     document.head.appendChild(s);
   });
 }
+
 
 
 
