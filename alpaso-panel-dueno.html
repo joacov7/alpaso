@@ -1065,6 +1065,13 @@ input::placeholder { color: #9CA3AF !important; }
         <button onclick="resetVentasXls()" style="padding:6px 10px;border-radius:8px;background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.7);font-family:Nunito,sans-serif;font-size:10px;cursor:pointer">✕ Limpiar</button>
       </div>
 
+      <!-- Buscador de producto -->
+      <div style="margin-bottom:12px">
+        <input id="ventas-buscar-prod" placeholder="🔍 Buscar producto por nombre..." oninput="buscarProductoVentas()"
+          style="width:100%;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:10px;padding:10px 12px;font-family:Nunito,sans-serif;font-size:13px;color:#1A1A2E;outline:none;box-sizing:border-box">
+        <div id="ventas-buscar-resultado" style="margin-top:8px"></div>
+      </div>
+
       <!-- Sub-tabs resultados -->
       <div style="display:flex;gap:6px;margin-bottom:12px">
         <button class="ventas-rtab on" onclick="ventasResTab(this,'resumen')" style="flex:1;padding:7px;border-radius:8px;font-family:Nunito,sans-serif;font-size:10px;font-weight:800;cursor:pointer;background:#E53935;color:#fff;border:none">📊 Resumen</button>
@@ -1076,6 +1083,23 @@ input::placeholder { color: #9CA3AF !important; }
       <div id="ventas-res-resumen"></div>
       <div id="ventas-res-top" style="display:none"></div>
       <div id="ventas-res-alertas" style="display:none"></div>
+      <div id="ventas-comprar-config" style="display:none;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;padding:10px;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="font-size:11px;font-weight:700;color:#6B7280">Mostrar top</div>
+          <select id="ventas-comprar-cant" onchange="renderVentasComprar()" style="background:#fff;border:1.5px solid #E5E7EB;border-radius:8px;padding:6px 10px;font-family:Nunito,sans-serif;font-size:13px;font-weight:700;color:#1A1A2E;outline:none">
+            <option value="5">5 por rubro</option>
+            <option value="10" selected>10 por rubro</option>
+            <option value="20">20 por rubro</option>
+            <option value="999">Todos</option>
+          </select>
+          <div style="font-size:11px;font-weight:700;color:#6B7280">ordenado por</div>
+          <select id="ventas-comprar-orden" onchange="renderVentasComprar()" style="background:#fff;border:1.5px solid #E5E7EB;border-radius:8px;padding:6px 10px;font-family:Nunito,sans-serif;font-size:13px;font-weight:700;color:#1A1A2E;outline:none">
+            <option value="total">$ Total</option>
+            <option value="cantidad">Cantidad</option>
+            <option value="margen">Margen %</option>
+          </select>
+        </div>
+      </div>
       <div id="ventas-res-comprar" style="display:none"></div>
 
     </div>
@@ -2599,6 +2623,7 @@ input::placeholder { color: #9CA3AF !important; }
 <div class="toast" id="toast"></div>
 
 <script>
+
 
 
 
@@ -11502,6 +11527,8 @@ function ventasResTab(btn, id) {
   if (id==='top')     renderVentasTop();
   if (id==='alertas') renderVentasAlertas();
   if (id==='comprar') renderVentasComprar();
+  var cfg = $('ventas-comprar-config');
+  if (cfg) cfg.style.display = id==='comprar' ? 'block' : 'none';
 }
 
 function renderVentasResumen() {
@@ -11626,12 +11653,19 @@ function renderVentasAlertas() {
 function renderVentasComprar() {
   var el = $('ventas-res-comprar'); if (!el || !_ventasData.length) return;
 
-  // Sugerencias de compra basadas en:
-  // 1. Alto volumen de ventas → reponer con prioridad
-  // 2. Buen margen → vale la pena aumentar stock
-  // 3. Alta rotación (cantidad/días)
+  // Show config panel
+  var cfg = $('ventas-comprar-config');
+  if (cfg) cfg.style.display = 'block';
 
-  // Get top selling products by quantity (not $ to capture meat/deli)
+  var topN  = parseInt($('ventas-comprar-cant')?.value)  || 10;
+  var orden = ($('ventas-comprar-orden')?.value) || 'total';
+
+  var sortFn = {
+    total:    function(a,b){ return b.total - a.total; },
+    cantidad: function(a,b){ return b.cantidad - a.cantidad; },
+    margen:   function(a,b){ return b.margen - a.margen; },
+  }[orden] || function(a,b){ return b.total - a.total; };
+
   var porRubro = {};
   _ventasData.forEach(function(p) {
     if (!porRubro[p.rubro]) porRubro[p.rubro] = [];
@@ -11657,11 +11691,11 @@ function renderVentasComprar() {
       var rubroTotal = prods.reduce(function(s,p){return s+p.total;},0);
       var pct = Math.round(rubroTotal/totalVenta*100*10)/10;
 
-      // Top 5 products of this rubro to restock
+      // Top products of this rubro to restock
       var topProds = prods
-        .filter(function(p){ return p.margen > 10 || p.costo === 0; })
-        .sort(function(a,b){ return b.total-a.total; })
-        .slice(0,5);
+        .filter(function(p){ return p.cantidad > 0; })
+        .sort(sortFn)
+        .slice(0, topN);
 
       if (!topProds.length) return '';
 
@@ -11752,6 +11786,49 @@ function resetVentasXls() {
 
 
 
+
+
+// ── BÚSQUEDA DE PRODUCTO EN VENTAS ───────────────
+function buscarProductoVentas() {
+  var q   = ($('ventas-buscar-prod')?.value || '').toLowerCase().trim();
+  var res = $('ventas-buscar-resultado'); if (!res) return;
+
+  if (!q || q.length < 2) { res.innerHTML = ''; return; }
+  if (!_ventasData.length) { res.innerHTML = '<div style="color:#9CA3AF;font-size:11px">Subí un reporte primero</div>'; return; }
+
+  var matches = _ventasData.filter(function(p) {
+    return p.nombre.toLowerCase().includes(q) || p.codigo.includes(q);
+  }).sort(function(a,b){ return b.total - a.total; }).slice(0, 15);
+
+  if (!matches.length) {
+    res.innerHTML = '<div style="color:#9CA3AF;font-size:11px;padding:8px">Sin resultados para "' + q + '"</div>';
+    return;
+  }
+
+  res.innerHTML = '<div style="background:#fff;border:1px solid #E5E7EB;border-radius:12px;overflow:hidden">' +
+    // Header
+    '<div style="display:grid;grid-template-columns:1fr repeat(4,auto);gap:6px;padding:8px 12px;background:#F9FAFB;border-bottom:1px solid #F3F4F6">' +
+      '<div style="font-size:9px;font-weight:800;color:#9CA3AF;text-transform:uppercase">Producto</div>' +
+      '<div style="font-size:9px;font-weight:800;color:#9CA3AF;text-transform:uppercase;text-align:right">Cantidad</div>' +
+      '<div style="font-size:9px;font-weight:800;color:#9CA3AF;text-transform:uppercase;text-align:right">Total $</div>' +
+      '<div style="font-size:9px;font-weight:800;color:#9CA3AF;text-transform:uppercase;text-align:right">Margen</div>' +
+      '<div style="font-size:9px;font-weight:800;color:#9CA3AF;text-transform:uppercase;text-align:right">Rubro</div>' +
+    '</div>' +
+    matches.map(function(p) {
+      var mCol = p.margen < 0 ? '#EF4444' : p.margen < 15 ? '#D97706' : '#16A34A';
+      return '<div style="display:grid;grid-template-columns:1fr repeat(4,auto);gap:6px;padding:10px 12px;border-bottom:1px solid #F9FAFB;align-items:center">' +
+        '<div>' +
+          '<div style="font-size:12px;font-weight:700;color:#1A1A2E">' + p.nombre + '</div>' +
+          '<div style="font-size:9px;color:#9CA3AF">' + p.codigo + (p.proveedor ? ' · ' + p.proveedor : '') + '</div>' +
+        '</div>' +
+        '<div style="font-size:12px;font-weight:700;color:#6B7280;text-align:right">' + p.cantidad.toFixed(2) + '</div>' +
+        '<div style="font-size:12px;font-weight:800;color:#1A1A2E;text-align:right">' + fmtM(Math.round(p.total)) + '</div>' +
+        '<div style="font-size:12px;font-weight:800;color:' + mCol + ';text-align:right">' + (p.costo > 0 ? p.margen.toFixed(1) + '%' : '—') + '</div>' +
+        '<div style="font-size:10px;color:#9CA3AF;text-align:right;white-space:nowrap">' + p.rubro.replace('(M)SIN ASIGNAR','—') + '</div>' +
+      '</div>';
+    }).join('') +
+  '</div>';
+}
 
 </script>
 
