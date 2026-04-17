@@ -870,7 +870,9 @@ input::placeholder { color: #9CA3AF !important; }
   <div style="display:flex;gap:6px;margin-bottom:14px">
     <button class="compras-stab on" onclick="comprasSubTab(this,'faltantes')" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#E53935;color:#fff;border:none">📦 Faltantes</button>
     <button class="compras-stab" onclick="comprasSubTab(this,'pedido')" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#F9FAFB;color:#9CA3AF;border:1px solid #2A2A2A">📋 Armar pedido</button>
-    <button class="compras-stab" onclick="comprasSubTab(this,'proveedores')" style="flex:1;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#F9FAFB;color:#9CA3AF;border:1px solid #2A2A2A">🏭 Proveedores</button>
+    <button class="compras-stab" onclick="comprasSubTab(this,'proveedores')" style="flex:1;padding:8px;border-radius:9px;font-family:Nunito,sans-serif;font-size:11px;font-weight:800;cursor:pointer;background:#F4F5F7;color:#4B5563;border:1px solid #E5E7EB">🏭 Proveedores</button>
+    <button class="compras-stab" onclick="comprasSubTab(this,'cfg-stock')" style="flex:1;padding:8px;border-radius:9px;font-family:Nunito,sans-serif;font-size:11px;font-weight:800;cursor:pointer;background:#F4F5F7;color:#4B5563;border:1px solid #E5E7EB">⚙️ Config</button>
+    <button class="compras-stab" onclick="comprasSubTab(this,'ventas-xls')" style="flex:1;padding:8px;border-radius:9px;font-family:Nunito,sans-serif;font-size:11px;font-weight:800;cursor:pointer;background:#F4F5F7;color:#4B5563;border:1px solid #E5E7EB">📊 Ventas</button>
   </div>
 
   <!-- FALTANTES -->
@@ -1032,6 +1034,51 @@ input::placeholder { color: #9CA3AF !important; }
       </button>
     </div>
 
+  </div>
+
+
+  <!-- ANÁLISIS DE VENTAS XLS -->
+  <div id="compras-ventas-xls" style="display:none">
+
+    <!-- Upload zone -->
+    <div id="ventas-upload-zone" style="border:2px dashed #E5E7EB;border-radius:14px;padding:28px;text-align:center;cursor:pointer;margin-bottom:14px"
+      onclick="document.getElementById('ventas-file-input').click()"
+      ondragover="event.preventDefault();this.style.borderColor='#E53935'"
+      ondragleave="this.style.borderColor='#E5E7EB'"
+      ondrop="onVentasXlsDrop(event)">
+      <div style="font-size:32px;margin-bottom:8px">📊</div>
+      <div style="font-size:14px;font-weight:700;color:#1A1A2E;margin-bottom:4px">Subí el reporte de ventas</div>
+      <div style="font-size:11px;color:#9CA3AF">Exportá desde ApolloGesCom → Todos los artículos → XLS</div>
+      <div style="font-size:10px;color:#9CA3AF;margin-top:4px" id="ventas-upload-status"></div>
+    </div>
+    <input type="file" id="ventas-file-input" accept=".xlsx,.xls" style="display:none" onchange="onVentasXlsSelect(this)">
+
+    <!-- Results -->
+    <div id="ventas-resultado" style="display:none">
+
+      <!-- Period header -->
+      <div style="background:#1A1A2E;border-radius:12px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:13px;font-weight:800;color:#fff" id="ventas-periodo-txt">Período</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.5)" id="ventas-periodo-sub"></div>
+        </div>
+        <button onclick="resetVentasXls()" style="padding:6px 10px;border-radius:8px;background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.7);font-family:Nunito,sans-serif;font-size:10px;cursor:pointer">✕ Limpiar</button>
+      </div>
+
+      <!-- Sub-tabs resultados -->
+      <div style="display:flex;gap:6px;margin-bottom:12px">
+        <button class="ventas-rtab on" onclick="ventasResTab(this,'resumen')" style="flex:1;padding:7px;border-radius:8px;font-family:Nunito,sans-serif;font-size:10px;font-weight:800;cursor:pointer;background:#E53935;color:#fff;border:none">📊 Resumen</button>
+        <button class="ventas-rtab" onclick="ventasResTab(this,'top')" style="flex:1;padding:7px;border-radius:8px;font-family:Nunito,sans-serif;font-size:10px;font-weight:800;cursor:pointer;background:#F4F5F7;color:#4B5563;border:1px solid #E5E7EB">🏆 Top ventas</button>
+        <button class="ventas-rtab" onclick="ventasResTab(this,'alertas')" style="flex:1;padding:7px;border-radius:8px;font-family:Nunito,sans-serif;font-size:10px;font-weight:800;cursor:pointer;background:#F4F5F7;color:#4B5563;border:1px solid #E5E7EB">⚠️ Alertas</button>
+        <button class="ventas-rtab" onclick="ventasResTab(this,'comprar')" style="flex:1;padding:7px;border-radius:8px;font-family:Nunito,sans-serif;font-size:10px;font-weight:800;cursor:pointer;background:#F4F5F7;color:#4B5563;border:1px solid #E5E7EB">🛒 Comprar</button>
+      </div>
+
+      <div id="ventas-res-resumen"></div>
+      <div id="ventas-res-top" style="display:none"></div>
+      <div id="ventas-res-alertas" style="display:none"></div>
+      <div id="ventas-res-comprar" style="display:none"></div>
+
+    </div>
   </div>
 
 </div>
@@ -2622,6 +2669,12 @@ input::placeholder { color: #9CA3AF !important; }
 
 
 
+
+
+
+
+
+
 // ══════════════════════════════════════════════════
 // SUPABASE
 // ══════════════════════════════════════════════════
@@ -3952,13 +4005,14 @@ function comprasSubTab(btn, id) {
     b.style.background='#F4F5F7'; b.style.color='#4B5563'; b.style.border='1px solid #E5E7EB';
   });
   btn.style.background='#E53935'; btn.style.color='#fff'; btn.style.border='none';
-  ['faltantes','pedido-auto','pedido','config-stock','proveedores','cfg-stock'].forEach(t => {
+  ['faltantes','pedido-auto','pedido','config-stock','proveedores','cfg-stock','ventas-xls'].forEach(t => {
     const el = $('compras-'+t); if (el) el.style.display = t === id ? 'block' : 'none';
   });
   if (id === 'faltantes')    loadFaltantesPanel();
   if (id === 'pedido')       initPedido();
   if (id === 'proveedores')  loadProveedores();
   if (id==='cfg-stock') { loadCfgCategorias(); loadCfgStockCats(); }
+  if (id==='ventas-xls') { /* ready for upload */ }
   if (id === 'pedido-auto')  initAutoPedido();
   if (id === 'config-stock') initConfigStock();
 }
@@ -11345,6 +11399,358 @@ function cerrarModalMov() {
   var el = $('modal-movimiento');
   if (el) el.style.display = 'none';
 }
+
+
+
+// ══════════════════════════════════════════════════
+// ANÁLISIS DE VENTAS XLS (ApolloGesCom)
+// ══════════════════════════════════════════════════
+
+var _ventasData = [];  // parsed products
+
+function onVentasXlsDrop(event) {
+  event.preventDefault();
+  var f = event.dataTransfer.files[0];
+  if (f) procesarVentasXls(f);
+}
+
+function onVentasXlsSelect(input) {
+  var f = input.files[0];
+  if (f) procesarVentasXls(f);
+}
+
+async function procesarVentasXls(file) {
+  var statusEl = $('ventas-upload-status');
+  var zone = $('ventas-upload-zone');
+  if (statusEl) statusEl.textContent = 'Cargando...';
+
+  try {
+    if (typeof XLSX === 'undefined') {
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+    }
+
+    var buf  = await file.arrayBuffer();
+    var wb   = XLSX.read(buf, {type:'array', cellDates:true});
+    var ws   = wb.Sheets[wb.SheetNames[0]];
+    var rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:true});
+
+    if (statusEl) statusEl.textContent = rows.length + ' filas leídas...';
+
+    // Parse header
+    var periodoTxt = rows[0] && rows[0][0] ? String(rows[0][0]) : '';
+
+    // Col mapping (0-based, from ApolloGesCom format):
+    // 0=Sel, 1=Codigo, 2=Articulo, 3=Cantidad, 4=Total, 5=Neto, 6=NoGravado
+    // 7=Costo, 8=UtiBruta, 9=CostFinal, 10=TotalCostoF, 11=%Incid
+    // 12=Rubro, 13=SubRubro, 14=Proveedores, 15=RentaPreCos, 16=UtilidSistema, 17=Devoluciones
+
+    var toNum = function(v) {
+      if (!v && v !== 0) return 0;
+      if (typeof v === 'number') return v;
+      return parseFloat(String(v).replace(/[^0-9.\-]/g,'')) || 0;
+    };
+
+    _ventasData = rows.slice(3)
+      .filter(function(r) { return r[1] && r[2] && r[1] !== 'Código' && toNum(r[4]) > 0; })
+      .map(function(r) {
+        return {
+          codigo:    String(r[1] || '').trim(),
+          nombre:    String(r[2] || '').trim(),
+          cantidad:  toNum(r[3]),
+          total:     toNum(r[4]),
+          neto:      toNum(r[5]),
+          costo:     toNum(r[7]),
+          utiBruta:  toNum(r[8]),
+          incid:     toNum(r[11]),
+          rubro:     String(r[12] || '').trim() || 'SIN ASIGNAR',
+          proveedor: String(r[14] || '').trim(),
+          margen:    toNum(r[16]),
+          devol:     toNum(r[17]),
+        };
+      });
+
+    if (!_ventasData.length) {
+      if (statusEl) statusEl.textContent = '⚠️ No se encontraron datos';
+      return;
+    }
+
+    if (statusEl) statusEl.textContent = '';
+    // Store periodo
+    $('ventas-periodo-txt') && ($('ventas-periodo-txt').textContent = periodoTxt.split('(')[0].trim() || 'Reporte de ventas');
+    $('ventas-periodo-sub') && ($('ventas-periodo-sub').textContent = _ventasData.length + ' productos · ' +
+      (periodoTxt.match(/\d+\/\d+\/\d+/g) || []).join(' → '));
+
+    $('ventas-resultado').style.display = 'block';
+    renderVentasResumen();
+
+  } catch(e) {
+    if (statusEl) statusEl.textContent = '⚠️ Error: ' + e.message;
+    console.error('[VENTAS]', e);
+  }
+}
+
+function ventasResTab(btn, id) {
+  document.querySelectorAll('.ventas-rtab').forEach(function(b) {
+    b.style.background='#F4F5F7'; b.style.color='#4B5563'; b.style.border='1px solid #E5E7EB';
+  });
+  btn.style.background='#E53935'; btn.style.color='#fff'; btn.style.border='none';
+  ['resumen','top','alertas','comprar'].forEach(function(p) {
+    var el = $('ventas-res-'+p);
+    if (el) el.style.display = p===id ? 'block' : 'none';
+  });
+  if (id==='resumen') renderVentasResumen();
+  if (id==='top')     renderVentasTop();
+  if (id==='alertas') renderVentasAlertas();
+  if (id==='comprar') renderVentasComprar();
+}
+
+function renderVentasResumen() {
+  var el = $('ventas-res-resumen'); if (!el || !_ventasData.length) return;
+
+  var totalVenta  = _ventasData.reduce(function(s,p){ return s+p.total; }, 0);
+  var totalCosto  = _ventasData.reduce(function(s,p){ return s+p.costo*p.cantidad; }, 0);
+  var totalUtil   = _ventasData.reduce(function(s,p){ return s+p.utiBruta; }, 0);
+  var margenProm  = totalCosto > 0 ? Math.round((totalVenta-totalCosto)/totalCosto*100*10)/10 : 0;
+  var sinCosto    = _ventasData.filter(function(p){ return p.costo===0 && p.total>10000; }).length;
+  var conDevol    = _ventasData.filter(function(p){ return p.devol>0; }).length;
+
+  // Ventas por rubro
+  var rubros = {};
+  _ventasData.forEach(function(p) {
+    if (!rubros[p.rubro]) rubros[p.rubro] = 0;
+    rubros[p.rubro] += p.total;
+  });
+  var rubrosSorted = Object.entries(rubros).sort(function(a,b){ return b[1]-a[1]; });
+
+  el.innerHTML =
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">' +
+      '<div class="kpi kpi-green"><div class="kpi-val">' + fmtM(Math.round(totalVenta)) + '</div><div class="kpi-lbl">Total vendido</div></div>' +
+      '<div class="kpi kpi-gold"><div class="kpi-val">' + margenProm + '%</div><div class="kpi-lbl">Margen promedio</div></div>' +
+      '<div class="kpi kpi-blue"><div class="kpi-val">' + _ventasData.length + '</div><div class="kpi-lbl">Productos con ventas</div></div>' +
+      '<div class="kpi kpi-red"><div class="kpi-val">' + sinCosto + '</div><div class="kpi-lbl">Sin costo cargado</div></div>' +
+    '</div>' +
+    '<div class="card">' +
+      '<div class="card-title">🏪 Ventas por rubro</div>' +
+      rubrosSorted.map(function(e) {
+        var pct = Math.round(e[1]/totalVenta*100*10)/10;
+        return '<div style="margin-bottom:8px">' +
+          '<div style="display:flex;justify-content:space-between;margin-bottom:3px">' +
+            '<div style="font-size:12px;font-weight:700;color:#1A1A2E">' + e[0] + '</div>' +
+            '<div style="font-size:12px;font-weight:700;color:#E53935">' + fmtM(Math.round(e[1])) + ' <span style="color:#9CA3AF;font-weight:400">(' + pct + '%)</span></div>' +
+          '</div>' +
+          '<div style="background:#F3F4F6;border-radius:4px;height:6px;overflow:hidden">' +
+            '<div style="height:100%;background:#E53935;border-radius:4px;width:' + pct + '%"></div>' +
+          '</div>' +
+        '</div>';
+      }).join('') +
+    '</div>';
+}
+
+function renderVentasTop() {
+  var el = $('ventas-res-top'); if (!el || !_ventasData.length) return;
+  var sorted = _ventasData.slice().sort(function(a,b){ return b.total-a.total; }).slice(0,20);
+
+  el.innerHTML = '<div class="card">' +
+    '<div class="card-title">🏆 Top 20 — mayor venta $</div>' +
+    sorted.map(function(p, i) {
+      var mCol = p.margen < 0 ? '#EF4444' : p.margen < 20 ? '#D97706' : '#16A34A';
+      return '<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid #F3F4F6">' +
+        '<div style="width:22px;font-size:11px;font-weight:800;color:#9CA3AF">' + (i+1) + '</div>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="font-size:12px;font-weight:700;color:#1A1A2E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p.nombre + '</div>' +
+          '<div style="font-size:10px;color:#9CA3AF">' + p.rubro + ' · ' + p.cantidad.toFixed(1) + ' u/kg</div>' +
+        '</div>' +
+        '<div style="text-align:right;min-width:90px">' +
+          '<div style="font-size:12px;font-weight:800;color:#1A1A2E">' + fmtM(Math.round(p.total)) + '</div>' +
+          '<div style="font-size:10px;font-weight:700;color:' + mCol + '">' + (p.margen > 0 ? p.margen.toFixed(1) + '%' : 'sin costo') + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('') +
+  '</div>';
+}
+
+function renderVentasAlertas() {
+  var el = $('ventas-res-alertas'); if (!el || !_ventasData.length) return;
+  var items = [];
+
+  // Negative margin products with significant sales
+  var negMargen = _ventasData.filter(function(p){ return p.margen < 0 && p.total > 50000; })
+    .sort(function(a,b){ return a.margen-b.margen; });
+  if (negMargen.length) {
+    items.push({tipo:'danger', titulo:'🔴 Margen negativo — perdés plata',
+      lista: negMargen.slice(0,5).map(function(p){
+        return p.nombre + ': ' + p.margen.toFixed(1) + '% · ' + fmtM(p.total);
+      })
+    });
+  }
+
+  // Sin costo pero con ventas altas
+  var sinCosto = _ventasData.filter(function(p){ return p.costo===0 && p.total>100000; })
+    .sort(function(a,b){ return b.total-a.total; });
+  if (sinCosto.length) {
+    items.push({tipo:'warn', titulo:'⚠️ Sin costo cargado — margen desconocido',
+      lista: sinCosto.slice(0,5).map(function(p){
+        return p.nombre + ': ' + fmtM(p.total) + ' vendidos';
+      })
+    });
+  }
+
+  // Devoluciones altas
+  var altaDevol = _ventasData.filter(function(p){ return p.devol >= 3; })
+    .sort(function(a,b){ return b.devol-a.devol; });
+  if (altaDevol.length) {
+    items.push({tipo:'warn', titulo:'↩️ Devoluciones frecuentes — revisá calidad',
+      lista: altaDevol.slice(0,5).map(function(p){
+        return p.nombre + ': ' + p.devol + ' devoluciones';
+      })
+    });
+  }
+
+  if (!items.length) {
+    el.innerHTML = '<div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:16px;text-align:center;color:#16A34A;font-weight:700">✅ Sin alertas relevantes</div>';
+    return;
+  }
+
+  var BG  = {danger:'#FEF2F2',warn:'#FFFBEB'};
+  var COL = {danger:'#EF4444',warn:'#D97706'};
+  el.innerHTML = items.map(function(item) {
+    return '<div style="background:' + BG[item.tipo] + ';border-radius:10px;padding:12px;margin-bottom:10px">' +
+      '<div style="font-size:12px;font-weight:800;color:' + COL[item.tipo] + ';margin-bottom:8px">' + item.titulo + '</div>' +
+      item.lista.map(function(l) {
+        return '<div style="font-size:11px;color:#4B5563;padding:3px 0;border-bottom:1px solid rgba(0,0,0,.05)">' + l + '</div>';
+      }).join('') +
+    '</div>';
+  }).join('');
+}
+
+function renderVentasComprar() {
+  var el = $('ventas-res-comprar'); if (!el || !_ventasData.length) return;
+
+  // Sugerencias de compra basadas en:
+  // 1. Alto volumen de ventas → reponer con prioridad
+  // 2. Buen margen → vale la pena aumentar stock
+  // 3. Alta rotación (cantidad/días)
+
+  // Get top selling products by quantity (not $ to capture meat/deli)
+  var porRubro = {};
+  _ventasData.forEach(function(p) {
+    if (!porRubro[p.rubro]) porRubro[p.rubro] = [];
+    porRubro[p.rubro].push(p);
+  });
+
+  var totalVenta = _ventasData.reduce(function(s,p){ return s+p.total; }, 0);
+
+  el.innerHTML = '<div style="font-size:11px;color:#9CA3AF;margin-bottom:12px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:10px">' +
+    '🤖 Basado en tus ventas del período — los productos con mayor rotación y buen margen son los que conviene tener siempre en stock.' +
+  '</div>' +
+
+  Object.entries(porRubro)
+    .filter(function(e){ return e[0] !== 'SIN ASIGNAR' && e[0] !== '(M)SIN ASIGNAR'; })
+    .sort(function(a,b){
+      var ta = a[1].reduce(function(s,p){return s+p.total;},0);
+      var tb = b[1].reduce(function(s,p){return s+p.total;},0);
+      return tb - ta;
+    })
+    .map(function(entry) {
+      var rubro = entry[0];
+      var prods = entry[1];
+      var rubroTotal = prods.reduce(function(s,p){return s+p.total;},0);
+      var pct = Math.round(rubroTotal/totalVenta*100*10)/10;
+
+      // Top 5 products of this rubro to restock
+      var topProds = prods
+        .filter(function(p){ return p.margen > 10 || p.costo === 0; })
+        .sort(function(a,b){ return b.total-a.total; })
+        .slice(0,5);
+
+      if (!topProds.length) return '';
+
+      return '<div class="card" style="margin-bottom:10px">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' +
+          '<div class="card-title" style="margin:0">' + rubro + '</div>' +
+          '<div style="font-size:10px;color:#9CA3AF">' + pct + '% de tus ventas</div>' +
+        '</div>' +
+        topProds.map(function(p) {
+          var urgencia = p.incid > 5 ? '🔴 Alta' : p.incid > 2 ? '🟡 Media' : '🟢 Normal';
+          var mCol = p.margen < 0 ? '#EF4444' : p.margen < 20 ? '#D97706' : '#16A34A';
+          return '<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid #F9FAFB">' +
+            '<div style="flex:1;min-width:0">' +
+              '<div style="font-size:12px;font-weight:700;color:#1A1A2E">' + p.nombre + '</div>' +
+              '<div style="font-size:10px;color:#9CA3AF">' +
+                'Vendido: ' + fmtM(Math.round(p.total)) + ' · ' +
+                p.cantidad.toFixed(1) + ' u · ' +
+                (p.proveedor ? p.proveedor : 'Sin proveedor') +
+              '</div>' +
+            '</div>' +
+            '<div style="text-align:right;margin-left:8px">' +
+              '<div style="font-size:10px;font-weight:700;color:' + mCol + '">' + (p.margen > 0 ? p.margen.toFixed(0) + '%' : 'sin costo') + '</div>' +
+              '<div style="font-size:9px;color:#9CA3AF">' + urgencia + '</div>' +
+            '</div>' +
+          '</div>';
+        }).join('') +
+      '</div>';
+    }).join('') +
+
+  // IA button
+  '<button onclick="analizarVentasConIA()" class="btn btn-primary btn-full" style="margin-top:8px">' +
+    '🤖 Analizar con IA y generar pedido' +
+  '</button>' +
+  '<div id="ventas-ia-resultado" style="margin-top:10px"></div>';
+}
+
+async function analizarVentasConIA() {
+  var el = $('ventas-ia-resultado'); if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:16px;color:#9CA3AF">⏳ Analizando con IA...</div>';
+
+  var top20 = _ventasData.slice().sort(function(a,b){ return b.total-a.total; }).slice(0,20);
+  var lowMargen = _ventasData.filter(function(p){ return p.margen < 0 && p.total > 50000; }).slice(0,5);
+  var sinCosto = _ventasData.filter(function(p){ return p.costo===0 && p.total>100000; }).length;
+  var totalVenta = _ventasData.reduce(function(s,p){ return s+p.total; }, 0);
+
+  var ctx = 'REPORTE DE VENTAS - AL PASO' + '\n';
+  ctx += 'Total vendido: $' + Math.round(totalVenta).toLocaleString('es-AR') + '\n';
+  ctx += 'Productos: ' + _ventasData.length + ' (' + sinCosto + ' sin costo cargado)\n\n';
+  ctx += 'TOP 20 PRODUCTOS:\n';
+  top20.forEach(function(p) {
+    ctx += '- ' + p.nombre + ': $' + Math.round(p.total).toLocaleString('es-AR') + ' · ' + p.cantidad.toFixed(1) + ' u · margen ' + p.margen.toFixed(1) + '% · ' + p.rubro + '\n';
+
+
+  });
+  if (lowMargen.length) {
+    ctx += '\nMARGEN NEGATIVO:\n';
+    lowMargen.forEach(function(p){ ctx += '- ' + p.nombre + ': ' + p.margen.toFixed(1) + '%\n'; });
+  }
+
+  var SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRsc3lha2JoY2VvbGN6anphZHBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1ODIxMTUsImV4cCI6MjA5MDE1ODExNX0.snm7nQuLEagVKIofUxhGa6ISCrVGK96SH_N-zzQRgBg';
+
+  try {
+    var resp = await fetch('https://tlsyakbhceolczjzadpc.supabase.co/functions/v1/ia-alpaso', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPA_ANON },
+      body: JSON.stringify({
+        system: 'Sos el asesor de compras del supermercado Al Paso Argentina. Analizá los datos de ventas y generá recomendaciones concretas de qué comprar, en qué cantidad aproximada y por qué. Priorizá los productos de mayor rotación y buen margen. Indicá si hay problemas de rentabilidad que resolver. Sé específico y práctico. Respondé en español rioplatense.',
+        messages: [{ role: 'user', content: ctx + 'Basandote en estas ventas, que me recomendas comprar esta semana? Hay algun problema de rentabilidad urgente?' }],
+
+        max_tokens: 1200,
+      })
+    });
+    var data = await resp.json();
+    var txt = data.content ? data.content.filter(function(b){return b.type==='text';}).map(function(b){return b.text;}).join('') : '⚠️ Sin respuesta';
+    el.innerHTML = '<div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:14px;font-size:12px;color:#1A1A2E;line-height:1.7;white-space:pre-wrap">' + txt + '</div>';
+  } catch(e) {
+    el.innerHTML = '<div style="color:#EF4444;font-size:11px">⚠️ Error: ' + e.message + '</div>';
+  }
+}
+
+function resetVentasXls() {
+  _ventasData = [];
+  $('ventas-resultado').style.display = 'none';
+  $('ventas-upload-status') && ($('ventas-upload-status').textContent = '');
+}
+
+
+
+
 
 
 </script>
