@@ -2000,6 +2000,7 @@ input::placeholder { color: #9CA3AF !important; }
     <button class="fin-stab" onclick="finSubTab(this,'productos-rent')" style="flex:1;min-width:80px;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#F9FAFB;color:#9CA3AF;border:1px solid #2A2A2A">🏆 Rentabilidad</button>
     <button class="fin-stab" onclick="finSubTab(this,'costos')" style="flex:1;min-width:80px;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#F9FAFB;color:#9CA3AF;border:1px solid #E5E7EB">💸 Costos fijos</button>
     <button class="fin-stab" onclick="finSubTab(this,'rentabilidad')" style="flex:1;min-width:80px;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#F9FAFB;color:#9CA3AF;border:1px solid #E5E7EB">📊 Rentabilidad</button>
+    <button class="fin-stab" onclick="finSubTab(this,'simulador')" style="flex:1;min-width:80px;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#F9FAFB;color:#9CA3AF;border:1px solid #E5E7EB">🎯 Simulador</button>
     <button class="fin-stab" onclick="finSubTab(this,'empleados-rent')" style="flex:1;min-width:80px;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#F9FAFB;color:#9CA3AF;border:1px solid #2A2A2A">👷 Personal</button>
   </div>
 
@@ -2218,6 +2219,103 @@ input::placeholder { color: #9CA3AF !important; }
       <div id="rent-recomendaciones"></div>
     </div>
 
+  </div>
+
+
+  <!-- SIMULADOR DE VENTAS -->
+  <div id="fin-simulador" style="display:none">
+
+    <!-- Objetivo de ganancia -->
+    <div style="background:#fff;border:1px solid #E5E7EB;border-radius:14px;padding:16px;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:800;color:#1A1A2E;margin-bottom:14px">🎯 ¿Cuánto querés ganar?</div>
+
+      <div style="margin-bottom:12px">
+        <div style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;margin-bottom:6px">Ganancia objetivo</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:20px;font-weight:800;color:#9CA3AF">$</span>
+          <input id="sim-objetivo" type="number" placeholder="500000" min="0" step="10000"
+            oninput="calcularSimulador()"
+            style="flex:1;font-size:28px;font-weight:900;color:#E53935;background:#F9FAFB;border:2px solid #E5E7EB;border-radius:10px;padding:10px 12px;font-family:Nunito,sans-serif;outline:none;text-align:right">
+          <select id="sim-periodo-obj" onchange="calcularSimulador()"
+            style="background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:9px;padding:10px;font-family:Nunito,sans-serif;font-size:12px;color:#1A1A2E;outline:none">
+            <option value="dia">por día</option>
+            <option value="semana">por semana</option>
+            <option value="mes" selected>por mes</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Mix de pagos esperado -->
+      <div style="margin-bottom:12px">
+        <div style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;margin-bottom:6px">Mix de pagos esperado</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div>
+            <div style="font-size:11px;color:#6B7280;margin-bottom:3px">💵 Efectivo %</div>
+            <input id="sim-pct-ef" type="number" value="40" min="0" max="100" oninput="sincronizarMix('ef');calcularSimulador()"
+              style="width:100%;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:8px;padding:8px;font-family:Nunito,sans-serif;font-size:16px;font-weight:700;color:#16A34A;outline:none;text-align:center">
+          </div>
+          <div>
+            <div style="font-size:11px;color:#6B7280;margin-bottom:3px">💳 Débito %</div>
+            <input id="sim-pct-deb" type="number" value="35" min="0" max="100" oninput="sincronizarMix('deb');calcularSimulador()"
+              style="width:100%;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:8px;padding:8px;font-family:Nunito,sans-serif;font-size:16px;font-weight:700;color:#3B82F6;outline:none;text-align:center">
+          </div>
+          <div>
+            <div style="font-size:11px;color:#6B7280;margin-bottom:3px">💙 MercadoPago %</div>
+            <input id="sim-pct-mp" type="number" value="20" min="0" max="100" oninput="sincronizarMix('mp');calcularSimulador()"
+              style="width:100%;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:8px;padding:8px;font-family:Nunito,sans-serif;font-size:16px;font-weight:700;color:#06B6D4;outline:none;text-align:center">
+          </div>
+          <div>
+            <div style="font-size:11px;color:#6B7280;margin-bottom:3px">💳 Crédito %</div>
+            <input id="sim-pct-cred" type="number" value="5" min="0" max="100" oninput="sincronizarMix('cred');calcularSimulador()"
+              style="width:100%;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:8px;padding:8px;font-family:Nunito,sans-serif;font-size:16px;font-weight:700;color:#8B5CF6;outline:none;text-align:center">
+          </div>
+        </div>
+        <div style="font-size:10px;margin-top:6px;text-align:right" id="sim-mix-total-txt"></div>
+      </div>
+
+      <!-- Margen del negocio -->
+      <div style="margin-bottom:4px">
+        <div style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;margin-bottom:6px">Margen del negocio sobre ventas</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input id="sim-margen-neg" type="number" value="35" min="1" max="90" oninput="calcularSimulador()"
+            style="flex:1;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:8px;padding:10px;font-family:Nunito,sans-serif;font-size:20px;font-weight:800;color:#D97706;outline:none;text-align:center">
+          <span style="font-size:16px;color:#9CA3AF">%</span>
+          <button onclick="cargarMargenReal()" style="padding:8px 12px;border-radius:8px;background:#FEF3C7;border:1px solid #FDE68A;color:#92400E;font-family:Nunito,sans-serif;font-size:10px;font-weight:700;cursor:pointer">📊 Usar real</button>
+        </div>
+        <div style="font-size:10px;color:#9CA3AF;margin-top:4px">Margen real = ventas - costo productos - comisiones</div>
+      </div>
+    </div>
+
+    <!-- Resultado simulador -->
+    <div id="sim-resultado" style="display:none">
+
+      <!-- Venta necesaria -->
+      <div id="sim-card-principal" style="border-radius:14px;padding:20px;margin-bottom:12px;text-align:center">
+        <div style="font-size:11px;font-weight:800;color:#6B7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Necesitás vender</div>
+        <div style="font-size:42px;font-weight:900;line-height:1" id="sim-venta-necesaria">$0</div>
+        <div style="font-size:14px;color:#6B7280;margin-top:6px" id="sim-periodo-label">por mes</div>
+      </div>
+
+      <!-- Desglose -->
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-title">📊 Desglose del cálculo</div>
+        <div id="sim-desglose"></div>
+      </div>
+
+      <!-- ¿Cómo voy hoy? -->
+      <div class="card" style="margin-bottom:12px" id="sim-hoy-card">
+        <div class="card-title">📅 ¿Cómo vas hoy?</div>
+        <div id="sim-hoy-contenido"></div>
+      </div>
+
+      <!-- Escenarios -->
+      <div class="card">
+        <div class="card-title">🔄 Comparar escenarios de mix de pagos</div>
+        <div style="font-size:10px;color:#9CA3AF;margin-bottom:10px">Qué pasa si cambiás el mix — para la misma ganancia</div>
+        <div id="sim-escenarios"></div>
+      </div>
+
+    </div>
   </div>
 
 </div>
@@ -2741,6 +2839,7 @@ input::placeholder { color: #9CA3AF !important; }
 <div class="toast" id="toast"></div>
 
 <script>
+
 
 
 
@@ -12465,6 +12564,230 @@ async function loadRentabilidad() {
     var COL = {ok:'#16A34A',warn:'#D97706',danger:'#EF4444',info:'#3B82F6'};
     recEl.innerHTML = recs.map(function(r) {
       return '<div style="background:' + BG[r.tipo] + ';border-radius:8px;padding:10px 12px;margin-bottom:6px;font-size:11px;color:' + COL[r.tipo] + ';font-weight:600">' + r.txt + '</div>';
+    }).join('');
+  }
+}
+
+
+// ══════════════════════════════════════════════════
+// SIMULADOR DE VENTAS
+// ══════════════════════════════════════════════════
+
+var _simVentaActualHoy = 0;
+var _simMargenRealCargado = null;
+
+async function initSimulador() {
+  loadComisionesCfg && loadComisionesCfg();
+
+  // Try to load today's actual sales
+  var hoy = new Date().toISOString().split('T')[0];
+  try {
+    var { data: movs } = await db.from('movimientos_caja')
+      .select('tipo,monto').eq('fecha', hoy)
+      .in('tipo',['venta_efectivo','venta_debito','venta_mp','venta_credito','venta_tarjeta']);
+    _simVentaActualHoy = (movs||[]).reduce(function(s,m){ return s+(m.monto||0); }, 0);
+  } catch(e) {}
+
+  // Load real margen from last ventas XLS context
+  try {
+    var { data: ctx } = await db.from('ia_contexto')
+      .select('contenido').eq('tipo','ventas_xls')
+      .order('created_at',{ascending:false}).limit(1);
+    if (ctx && ctx[0] && ctx[0].contenido.margenPromedio) {
+      _simMargenRealCargado = ctx[0].contenido.margenPromedio;
+    }
+  } catch(e) {}
+
+  // Load real mix from last month's movimientos
+  try {
+    var inicioMes = new Date().getFullYear() + '-' + String(new Date().getMonth()+1).padStart(2,'0') + '-01';
+    var { data: movsMes } = await db.from('movimientos_caja')
+      .select('tipo,monto').gte('fecha', inicioMes)
+      .in('tipo',['venta_efectivo','venta_debito','venta_mp','venta_credito','venta_tarjeta']);
+    if (movsMes && movsMes.length) {
+      var ef=0,deb=0,mp=0,cred=0;
+      movsMes.forEach(function(m){
+        if(m.tipo==='venta_efectivo') ef+=m.monto||0;
+        if(m.tipo==='venta_debito'||m.tipo==='venta_tarjeta') deb+=m.monto||0;
+        if(m.tipo==='venta_mp') mp+=m.monto||0;
+        if(m.tipo==='venta_credito') cred+=m.monto||0;
+      });
+      var tot = ef+deb+mp+cred;
+      if (tot > 0) {
+        if($('sim-pct-ef'))   $('sim-pct-ef').value   = Math.round(ef/tot*100);
+        if($('sim-pct-deb'))  $('sim-pct-deb').value  = Math.round(deb/tot*100);
+        if($('sim-pct-mp'))   $('sim-pct-mp').value   = Math.round(mp/tot*100);
+        if($('sim-pct-cred')) $('sim-pct-cred').value = Math.round(cred/tot*100);
+      }
+    }
+  } catch(e) {}
+
+  calcularSimulador();
+}
+
+function cargarMargenReal() {
+  if (_simMargenRealCargado !== null) {
+    if($('sim-margen-neg')) $('sim-margen-neg').value = _simMargenRealCargado;
+    toast('✅ Margen real cargado: ' + _simMargenRealCargado + '%');
+    calcularSimulador();
+  } else {
+    toast('⚠️ Subí un XLS de ventas primero para calcular el margen real');
+  }
+}
+
+function sincronizarMix(cambiado) {
+  // Keep total at 100% by adjusting proportionally
+  var ef   = parseFloat($('sim-pct-ef')?.value)   || 0;
+  var deb  = parseFloat($('sim-pct-deb')?.value)  || 0;
+  var mp   = parseFloat($('sim-pct-mp')?.value)   || 0;
+  var cred = parseFloat($('sim-pct-cred')?.value) || 0;
+  var total = ef + deb + mp + cred;
+  var txt = $('sim-mix-total-txt');
+  if (txt) {
+    txt.textContent = 'Total: ' + total + '%';
+    txt.style.color = Math.abs(total - 100) < 2 ? '#16A34A' : '#EF4444';
+  }
+}
+
+function calcularSimulador() {
+  var objetivo    = parseFloat($('sim-objetivo')?.value) || 0;
+  var periodoObj  = $('sim-periodo-obj')?.value || 'mes';
+  var margenNeg   = parseFloat($('sim-margen-neg')?.value) || 35;
+  var pctEf       = parseFloat($('sim-pct-ef')?.value)   || 0;
+  var pctDeb      = parseFloat($('sim-pct-deb')?.value)  || 0;
+  var pctMP       = parseFloat($('sim-pct-mp')?.value)   || 0;
+  var pctCred     = parseFloat($('sim-pct-cred')?.value) || 0;
+
+  sincronizarMix(null);
+
+  if (!objetivo) { $('sim-resultado').style.display='none'; return; }
+  $('sim-resultado').style.display = 'block';
+
+  loadComisionesCfg && loadComisionesCfg();
+  var comDeb  = (_comisionesCfg.tarjeta_debito?.pct  || 0) / 100;
+  var comMP   = (_comisionesCfg.mercadopago?.pct     || 0) / 100;
+  var comCred = (_comisionesCfg.tarjeta_credito?.pct || 0) / 100;
+
+  // Comisión efectiva promedio según mix
+  var totalPct = pctEf + pctDeb + pctMP + pctCred;
+  var mixEf   = totalPct > 0 ? pctEf/totalPct   : 0.4;
+  var mixDeb  = totalPct > 0 ? pctDeb/totalPct  : 0.35;
+  var mixMP   = totalPct > 0 ? pctMP/totalPct   : 0.2;
+  var mixCred = totalPct > 0 ? pctCred/totalPct : 0.05;
+  var comPromedio = mixEf*0 + mixDeb*comDeb + mixMP*comMP + mixCred*comCred;
+
+  // Venta necesaria para lograr objetivo:
+  // ganancia_neta = venta * margen% - venta * com_promedio
+  // objetivo = venta * (margen% - com_promedio)
+  // venta = objetivo / (margen% - com_promedio)
+  var margenEfectivo = (margenNeg/100) - comPromedio;
+  if (margenEfectivo <= 0) {
+    $('sim-venta-necesaria').textContent = '∞';
+    $('sim-periodo-label').textContent = 'Las comisiones superan el margen — imposible';
+    return;
+  }
+
+  var ventaNecesariaMes = objetivo / margenEfectivo;
+  // Adjust for period
+  var ventaNecesariaPeriodo = periodoObj === 'dia' ? ventaNecesariaMes / 30
+    : periodoObj === 'semana' ? ventaNecesariaMes / 4.3
+    : ventaNecesariaMes;
+
+  // Display
+  var card = $('sim-card-principal');
+  if (card) {
+    card.style.background = 'linear-gradient(135deg,#FEF2F2,#FFF5F5)';
+  }
+  if ($('sim-venta-necesaria')) $('sim-venta-necesaria').textContent = fmtM(Math.round(ventaNecesariaPeriodo));
+  if ($('sim-periodo-label')) {
+    var labels = {dia:'por día',semana:'por semana',mes:'por mes'};
+    $('sim-periodo-label').textContent = labels[periodoObj] + ' · ' + Math.round(margenEfectivo*100*10)/10 + '% margen efectivo';
+  }
+
+  // Desglose
+  var desEl = $('sim-desglose');
+  if (desEl) {
+    var comMonto = ventaNecesariaMes * comPromedio;
+    var costoMonto = ventaNecesariaMes * (1 - margenNeg/100);
+    var ventaXDia = ventaNecesariaMes / 30;
+    desEl.innerHTML = [
+      { l:'Venta bruta necesaria/mes', v: fmtM(Math.round(ventaNecesariaMes)),   col:'#1A1A2E' },
+      { l:'Costo reposición estimado',  v:'-' + fmtM(Math.round(costoMonto)),      col:'#EF4444' },
+      { l:'Comisiones estimadas (' + (comPromedio*100).toFixed(2) + '%)', v:'-' + fmtM(Math.round(comMonto)), col:'#EF4444' },
+      { l:'Ganancia neta',              v: fmtM(Math.round(objetivo)),              col:'#16A34A' },
+      { l:'Venta diaria requerida',     v: fmtM(Math.round(ventaXDia)) + '/día',   col:'#E53935' },
+      { l:'Venta semanal requerida',    v: fmtM(Math.round(ventaXDia*7)) + '/sem', col:'#D97706' },
+    ].map(function(r) {
+      return '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #F9FAFB">' +
+        '<div style="font-size:12px;color:#6B7280">' + r.l + '</div>' +
+        '<div style="font-size:13px;font-weight:800;color:' + r.col + '">' + r.v + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // ¿Cómo vas hoy?
+  var hoyEl = $('sim-hoy-contenido');
+  if (hoyEl) {
+    var ventaHoy = _simVentaActualHoy;
+    var metaDia  = ventaNecesariaMes / 30;
+    var pctHoy   = metaDia > 0 ? Math.min(120, Math.round(ventaHoy/metaDia*100)) : 0;
+    var falta    = Math.max(0, metaDia - ventaHoy);
+    var colorBarra = pctHoy >= 100 ? '#16A34A' : pctHoy >= 70 ? '#D97706' : '#EF4444';
+
+    hoyEl.innerHTML =
+      '<div style="display:flex;justify-content:space-between;margin-bottom:8px">' +
+        '<div>' +
+          '<div style="font-size:11px;color:#6B7280">Vendido hoy</div>' +
+          '<div style="font-size:22px;font-weight:900;color:#1A1A2E">' + fmtM(Math.round(ventaHoy)) + '</div>' +
+        '</div>' +
+        '<div style="text-align:right">' +
+          '<div style="font-size:11px;color:#6B7280">Meta del día</div>' +
+          '<div style="font-size:22px;font-weight:900;color:#E53935">' + fmtM(Math.round(metaDia)) + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="background:#F3F4F6;border-radius:8px;height:12px;overflow:hidden;margin-bottom:8px">' +
+        '<div style="height:100%;border-radius:8px;background:' + colorBarra + ';width:' + Math.min(100,pctHoy) + '%;transition:width .5s"></div>' +
+      '</div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:11px">' +
+        '<span style="color:' + colorBarra + ';font-weight:700">' + pctHoy + '% de la meta</span>' +
+        (falta > 0
+          ? '<span style="color:#EF4444;font-weight:700">Falta: ' + fmtM(Math.round(falta)) + '</span>'
+          : '<span style="color:#16A34A;font-weight:700">✅ Meta superada</span>') +
+      '</div>' +
+      (ventaHoy === 0 ? '<div style="font-size:10px;color:#9CA3AF;margin-top:6px;text-align:center">Importá la planilla de caja para ver las ventas de hoy</div>' : '');
+  }
+
+  // Escenarios de mix
+  var escEl = $('sim-escenarios');
+  if (escEl) {
+    var escenarios = [
+      { label:'100% Efectivo',   ef:1,   deb:0,    mp:0,    cred:0 },
+      { label:'Mix actual',      ef:mixEf, deb:mixDeb, mp:mixMP, cred:mixCred },
+      { label:'70% Débito',      ef:0.1, deb:0.7,  mp:0.2,  cred:0 },
+      { label:'50% MercadoPago', ef:0.1, deb:0.2,  mp:0.5,  cred:0.2 },
+    ];
+
+    escEl.innerHTML = escenarios.map(function(esc) {
+      var comEsc = esc.ef*0 + esc.deb*comDeb + esc.mp*comMP + esc.cred*comCred;
+      var margenEsc = (margenNeg/100) - comEsc;
+      var ventaEsc  = margenEsc > 0 ? Math.round(objetivo / margenEsc) : null;
+      var diff      = ventaEsc ? ventaEsc - Math.round(ventaNecesariaMes) : null;
+      var isActual  = esc.label === 'Mix actual';
+
+      return '<div style="background:' + (isActual?'#FEF2F2':'#F9FAFB') + ';border:1px solid ' + (isActual?'#FECACA':'#E5E7EB') + ';border-radius:10px;padding:10px 12px;margin-bottom:8px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center">' +
+          '<div>' +
+            '<div style="font-size:12px;font-weight:700;color:#1A1A2E">' + esc.label + (isActual?' ← actual':'') + '</div>' +
+            '<div style="font-size:10px;color:#9CA3AF">Comisión prom: ' + (comEsc*100).toFixed(2) + '%</div>' +
+          '</div>' +
+          '<div style="text-align:right">' +
+            '<div style="font-size:14px;font-weight:900;color:#E53935">' + (ventaEsc ? fmtM(ventaEsc) : '—') + '</div>' +
+            (diff !== null && diff !== 0
+              ? '<div style="font-size:10px;font-weight:700;color:' + (diff>0?'#EF4444':'#16A34A') + '">' + (diff>0?'+':'-') + fmtM(Math.abs(diff)) + '</div>'
+              : '') +
+          '</div>' +
+        '</div>' +
+      '</div>';
     }).join('');
   }
 }
