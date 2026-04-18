@@ -1998,7 +1998,8 @@ input::placeholder { color: #9CA3AF !important; }
     <button class="fin-stab on" onclick="finSubTab(this,'dashboard')" style="flex:1;min-width:80px;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#E53935;color:#fff;border:none">📊 Dashboard</button>
     <button class="fin-stab" onclick="finSubTab(this,'pagos')" style="flex:1;min-width:80px;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#F9FAFB;color:#9CA3AF;border:1px solid #2A2A2A">💳 Medios de pago</button>
     <button class="fin-stab" onclick="finSubTab(this,'productos-rent')" style="flex:1;min-width:80px;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#F9FAFB;color:#9CA3AF;border:1px solid #2A2A2A">🏆 Rentabilidad</button>
-    <button class="fin-stab" onclick="finSubTab(this,'costos')" style="flex:1;min-width:80px;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#F9FAFB;color:#9CA3AF;border:1px solid #2A2A2A">💸 Costos fijos</button>
+    <button class="fin-stab" onclick="finSubTab(this,'costos')" style="flex:1;min-width:80px;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#F9FAFB;color:#9CA3AF;border:1px solid #E5E7EB">💸 Costos fijos</button>
+    <button class="fin-stab" onclick="finSubTab(this,'rentabilidad')" style="flex:1;min-width:80px;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#F9FAFB;color:#9CA3AF;border:1px solid #E5E7EB">📊 Rentabilidad</button>
     <button class="fin-stab" onclick="finSubTab(this,'empleados-rent')" style="flex:1;min-width:80px;padding:8px;border-radius:9px;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;background:#F9FAFB;color:#9CA3AF;border:1px solid #2A2A2A">👷 Personal</button>
   </div>
 
@@ -2025,19 +2026,31 @@ input::placeholder { color: #9CA3AF !important; }
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
       <div class="kpi" style="padding:12px">
         <div style="font-size:10px;color:#6B7280;margin-bottom:4px">Ventas brutas</div>
-        <div style="font-size:22px;font-weight:900;color:#fff" id="fin-venta-bruta">—</div>
+        <div style="font-size:20px;font-weight:900;color:#1A1A2E" id="fin-venta-bruta">—</div>
+      </div>
+      <div class="kpi kpi-green" style="padding:12px">
+        <div style="font-size:10px;color:#6B7280;margin-bottom:4px">Ganancia neta real</div>
+        <div style="font-size:20px;font-weight:900" id="fin-ganancia">—</div>
       </div>
       <div class="kpi" style="padding:12px">
-        <div style="font-size:10px;color:#6B7280;margin-bottom:4px">Ganancia neta</div>
-        <div style="font-size:22px;font-weight:900;color:#43A047" id="fin-ganancia">—</div>
+        <div style="font-size:10px;color:#6B7280;margin-bottom:2px">Comisiones pagadas</div>
+        <div style="font-size:16px;font-weight:800;color:#EF4444" id="fin-comisiones">—</div>
+        <div style="font-size:9px;color:#9CA3AF" id="fin-com-pct"></div>
       </div>
       <div class="kpi" style="padding:12px">
-        <div style="font-size:10px;color:#6B7280;margin-bottom:4px">Comisiones pagadas</div>
-        <div style="font-size:18px;font-weight:800;color:#E53935" id="fin-comisiones">—</div>
+        <div style="font-size:10px;color:#6B7280;margin-bottom:2px">Costos totales</div>
+        <div style="font-size:16px;font-weight:800;color:#EF4444" id="fin-costos-dia">—</div>
+        <div style="font-size:9px;color:#9CA3AF" id="fin-costos-detalle"></div>
       </div>
       <div class="kpi" style="padding:12px">
-        <div style="font-size:10px;color:#6B7280;margin-bottom:4px">Costos del día</div>
-        <div style="font-size:18px;font-weight:800;color:#E53935" id="fin-costos-dia">—</div>
+        <div style="font-size:10px;color:#6B7280;margin-bottom:2px">% En efectivo</div>
+        <div style="font-size:18px;font-weight:900;color:#16A34A" id="fin-pct-efectivo">—</div>
+        <div style="font-size:9px;color:#9CA3AF">sin comisión</div>
+      </div>
+      <div class="kpi" style="padding:12px">
+        <div style="font-size:10px;color:#6B7280;margin-bottom:2px">Margen real %</div>
+        <div style="font-size:18px;font-weight:900" id="fin-margen-real">—</div>
+        <div style="font-size:9px;color:#9CA3AF">sobre ventas brutas</div>
       </div>
     </div>
 
@@ -2159,6 +2172,52 @@ input::placeholder { color: #9CA3AF !important; }
   <div id="fin-empleados-rent" style="display:none">
     <div style="font-size:12px;color:#6B7280;margin-bottom:12px">Comparación costo vs aporte de cada empleado al negocio</div>
     <div id="fin-emp-rent-list"><div class="loading-panel">⏳</div></div>
+  </div>
+
+
+  <!-- RENTABILIDAD POR MEDIO DE PAGO -->
+  <div id="fin-rentabilidad" style="display:none">
+
+    <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+      <select id="rent-periodo" onchange="loadRentabilidad()"
+        style="flex:1;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:9px;padding:9px 10px;font-family:Nunito,sans-serif;font-size:12px;color:#1A1A2E;outline:none">
+        <option value="hoy">Hoy</option>
+        <option value="semana">Esta semana</option>
+        <option value="mes" selected>Este mes</option>
+      </select>
+      <button onclick="loadRentabilidad()" style="padding:9px 12px;border-radius:9px;background:#F9FAFB;border:1px solid #E5E7EB;color:#9CA3AF;font-family:Nunito,sans-serif;font-size:11px;cursor:pointer">🔄</button>
+    </div>
+
+    <!-- Resumen impacto comisiones -->
+    <div class="card" style="margin-bottom:12px" id="rent-resumen-card">
+      <div class="card-title">💳 Impacto real de comisiones</div>
+      <div id="rent-resumen"><div class="loading-panel">⏳</div></div>
+    </div>
+
+    <!-- Desglose por medio de pago -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">📊 Desglose por medio de pago</div>
+      <div id="rent-desglose"></div>
+    </div>
+
+    <!-- Config comisiones inline -->
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="card-title" style="margin:0">⚙️ Comisiones configuradas</div>
+        <button onclick="cajaSubTab(document.querySelector('.caja-stab:last-child'),'comisiones')" 
+          style="padding:5px 10px;border-radius:7px;background:#FEF2F2;border:1px solid #FECACA;color:#E53935;font-family:Nunito,sans-serif;font-size:10px;cursor:pointer">
+          Editar
+        </button>
+      </div>
+      <div id="rent-comisiones-cfg"></div>
+    </div>
+
+    <!-- Recomendaciones -->
+    <div class="card">
+      <div class="card-title">💡 Recomendaciones</div>
+      <div id="rent-recomendaciones"></div>
+    </div>
+
   </div>
 
 </div>
@@ -2682,6 +2741,7 @@ input::placeholder { color: #9CA3AF !important; }
 <div class="toast" id="toast"></div>
 
 <script>
+
 
 
 
@@ -6090,6 +6150,20 @@ async function loadFinDashboard() {
     $('fin-ganancia').style.color = ganancia >= 0 ? '#16A34A' : '#EF4444';
   }
   if ($('fin-comisiones')) $('fin-comisiones').textContent = fmtM(Math.round(totalCom));
+  var comPct = bruto > 0 ? (totalCom/bruto*100).toFixed(1) : 0;
+  if ($('fin-com-pct')) $('fin-com-pct').textContent = comPct + '% de las ventas';
+  var pctEf = bruto > 0 ? Math.round(ef/bruto*100) : 0;
+  if ($('fin-pct-efectivo')) $('fin-pct-efectivo').textContent = pctEf + '%';
+  if ($('fin-margen-real')) {
+    $('fin-margen-real').textContent = margenReal + '%';
+    $('fin-margen-real').style.color = margenReal > 20 ? '#16A34A' : margenReal > 0 ? '#D97706' : '#EF4444';
+  }
+  if ($('fin-costos-detalle')) {
+    var parts = [];
+    if (costoDia > 0) parts.push('Fijos: ' + fmtM(costoDia));
+    if (costoTotal > 0) parts.push('Repos: ' + fmtM(costoTotal));
+    $('fin-costos-detalle').textContent = parts.join(' + ') || '';
+  }
   if ($('fin-costos-dia')) $('fin-costos-dia').textContent = fmtM(Math.round(costoDia + costoTotal));
 
   // Situación
@@ -12253,6 +12327,147 @@ _buildAgenteContext = async function(tipo, pregunta) {
 
 
 
+
+
+// ══════════════════════════════════════════════════
+// RENTABILIDAD POR MEDIO DE PAGO
+// ══════════════════════════════════════════════════
+
+async function loadRentabilidad() {
+  var periodo  = $('rent-periodo')?.value || 'mes';
+  var hoy      = new Date().toISOString().split('T')[0];
+  var hace7    = new Date(Date.now()-7*24*60*60*1000).toISOString().split('T')[0];
+  var inicioMes = new Date().getFullYear() + '-' + String(new Date().getMonth()+1).padStart(2,'0') + '-01';
+  var desde    = periodo === 'hoy' ? hoy : periodo === 'semana' ? hace7 : inicioMes;
+
+  loadComisionesCfg && loadComisionesCfg();
+
+  // Load movimientos_caja
+  var { data: movs } = await db.from('movimientos_caja')
+    .select('tipo,monto,fecha,concepto').gte('fecha', desde);
+
+  // Aggregate by medio de pago
+  var medios = {
+    efectivo:  { label:'💵 Efectivo',    monto:0, pct:0,   color:'#16A34A' },
+    debito:    { label:'💳 Débito',      monto:0, pct:(_comisionesCfg.tarjeta_debito?.pct||0),   color:'#3B82F6' },
+    mp:        { label:'💙 MercadoPago', monto:0, pct:(_comisionesCfg.mercadopago?.pct||0),      color:'#06B6D4' },
+    credito:   { label:'💳 Crédito',     monto:0, pct:(_comisionesCfg.tarjeta_credito?.pct||0),  color:'#8B5CF6' },
+    comision:  { label:'📉 Comisiones',  monto:0, pct:0,   color:'#EF4444' },
+  };
+
+  var totalBruto = 0;
+  var totalComisiones = 0;
+  (movs||[]).forEach(function(m) {
+    var monto = m.monto || 0;
+    if (m.tipo==='venta_efectivo')              { medios.efectivo.monto += monto; totalBruto += monto; }
+    if (m.tipo==='venta_debito'||m.tipo==='venta_tarjeta') { medios.debito.monto += monto;  totalBruto += monto; }
+    if (m.tipo==='venta_mp')                    { medios.mp.monto      += monto; totalBruto += monto; }
+    if (m.tipo==='venta_credito')               { medios.credito.monto += monto; totalBruto += monto; }
+    if (m.tipo==='comision')                    { medios.comision.monto += Math.abs(monto); totalComisiones += Math.abs(monto); }
+  });
+
+  // Calcular comisiones si no están registradas
+  if (totalComisiones === 0) {
+    medios.comision.monto = medios.debito.monto * (medios.debito.pct/100) +
+                            medios.mp.monto     * (medios.mp.pct/100) +
+                            medios.credito.monto* (medios.credito.pct/100);
+    totalComisiones = medios.comision.monto;
+  }
+
+  var totalNeto = totalBruto - totalComisiones;
+
+  // ── Resumen ──────────────────────────────────
+  var resEl = $('rent-resumen');
+  if (resEl) {
+    var impacto = totalBruto > 0 ? (totalComisiones/totalBruto*100).toFixed(2) : 0;
+    var ahorroEf = totalBruto > 0 ? Math.round(totalBruto * (medios.efectivo.monto/totalBruto) * ((medios.debito.pct||0)/100)) : 0;
+    resEl.innerHTML =
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">' +
+        '<div style="text-align:center;padding:10px;background:#F0FDF4;border-radius:10px">' +
+          '<div style="font-size:18px;font-weight:900;color:#16A34A">' + fmtM(Math.round(totalBruto)) + '</div>' +
+          '<div style="font-size:10px;color:#6B7280">Ventas brutas</div>' +
+        '</div>' +
+        '<div style="text-align:center;padding:10px;background:#FEF2F2;border-radius:10px">' +
+          '<div style="font-size:18px;font-weight:900;color:#EF4444">-' + fmtM(Math.round(totalComisiones)) + '</div>' +
+          '<div style="font-size:10px;color:#6B7280">Comisiones (' + impacto + '%)</div>' +
+        '</div>' +
+        '<div style="text-align:center;padding:10px;background:#EFF6FF;border-radius:10px">' +
+          '<div style="font-size:18px;font-weight:900;color:#3B82F6">' + fmtM(Math.round(totalNeto)) + '</div>' +
+          '<div style="font-size:10px;color:#6B7280">Neto cobrado</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:10px;font-size:11px;color:#92400E">' +
+        '⚡ Cada $100 de venta: recibís <strong>$' + (100 - parseFloat(impacto)).toFixed(2) + '</strong> neto en promedio.' +
+      '</div>';
+  }
+
+  // ── Desglose por medio ───────────────────────
+  var desEl = $('rent-desglose');
+  if (desEl && totalBruto > 0) {
+    var items = Object.entries(medios).filter(function(e){ return e[0] !== 'comision' && e[1].monto > 0; });
+    desEl.innerHTML = items.map(function(entry) {
+      var key = entry[0]; var m = entry[1];
+      var com      = m.monto * (m.pct/100);
+      var neto     = m.monto - com;
+      var mixPct   = Math.round(m.monto/totalBruto*100);
+      var comLabel = m.pct > 0 ? '-' + fmtM(Math.round(com)) + ' (' + m.pct + '%)' : 'Sin comisión';
+      var comColor = m.pct > 0 ? '#EF4444' : '#16A34A';
+
+      return '<div style="padding:12px 0;border-bottom:1px solid #F3F4F6">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+          '<div style="font-size:13px;font-weight:700;color:#1A1A2E">' + m.label + '</div>' +
+          '<div style="font-size:13px;font-weight:800;color:' + m.color + '">' + fmtM(Math.round(m.monto)) + ' <span style="font-size:10px;color:#9CA3AF;font-weight:400">(' + mixPct + '%)</span></div>' +
+        '</div>' +
+        '<div style="background:#F3F4F6;border-radius:4px;height:8px;overflow:hidden;margin-bottom:6px">' +
+          '<div style="height:100%;border-radius:4px;background:' + m.color + ';width:' + mixPct + '%"></div>' +
+        '</div>' +
+        '<div style="display:flex;justify-content:space-between;font-size:10px">' +
+          '<span style="color:' + comColor + ';font-weight:700">Comisión: ' + comLabel + '</span>' +
+          '<span style="color:#1A1A2E;font-weight:700">Neto: ' + fmtM(Math.round(neto)) + '</span>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  } else if (desEl) {
+    desEl.innerHTML = '<div style="color:#9CA3AF;text-align:center;padding:12px;font-size:11px">Sin datos — importá la planilla de caja para ver el desglose</div>';
+  }
+
+  // ── Config comisiones ────────────────────────
+  var cfgEl = $('rent-comisiones-cfg');
+  if (cfgEl) {
+    cfgEl.innerHTML = Object.entries(_comisionesCfg).map(function(entry) {
+      var k = entry[0]; var v = entry[1];
+      var impactoAnual = v.pct > 0 ? Math.round(totalBruto * 12 * v.pct / 100) : 0;
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #F9FAFB">' +
+        '<div>' +
+          '<div style="font-size:12px;font-weight:700;color:#1A1A2E">' + v.label + '</div>' +
+          (impactoAnual > 0 ? '<div style="font-size:9px;color:#9CA3AF">Impacto anual est.: -' + fmtM(impactoAnual) + '</div>' : '') +
+        '</div>' +
+        '<div style="font-size:16px;font-weight:900;color:' + (v.pct > 0 ? '#EF4444' : '#16A34A') + '">' + v.pct + '%</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // ── Recomendaciones ──────────────────────────
+  var recEl = $('rent-recomendaciones');
+  if (recEl) {
+    var recs = [];
+    var pctEf = totalBruto > 0 ? medios.efectivo.monto/totalBruto*100 : 0;
+    var pctMP = totalBruto > 0 ? medios.mp.monto/totalBruto*100 : 0;
+    var pctDeb = totalBruto > 0 ? medios.debito.monto/totalBruto*100 : 0;
+
+    if (pctEf < 30) recs.push({tipo:'warn', txt:'Solo el ' + Math.round(pctEf) + '% de tus ventas es en efectivo. Incentivá el efectivo con un pequeño descuento para reducir comisiones.'});
+    if (pctMP > 40) recs.push({tipo:'danger', txt:'El ' + Math.round(pctMP) + '% en MercadoPago implica comisiones de ' + fmtM(Math.round(medios.mp.monto*(medios.mp.pct/100))) + ' este período. Evaluá si podés redirigir a débito.'});
+    if (pctDeb > 50) recs.push({tipo:'info', txt:'El débito representa el ' + Math.round(pctDeb) + '% de ventas. Comisión total: ' + fmtM(Math.round(medios.debito.monto*(medios.debito.pct/100))) + '.'});
+    if (totalComisiones > totalBruto * 0.05) recs.push({tipo:'danger', txt:'Las comisiones superan el 5% de tus ventas (' + (totalComisiones/totalBruto*100).toFixed(1) + '%). Revisá los medios de pago que más usás.'});
+    if (!recs.length) recs.push({tipo:'ok', txt:'Tu mix de medios de pago tiene un impacto razonable. Seguí monitoreando.'});
+
+    var BG  = {ok:'#F0FDF4',warn:'#FFFBEB',danger:'#FEF2F2',info:'#EFF6FF'};
+    var COL = {ok:'#16A34A',warn:'#D97706',danger:'#EF4444',info:'#3B82F6'};
+    recEl.innerHTML = recs.map(function(r) {
+      return '<div style="background:' + BG[r.tipo] + ';border-radius:8px;padding:10px 12px;margin-bottom:6px;font-size:11px;color:' + COL[r.tipo] + ';font-weight:600">' + r.txt + '</div>';
+    }).join('');
+  }
+}
 
 </script>
 
