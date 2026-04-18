@@ -1078,6 +1078,7 @@ input::placeholder { color: #9CA3AF !important; }
         <button class="ventas-rtab" onclick="ventasResTab(this,'top')" style="flex:1;padding:7px;border-radius:8px;font-family:Nunito,sans-serif;font-size:10px;font-weight:800;cursor:pointer;background:#F4F5F7;color:#4B5563;border:1px solid #E5E7EB">🏆 Top ventas</button>
         <button class="ventas-rtab" onclick="ventasResTab(this,'alertas')" style="flex:1;padding:7px;border-radius:8px;font-family:Nunito,sans-serif;font-size:10px;font-weight:800;cursor:pointer;background:#F4F5F7;color:#4B5563;border:1px solid #E5E7EB">⚠️ Alertas</button>
         <button class="ventas-rtab" onclick="ventasResTab(this,'comprar')" style="flex:1;padding:7px;border-radius:8px;font-family:Nunito,sans-serif;font-size:10px;font-weight:800;cursor:pointer;background:#F4F5F7;color:#4B5563;border:1px solid #E5E7EB">🛒 Comprar</button>
+        <button class="ventas-rtab" onclick="ventasResTab(this,'pedido')" style="flex:1;padding:7px;border-radius:8px;font-family:Nunito,sans-serif;font-size:10px;font-weight:800;cursor:pointer;background:#F4F5F7;color:#4B5563;border:1px solid #E5E7EB">📋 Pedido</button>
       </div>
 
       <div id="ventas-res-resumen"></div>
@@ -1101,6 +1102,64 @@ input::placeholder { color: #9CA3AF !important; }
         </div>
       </div>
       <div id="ventas-res-comprar" style="display:none"></div>
+      <div id="ventas-res-pedido" style="display:none">
+
+        <!-- Config del pedido -->
+        <div style="background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:14px;margin-bottom:12px">
+          <div style="font-size:12px;font-weight:800;color:#1A1A2E;margin-bottom:12px">⚙️ Configurar pedido</div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+            <div>
+              <div style="font-size:10px;font-weight:700;color:#6B7280;margin-bottom:4px">Días de stock objetivo</div>
+              <select id="pedido-dias-stock" style="width:100%;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:8px;padding:8px;font-family:Nunito,sans-serif;font-size:13px;font-weight:700;color:#E53935;outline:none">
+                <option value="7">7 días</option>
+                <option value="14" selected>14 días</option>
+                <option value="21">21 días</option>
+                <option value="30">30 días</option>
+              </select>
+            </div>
+            <div>
+              <div style="font-size:10px;font-weight:700;color:#6B7280;margin-bottom:4px">Rubro</div>
+              <select id="pedido-rubro" style="width:100%;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:8px;padding:8px;font-family:Nunito,sans-serif;font-size:13px;color:#1A1A2E;outline:none">
+                <option value="">Todos los rubros</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+            <div>
+              <div style="font-size:10px;font-weight:700;color:#6B7280;margin-bottom:4px">Top productos por rubro</div>
+              <select id="pedido-top-n" style="width:100%;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:8px;padding:8px;font-family:Nunito,sans-serif;font-size:13px;color:#1A1A2E;outline:none">
+                <option value="10">Top 10</option>
+                <option value="20" selected>Top 20</option>
+                <option value="50">Top 50</option>
+                <option value="999">Todos</option>
+              </select>
+            </div>
+            <div>
+              <div style="font-size:10px;font-weight:700;color:#6B7280;margin-bottom:4px">Margen mínimo %</div>
+              <input id="pedido-margen-min" type="number" value="0" min="0" max="100"
+                style="width:100%;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:8px;padding:8px;font-family:Nunito,sans-serif;font-size:13px;color:#1A1A2E;outline:none;box-sizing:border-box"
+                placeholder="0 = todos">
+            </div>
+          </div>
+
+          <button onclick="generarPedidoVentas()" class="btn btn-primary btn-full">
+            📋 Generar pedido sugerido
+          </button>
+        </div>
+
+        <!-- Resultado pedido -->
+        <div id="pedido-resultado" style="display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-size:13px;font-weight:800;color:#1A1A2E" id="pedido-titulo">Pedido sugerido</div>
+            <button onclick="exportarPedidoWsp()" style="padding:7px 12px;border-radius:8px;background:#25D366;border:none;color:#fff;font-family:Nunito,sans-serif;font-size:11px;font-weight:700;cursor:pointer">💬 WhatsApp</button>
+          </div>
+          <div id="pedido-kpis" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px"></div>
+          <div id="pedido-lista"></div>
+        </div>
+
+      </div>
 
     </div>
   </div>
@@ -2623,6 +2682,8 @@ input::placeholder { color: #9CA3AF !important; }
 <div class="toast" id="toast"></div>
 
 <script>
+
+
 
 
 
@@ -9948,7 +10009,7 @@ Podés sugerir acciones concretas que el dueño pueda tomar de inmediato.`,
     icono: '📣', nombre: 'Agente de Marketing',
     desc: 'Ofertas, textos y campañas para WhatsApp e Instagram',
     color: '#7C3AED',
-    system: 'Sos el agente de marketing del supermercado de barrio "Al Paso" en Argentina. ' +
+    system: 'Sos el agente de marketing del supermercado de barrio "Al Paso" en Argentina. Tenes acceso al historial de ventas del negocio — usalo para sugerir ofertas basadas en los productos mas vendidos y tendencias reales. ' +
       'Tu trabajo es sugerir qué productos promocionar hoy y generar textos listos para usar. ' +
       'Conocés el negocio: tiene carnicería (mocho, media res, cortes), fiambrería, almacén, bebidas y kiosco. ' +
       'Los clientes son del barrio, trato cercano y argentino. ' +
@@ -11507,6 +11568,8 @@ async function procesarVentasXls(file) {
 
     $('ventas-resultado').style.display = 'block';
     renderVentasResumen();
+    // Guardar contexto para el agente
+    guardarContextoVentas().catch(function(){});
 
   } catch(e) {
     if (statusEl) statusEl.textContent = '⚠️ Error: ' + e.message;
@@ -11519,7 +11582,7 @@ function ventasResTab(btn, id) {
     b.style.background='#F4F5F7'; b.style.color='#4B5563'; b.style.border='1px solid #E5E7EB';
   });
   btn.style.background='#E53935'; btn.style.color='#fff'; btn.style.border='none';
-  ['resumen','top','alertas','comprar'].forEach(function(p) {
+  ['resumen','top','alertas','comprar','pedido'].forEach(function(p) {
     var el = $('ventas-res-'+p);
     if (el) el.style.display = p===id ? 'block' : 'none';
   });
@@ -11527,6 +11590,7 @@ function ventasResTab(btn, id) {
   if (id==='top')     renderVentasTop();
   if (id==='alertas') renderVentasAlertas();
   if (id==='comprar') renderVentasComprar();
+  if (id==='pedido')  initPedidoVentas();
   var cfg = $('ventas-comprar-config');
   if (cfg) cfg.style.display = id==='comprar' ? 'block' : 'none';
 }
@@ -11829,6 +11893,269 @@ function buscarProductoVentas() {
     }).join('') +
   '</div>';
 }
+
+
+// ── PEDIDO SUGERIDO BASADO EN VENTAS ─────────────
+var _pedidoData = [];
+
+function initPedidoVentas() {
+  if (!_ventasData.length) return;
+
+  // Populate rubros selector
+  var sel = $('pedido-rubro'); if (!sel) return;
+  var rubros = [...new Set(_ventasData.map(function(p){ return p.rubro; }))].sort();
+  sel.innerHTML = '<option value="">Todos los rubros</option>' +
+    rubros.filter(function(r){ return r && r !== 'SIN ASIGNAR' && r !== '(M)SIN ASIGNAR'; })
+      .map(function(r){ return '<option value="' + r + '">' + r + '</option>'; }).join('');
+}
+
+function generarPedidoVentas() {
+  if (!_ventasData.length) { toast('⚠️ Subí un reporte de ventas primero'); return; }
+
+  var diasStock  = parseInt($('pedido-dias-stock')?.value) || 14;
+  var rubroFiltro = $('pedido-rubro')?.value || '';
+  var topN       = parseInt($('pedido-top-n')?.value) || 20;
+  var margenMin  = parseFloat($('pedido-margen-min')?.value) || 0;
+
+  // Calculate days in the report period from the title
+  var periodoTxt = $('ventas-periodo-txt')?.textContent || '';
+  var fechas = periodoTxt.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/g);
+  var diasPeriodo = 30; // default
+  if (fechas && fechas.length >= 2) {
+    var partes1 = fechas[0].split('/');
+    var partes2 = fechas[1].split('/');
+    var d1 = new Date(partes1[2], partes1[1]-1, partes1[0]);
+    var d2 = new Date(partes2[2], partes2[1]-1, partes2[0]);
+    var diff = Math.abs(d2-d1) / (1000*60*60*24);
+    if (diff > 0) diasPeriodo = Math.round(diff) + 1;
+  }
+
+  // Filter products
+  var prods = _ventasData.filter(function(p) {
+    if (rubroFiltro && p.rubro !== rubroFiltro) return false;
+    if (p.rubro === 'SIN ASIGNAR' || p.rubro === '(M)SIN ASIGNAR') return false;
+    if (margenMin > 0 && p.costo > 0 && p.margen < margenMin) return false;
+    if (p.cantidad <= 0) return false;
+    return true;
+  });
+
+  // Sort by total $ and take topN
+  prods = prods.sort(function(a,b){ return b.total - a.total; }).slice(0, topN);
+
+  // Calculate suggested quantity per product
+  _pedidoData = prods.map(function(p) {
+    var promedioXDia = p.cantidad / diasPeriodo;
+    var cantSugerida = Math.ceil(promedioXDia * diasStock);
+    var costoEstimado = p.costo > 0 ? cantSugerida * p.costo : null;
+    return {
+      codigo:    p.codigo,
+      nombre:    p.nombre,
+      rubro:     p.rubro,
+      proveedor: p.proveedor,
+      cantidad:  p.cantidad,
+      cantDia:   Math.round(promedioXDia * 100) / 100,
+      cantPedir: cantSugerida,
+      costo:     p.costo,
+      costoEst:  costoEstimado,
+      margen:    p.margen,
+      total:     p.total,
+    };
+  });
+
+  if (!_pedidoData.length) { toast('⚠️ Sin productos para el pedido con esos filtros'); return; }
+
+  renderPedidoVentas(diasStock, diasPeriodo, rubroFiltro);
+}
+
+function renderPedidoVentas(diasStock, diasPeriodo, rubroFiltro) {
+  var res = $('pedido-resultado'); if (!res) return;
+  res.style.display = 'block';
+
+  // Title
+  var tit = $('pedido-titulo');
+  if (tit) tit.textContent = 'Pedido sugerido — ' + diasStock + ' días' + (rubroFiltro ? ' · ' + rubroFiltro : '');
+
+  // KPIs
+  var totalCostoEst = _pedidoData.reduce(function(s,p){ return s + (p.costoEst||0); }, 0);
+  var conCosto = _pedidoData.filter(function(p){ return p.costoEst !== null; }).length;
+  var kpis = $('pedido-kpis');
+  if (kpis) {
+    kpis.innerHTML =
+      '<div class="kpi"><div class="kpi-val" style="font-size:16px">' + _pedidoData.length + '</div><div class="kpi-lbl">Productos</div></div>' +
+      '<div class="kpi"><div class="kpi-val" style="font-size:16px">' + diasPeriodo + 'd</div><div class="kpi-lbl">Período analizado</div></div>' +
+      '<div class="kpi kpi-red"><div class="kpi-val" style="font-size:14px">' + (totalCostoEst > 0 ? fmtM(Math.round(totalCostoEst)) : '—') + '</div><div class="kpi-lbl">Costo estimado</div></div>';
+  }
+
+  // Group by rubro
+  var porRubro = {};
+  _pedidoData.forEach(function(p) {
+    if (!porRubro[p.rubro]) porRubro[p.rubro] = [];
+    porRubro[p.rubro].push(p);
+  });
+
+  var lista = $('pedido-lista'); if (!lista) return;
+  lista.innerHTML = Object.entries(porRubro).map(function(entry) {
+    var rubro = entry[0];
+    var prods = entry[1];
+
+    return '<div style="background:#fff;border:1px solid #E5E7EB;border-radius:12px;margin-bottom:10px;overflow:hidden">' +
+      '<div style="background:#1A1A2E;padding:10px 14px;display:flex;align-items:center;justify-content:space-between">' +
+        '<div style="font-size:12px;font-weight:800;color:#fff">' + rubro + '</div>' +
+        '<div style="font-size:10px;color:rgba(255,255,255,.5)">' + prods.length + ' productos</div>' +
+      '</div>' +
+      // Column headers
+      '<div style="display:grid;grid-template-columns:1fr repeat(4,auto);gap:6px;padding:8px 12px;background:#F9FAFB;border-bottom:1px solid #F3F4F6">' +
+        '<div style="font-size:9px;font-weight:800;color:#9CA3AF;text-transform:uppercase">Producto</div>' +
+        '<div style="font-size:9px;font-weight:800;color:#9CA3AF;text-transform:uppercase;text-align:right">Prom/día</div>' +
+        '<div style="font-size:9px;font-weight:800;color:#9CA3AF;text-transform:uppercase;text-align:right">A pedir</div>' +
+        '<div style="font-size:9px;font-weight:800;color:#9CA3AF;text-transform:uppercase;text-align:right">Costo est.</div>' +
+        '<div style="font-size:9px;font-weight:800;color:#9CA3AF;text-transform:uppercase;text-align:right">Margen</div>' +
+      '</div>' +
+      prods.map(function(p) {
+        var mCol = p.margen < 0 ? '#EF4444' : p.margen < 20 ? '#D97706' : '#16A34A';
+        return '<div style="display:grid;grid-template-columns:1fr repeat(4,auto);gap:6px;padding:9px 12px;border-bottom:1px solid #F9FAFB;align-items:center">' +
+          '<div>' +
+            '<div style="font-size:11px;font-weight:700;color:#1A1A2E">' + p.nombre + '</div>' +
+            '<div style="font-size:9px;color:#9CA3AF">' + (p.proveedor || 'Sin proveedor') + '</div>' +
+          '</div>' +
+          '<div style="font-size:11px;color:#6B7280;text-align:right">' + p.cantDia.toFixed(2) + '</div>' +
+          '<div style="font-size:13px;font-weight:900;color:#E53935;text-align:right">' + p.cantPedir + '</div>' +
+          '<div style="font-size:11px;color:#6B7280;text-align:right">' + (p.costoEst ? fmtM(Math.round(p.costoEst)) : '—') + '</div>' +
+          '<div style="font-size:11px;font-weight:700;color:' + mCol + ';text-align:right">' + (p.costo > 0 ? p.margen.toFixed(0) + '%' : '—') + '</div>' +
+        '</div>';
+      }).join('') +
+    '</div>';
+  }).join('');
+}
+
+function exportarPedidoWsp() {
+  if (!_pedidoData.length) return;
+  var nl = '\n';
+  var diasStock = $('pedido-dias-stock')?.value || '14';
+  var txt = 'PEDIDO SUGERIDO - AL PASO' + nl;
+  txt += 'Stock para ' + diasStock + ' dias' + nl + nl;
+
+  var porRubro = {};
+  _pedidoData.forEach(function(p) {
+    if (!porRubro[p.rubro]) porRubro[p.rubro] = [];
+    porRubro[p.rubro].push(p);
+  });
+
+  Object.entries(porRubro).forEach(function(entry) {
+    txt += entry[0] + ':' + nl;
+    entry[1].forEach(function(p) {
+      txt += '- ' + p.nombre + ': ' + p.cantPedir + ' u';
+      if (p.proveedor) txt += ' (' + p.proveedor + ')';
+      txt += nl;
+    });
+    txt += nl;
+  });
+
+  txt += 'Sistema Al Paso';
+  window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank');
+}
+
+
+// ══════════════════════════════════════════════════
+// AGENTE CON MEMORIA — CONTEXTO ACUMULADO
+// ══════════════════════════════════════════════════
+
+// Guarda un snapshot del análisis de ventas en ia_contexto
+async function guardarContextoVentas() {
+  if (!_ventasData.length) return;
+
+  var totalVenta = _ventasData.reduce(function(s,p){ return s+p.total; }, 0);
+  var totalCosto = _ventasData.reduce(function(s,p){ return s+p.costo*p.cantidad; }, 0);
+  var margenProm = totalCosto > 0 ? Math.round((totalVenta-totalCosto)/totalCosto*100*10)/10 : 0;
+
+  // Top 30 por ventas
+  var top30 = _ventasData.slice().sort(function(a,b){ return b.total-a.total; }).slice(0,30)
+    .map(function(p){ return { nombre:p.nombre, rubro:p.rubro, cantidad:Math.round(p.cantidad*100)/100, total:Math.round(p.total), margen:Math.round(p.margen*10)/10, costo:p.costo, proveedor:p.proveedor }; });
+
+  // Margen por rubro
+  var rubros = {};
+  _ventasData.forEach(function(p) {
+    if (!rubros[p.rubro]) rubros[p.rubro] = {total:0,costo:0};
+    rubros[p.rubro].total += p.total;
+    rubros[p.rubro].costo += p.costo * p.cantidad;
+  });
+  var rubroResumen = Object.entries(rubros).map(function(e) {
+    var m = e[1].costo > 0 ? Math.round((e[1].total-e[1].costo)/e[1].costo*100) : null;
+    return { rubro:e[0], total:Math.round(e[1].total), margen:m };
+  });
+
+  // Productos con margen negativo
+  var negMargen = _ventasData.filter(function(p){ return p.margen < 0 && p.total > 50000; })
+    .map(function(p){ return { nombre:p.nombre, margen:Math.round(p.margen*10)/10, total:Math.round(p.total) }; });
+
+  var periodoTxt = $('ventas-periodo-txt')?.textContent || '';
+
+  var payload = {
+    tipo: 'ventas_xls',
+    periodo: periodoTxt,
+    contenido: {
+      totalVenta: Math.round(totalVenta),
+      margenPromedio: margenProm,
+      cantProductos: _ventasData.length,
+      top30: top30,
+      rubroResumen: rubroResumen,
+      negMargen: negMargen,
+      fecha: new Date().toISOString(),
+    }
+  };
+
+  var { error } = await db.from('ia_contexto').insert(payload);
+  if (!error) console.log('[MEMORIA] Contexto de ventas guardado');
+}
+
+// Carga el contexto acumulado para enriquecer al agente
+async function cargarContextoAcumulado() {
+  var { data } = await db.from('ia_contexto')
+    .select('tipo,contenido,periodo,created_at')
+    .order('created_at', {ascending:false})
+    .limit(10);
+  return data || [];
+}
+
+// Construye un resumen del historial para el agente
+function _resumirHistorial(contextos) {
+  if (!contextos.length) return '';
+
+  var lines = ['HISTORIAL DE ANALISIS PREVIOS:'];
+  contextos.forEach(function(ctx, i) {
+    var c = ctx.contenido;
+    var fecha = new Date(c.fecha || ctx.created_at).toLocaleDateString('es-AR');
+    lines.push('');
+    lines.push('Analisis ' + (i+1) + ' — ' + (ctx.periodo||fecha) + ':');
+    if (c.totalVenta)     lines.push('  Total vendido: $' + c.totalVenta.toLocaleString('es-AR'));
+    if (c.margenPromedio) lines.push('  Margen promedio: ' + c.margenPromedio + '%');
+    if (c.top30 && c.top30.length) {
+      lines.push('  Top 5 productos: ' + c.top30.slice(0,5).map(function(p){ return p.nombre + ' ($' + p.total.toLocaleString('es-AR') + ')'; }).join(', '));
+    }
+    if (c.negMargen && c.negMargen.length) {
+      lines.push('  Problemas de margen: ' + c.negMargen.map(function(p){ return p.nombre + ' (' + p.margen + '%)'; }).join(', '));
+    }
+  });
+  return lines.join('\n');
+}
+
+// Wrapper que enriquece _buildAgenteContext con historial
+var _originalBuildCtx = _buildAgenteContext;
+_buildAgenteContext = async function(tipo, pregunta) {
+  var base = await _originalBuildCtx(tipo, pregunta);
+
+  // Add accumulated context for compras and marketing agents
+  if (tipo === 'compras' || tipo === 'marketing' || tipo === 'precios') {
+    try {
+      var historial = await cargarContextoAcumulado();
+      if (historial.length) {
+        var resumen = _resumirHistorial(historial);
+        base = base + '\n\n' + resumen;
+      }
+    } catch(e) { console.log('[MEMORIA] Error cargando historial:', e.message); }
+  }
+  return base;
+};
 
 </script>
 
