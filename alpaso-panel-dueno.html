@@ -2762,6 +2762,7 @@ input::placeholder { color: #9CA3AF !important; }
 
 
 
+
 // ══════════════════════════════════════════════════
 // SUPABASE
 // ══════════════════════════════════════════════════
@@ -11170,10 +11171,12 @@ async function procesarXlsCaja(file) {
     var ws   = workbook.Sheets[targetSheet];
     var data = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:true});
     // Log first few rows to debug
-    console.log('[XLS] Row 0:', data[0]);
-    console.log('[XLS] Row 1:', data[1]);
-    console.log('[XLS] Row 2:', data[2]);
-    console.log('[XLS] Row 3:', data[3]);
+    console.log('[XLS] Row 0:', JSON.stringify(data[0]));
+    console.log('[XLS] Row 1:', JSON.stringify(data[1]));
+    console.log('[XLS] Row 2:', JSON.stringify(data[2]));
+    console.log('[XLS] Row 3:', JSON.stringify(data[3]));
+    console.log('[XLS] Row 4:', JSON.stringify(data[4]));
+    console.log('[XLS] Row 5:', JSON.stringify(data[5]));
 
     console.log('[XLS] Sheet rows:', data.length);
     console.log('[XLS] First rows:', data.slice(0,5));
@@ -12199,6 +12202,7 @@ _buildAgenteContext = async function(tipo, pregunta) {
   }
   return base;
 };
+
 
 
 </script>
