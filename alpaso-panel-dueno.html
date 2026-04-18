@@ -2924,6 +2924,7 @@ input::placeholder { color: #9CA3AF !important; }
 
 
 
+
 // ══════════════════════════════════════════════════
 // SUPABASE
 // ══════════════════════════════════════════════════
@@ -6121,18 +6122,20 @@ const fmtM = n => '$' + Math.round(n||0).toLocaleString('es-AR');
 const fmtP = n => (n||0).toFixed(1) + '%';
 
 function finSubTab(btn, id) {
-  document.querySelectorAll('.fin-stab').forEach(b => {
-    b.style.background = '#1E1E1E'; b.style.color = '#aaa'; b.style.border = '1px solid #2A2A2A';
+  document.querySelectorAll('.fin-stab').forEach(function(b) {
+    b.style.background='#F4F5F7'; b.style.color='#4B5563'; b.style.border='1px solid #E5E7EB';
   });
-  btn.style.background = '#C9A84C'; btn.style.color = '#0A0A0A'; btn.style.border = 'none';
-  ['dashboard','pagos','productos-rent','costos','empleados-rent'].forEach(t => {
-    const el = $('fin-' + t); if (el) el.style.display = t === id ? 'block' : 'none';
+  btn.style.background='#E53935'; btn.style.color='#fff'; btn.style.border='none';
+  ['dashboard','pagos','productos-rent','costos','empleados-rent','rentabilidad','simulador'].forEach(function(t) {
+    var el = $('fin-' + t); if (el) el.style.display = t === id ? 'block' : 'none';
   });
   if (id === 'dashboard')      loadFinDashboard();
   if (id === 'pagos')          loadMediosPago();
   if (id === 'productos-rent') loadRentabilidadProductos();
   if (id === 'costos')         loadCostosFijos();
   if (id === 'empleados-rent') loadRentabilidadEmpleados();
+  if (id === 'rentabilidad')   loadRentabilidad();
+  if (id === 'simulador')      initSimulador();
 }
 
 function loadFinanzas() { loadFinDashboard(); }
@@ -12791,6 +12794,7 @@ function calcularSimulador() {
     }).join('');
   }
 }
+
 
 </script>
 
