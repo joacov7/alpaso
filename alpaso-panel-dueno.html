@@ -2764,6 +2764,7 @@ input::placeholder { color: #9CA3AF !important; }
 
 
 
+
 // ══════════════════════════════════════════════════
 // SUPABASE
 // ══════════════════════════════════════════════════
@@ -5979,114 +5980,192 @@ function loadFinanzas() { loadFinDashboard(); }
 
 // ── DASHBOARD ─────────────────────────────────────
 async function loadFinDashboard() {
-  const periodo = $('fin-periodo')?.value || 'hoy';
-  const hoy     = new Date().toISOString().split('T')[0];
-  const hace7   = new Date(Date.now()-7*24*60*60*1000).toISOString().split('T')[0];
-  const inicioMes = new Date().getFullYear() + '-' + String(new Date().getMonth()+1).padStart(2,'0') + '-01';
-  const desde   = periodo === 'hoy' ? hoy : periodo === 'semana' ? hace7 : inicioMes;
-  const dias    = periodo === 'hoy' ? 1 : periodo === 'semana' ? 7 : new Date().getDate();
+  var periodo  = $('fin-periodo')?.value || 'hoy';
+  var hoy      = new Date().toISOString().split('T')[0];
+  var hace7    = new Date(Date.now()-7*24*60*60*1000).toISOString().split('T')[0];
+  var inicioMes = new Date().getFullYear() + '-' + String(new Date().getMonth()+1).padStart(2,'0') + '-01';
+  var desde    = periodo === 'hoy' ? hoy : periodo === 'semana' ? hace7 : inicioMes;
+  var dias     = periodo === 'hoy' ? 1   : periodo === 'semana' ? 7     : new Date().getDate();
 
-  // Ventas por medio desde movimientos_caja
-  const { data: movs } = await db.from('movimientos_caja')
-    .select('tipo,monto').gte('fecha', desde)
-    .in('tipo',['venta_efectivo','venta_debito','venta_mp','venta_credito']);
+  // ── Comisiones config desde localStorage ──────
+  loadComisionesCfg && loadComisionesCfg();
+  var pctDeb  = (_comisionesCfg.tarjeta_debito?.pct  || 0) / 100;
+  var pctCred = (_comisionesCfg.tarjeta_credito?.pct || 0) / 100;
+  var pctCred3= (_comisionesCfg.tarjeta_credito3?.pct|| 0) / 100;
+  var pctMP   = (_comisionesCfg.mercadopago?.pct     || 0) / 100;
+  var pctPlus = (_comisionesCfg.pluspagos?.pct       || 0) / 100;
 
-  let ef=0, deb=0, mp=0, cred=0;
-  (movs||[]).forEach(m => {
-    if (m.tipo==='venta_efectivo') ef   += m.monto;
-    if (m.tipo==='venta_debito')   deb  += m.monto;
-    if (m.tipo==='venta_mp')       mp   += m.monto;
-    if (m.tipo==='venta_credito')  cred += m.monto;
+  // ── INGRESOS: movimientos_caja + pedidos ──────
+  var { data: movs } = await db.from('movimientos_caja')
+    .select('tipo,monto').gte('fecha', desde);
+
+  var ef=0, deb=0, mp=0, cred=0, plus=0, egresosMovs=0, comisiones_mov=0;
+  (movs||[]).forEach(function(m) {
+    var monto = m.monto || 0;
+    if (m.tipo==='venta_efectivo') ef   += monto;
+    if (m.tipo==='venta_debito')   deb  += monto;
+    if (m.tipo==='venta_mp')       mp   += monto;
+    if (m.tipo==='venta_credito')  cred += monto;
+    if (m.tipo==='venta_tarjeta')  deb  += monto;  // importado del XLS
+    if (m.tipo==='egreso')         egresosMovs += Math.abs(monto);
+    if (m.tipo==='comision')       comisiones_mov += Math.abs(monto);
   });
-  const bruto = ef + deb + mp + cred;
 
-  // Comisiones
-  const { data: configs } = await db.from('medios_pago_config').select('*');
-  const pctMp   = configs?.find(c=>c.codigo==='mp')?.comision_pct   || 2.99;
-  const pctCred = configs?.find(c=>c.codigo==='credito3')?.comision_pct || 5.5;
-  const comMp   = mp   * pctMp   / 100;
-  const comCred = cred * pctCred / 100;
-  const totalCom = comMp + comCred;
-  const neto    = bruto - totalCom;
+  // Pedidos del sistema
+  var { data: pedidos } = await db.from('pedidos')
+    .select('total,estado').gte('created_at', desde+'T00:00:00')
+    .not('estado','eq','cancelado');
+  var ventaPedidos = (pedidos||[]).reduce(function(s,p){ return s+(p.total||0); }, 0);
 
-  // Costos fijos prorrateados
-  const { data: costos } = await db.from('costos_fijos').select('monto').eq('activo',true);
-  const costoMes = (costos||[]).reduce((s,c)=>s+c.monto,0);
-  const costoDia = costoMes / 30 * dias;
-  const ganancia = neto - costoDia;
+  // Total bruto = caja + pedidos (evitar doble conteo si pedidos ya están en caja)
+  // Si hay datos en caja, usamos esos como fuente de verdad
+  var hayMovsCaja = (ef+deb+mp+cred+plus) > 0;
+  var bruto = hayMovsCaja ? (ef + deb + mp + cred + plus) : ventaPedidos;
+  var brutoLabel = hayMovsCaja ? 'Caja' : 'Pedidos';
+  if (hayMovsCaja && ventaPedidos > 0) {
+    // Ambos — sumamos y mostramos nota
+    // Usamos solo caja para evitar doble conteo (los pedidos suelen reflejarse en caja)
+    brutoLabel = 'Caja';
+  }
 
-  // Punto de equilibrio
-  let peData = null;
-  try { const r = await db.rpc('calcular_punto_equilibrio'); peData = r.data; } catch(e) {}
+  // ── COMISIONES calculadas ─────────────────────
+  var comDeb  = deb  * pctDeb;
+  var comCred = cred * pctCred;
+  var comMP   = mp   * pctMP;
+  var comPlus = plus * pctPlus;
+  // Si ya hay comisiones registradas en movimientos, usarlas
+  var totalCom = comisiones_mov > 0 ? comisiones_mov : (comDeb + comCred + comMP + comPlus);
+  var neto = bruto - totalCom;
 
-  // Actualizar UI
-  if($('fin-venta-bruta')) $('fin-venta-bruta').textContent = fmtM(bruto);
-  if($('fin-ganancia'))    { $('fin-ganancia').textContent  = fmtM(ganancia); $('fin-ganancia').style.color = ganancia >= 0 ? '#43A047' : '#E53935'; }
-  if($('fin-comisiones'))  $('fin-comisiones').textContent  = fmtM(totalCom);
-  if($('fin-costos-dia'))  $('fin-costos-dia').textContent  = fmtM(costoDia);
+  // ── COSTO DE REPOSICIÓN ───────────────────────
+  // Fuente 1: último reporte XLS de ventas guardado en ia_contexto
+  var costoReposicion = 0;
+  var fuenteCosto = '';
+  try {
+    var { data: ctxData } = await db.from('ia_contexto')
+      .select('contenido,periodo,created_at')
+      .eq('tipo','ventas_xls')
+      .order('created_at', {ascending:false})
+      .limit(1);
+    if (ctxData && ctxData.length) {
+      var ctx = ctxData[0].contenido;
+      // ctx.top30 has costo and cantidad per product
+      if (ctx.top30) {
+        var costoXls = ctx.top30.reduce(function(s,p){ return s + (p.costo||0) * (p.cantidad||0); }, 0);
+        if (costoXls > 0) {
+          // Prorate to current period
+          var periodoCtx = ctx.top30[0] ? 21 : 30; // approx days in XLS period
+          costoReposicion = Math.round(costoXls / periodoCtx * dias);
+          fuenteCosto = 'XLS ventas (' + (ctxData[0].periodo||'').split('(')[0].trim() + ')';
+        }
+      }
+    }
+  } catch(e) {}
+
+  // Fuente 2: compras registradas en el sistema (pedidos_compra)
+  var costoCompras = 0;
+  try {
+    var { data: compras } = await db.from('pedidos_compra')
+      .select('total').gte('fecha', desde).eq('estado','recibido');
+    costoCompras = (compras||[]).reduce(function(s,c){ return s+(c.total||0); }, 0);
+    if (costoCompras > 0 && !fuenteCosto) fuenteCosto = 'Compras registradas';
+  } catch(e) {}
+
+  var costoTotal = costoCompras > 0 ? costoCompras : costoReposicion;
+
+  // ── COSTOS FIJOS ──────────────────────────────
+  var { data: costos } = await db.from('costos_fijos').select('monto').eq('activo',true);
+  var costoMes = (costos||[]).reduce(function(s,c){ return s+c.monto; }, 0);
+  var costoDia = Math.round(costoMes / 30 * dias);
+
+  // ── GANANCIA REAL ─────────────────────────────
+  // Ventas netas - costo reposición - costos fijos prorrateados - egresos operativos
+  var ganancia = neto - costoTotal - costoDia;
+  var margenReal = bruto > 0 ? Math.round(ganancia/bruto*100*10)/10 : 0;
+
+  // ── UI ────────────────────────────────────────
+  if ($('fin-venta-bruta')) $('fin-venta-bruta').textContent = fmtM(Math.round(bruto));
+  if ($('fin-ganancia')) {
+    $('fin-ganancia').textContent = fmtM(Math.round(ganancia));
+    $('fin-ganancia').style.color = ganancia >= 0 ? '#16A34A' : '#EF4444';
+  }
+  if ($('fin-comisiones')) $('fin-comisiones').textContent = fmtM(Math.round(totalCom));
+  if ($('fin-costos-dia')) $('fin-costos-dia').textContent = fmtM(Math.round(costoDia + costoTotal));
 
   // Situación
-  const sitEl  = $('fin-situacion');
-  const sitLbl = $('fin-sit-label');
-  const sitSub = $('fin-sit-sub');
+  var sitEl  = $('fin-situacion');
+  var sitLbl = $('fin-sit-label');
+  var sitSub = $('fin-sit-sub');
   if (sitEl && sitLbl) {
     if (bruto === 0) {
-      sitEl.style.background = '#1A1A1A';
-      sitLbl.textContent = '📊 Sin datos'; sitLbl.style.color = '#555';
-      if(sitSub) sitSub.textContent = 'Registrá ventas en Caja para ver el análisis';
+      sitEl.style.background = '#F9FAFB';
+      sitLbl.textContent = '📊 Sin datos'; sitLbl.style.color = '#6B7280';
+      if (sitSub) sitSub.textContent = 'Importá la planilla de caja o registrá ventas';
     } else if (ganancia > 0) {
-      sitEl.style.background = 'rgba(67,160,71,.08)';
-      sitLbl.innerHTML = '✅ Ganando ' + fmtM(ganancia); sitLbl.style.color = '#43A047';
-      if(sitSub) { sitSub.textContent = 'Margen neto después de costos y comisiones'; sitSub.style.color = '#81C784'; }
+      sitEl.style.background = 'linear-gradient(135deg,#F0FDF4,#DCFCE7)';
+      sitLbl.innerHTML = '✅ Ganancia: ' + fmtM(Math.round(ganancia));
+      sitLbl.style.color = '#16A34A';
+      if (sitSub) sitSub.textContent = margenReal + '% margen neto · ' + brutoLabel + ' + costos reales';
     } else {
-      sitEl.style.background = 'rgba(229,57,53,.08)';
-      sitLbl.innerHTML = '🔴 Perdiendo ' + fmtM(Math.abs(ganancia)); sitLbl.style.color = '#E53935';
-      if(sitSub) { sitSub.textContent = 'Los costos superan las ventas'; sitSub.style.color = '#EF9A9A'; }
+      sitEl.style.background = 'linear-gradient(135deg,#FEF2F2,#FEE2E2)';
+      sitLbl.innerHTML = '🔴 Pérdida: ' + fmtM(Math.abs(Math.round(ganancia)));
+      sitLbl.style.color = '#EF4444';
+      if (sitSub) sitSub.textContent = 'Los costos superan las ventas del período';
     }
   }
 
-  // Punto de equilibrio
-  if (peData) {
-    if($('fin-pe-dia'))     $('fin-pe-dia').textContent     = fmtM(peData.venta_necesaria_dia);
-    if($('fin-actual-dia')) $('fin-actual-dia').textContent = fmtM(peData.venta_actual_dia);
-    const pct = peData.venta_necesaria_dia > 0
-      ? Math.min(100, Math.round(peData.venta_actual_dia / peData.venta_necesaria_dia * 100)) : 0;
-    if($('fin-pe-barra')) $('fin-pe-barra').style.width = pct + '%';
-    if($('fin-pe-txt'))   $('fin-pe-txt').textContent = pct >= 100
-      ? '✅ Cubrís costos — todo lo demás es ganancia'
-      : 'Cubrís el ' + pct + '% de tus costos fijos';
+  // Desglose costos
+  var costoEl = $('fin-costos-dia');
+  if (costoEl) {
+    costoEl.title = 'Fijos: ' + fmtM(costoDia) + (costoTotal > 0 ? ' + Reposición: ' + fmtM(costoTotal) : '');
   }
 
-  // Mix de pagos
-  const mixEl = $('fin-mix-pagos');
-  if (mixEl && bruto > 0) {
-    const items = [
-      { label:'💵 Efectivo', monto:ef,   com:0,        color:'#43A047' },
-      { label:'💳 Débito',   monto:deb,  com:0,        color:'#64B5F6' },
-      { label:'💙 MP/QR',    monto:mp,   com:comMp,    color:'#C9A84C' },
-      { label:'💳 Crédito',  monto:cred, com:comCred,  color:'#FFB74D' },
-    ].filter(i => i.monto > 0);
+  // Punto de equilibrio
+  var peNec = costoMes / 30;  // costos fijos diarios
+  var peAct = bruto / dias;
+  if ($('fin-pe-dia'))     $('fin-pe-dia').textContent     = fmtM(Math.round(peNec));
+  if ($('fin-actual-dia')) $('fin-actual-dia').textContent = fmtM(Math.round(peAct));
+  var pePct = peNec > 0 ? Math.min(120, Math.round(peAct/peNec*100)) : 0;
+  if ($('fin-pe-barra')) $('fin-pe-barra').style.width = Math.min(100,pePct) + '%';
+  if ($('fin-pe-txt'))   $('fin-pe-txt').textContent = pePct >= 100
+    ? '✅ Cubrís costos fijos — todo lo demás es ganancia'
+    : 'Cubrís el ' + pePct + '% de tus costos fijos';
 
-    mixEl.innerHTML = items.map(it => {
-      const pct    = Math.round(it.monto / bruto * 100);
-      const neto   = it.monto - it.com;
-      const comPct = it.monto > 0 ? (it.com / it.monto * 100).toFixed(2) : 0;
-      return '<div style="margin-bottom:12px">' +
-        '<div style="display:flex;justify-content:space-between;margin-bottom:4px">' +
-          '<span style="font-size:12px;font-weight:700;color:#fff">' + it.label + '</span>' +
-          '<span style="font-size:12px;font-weight:800;color:' + it.color + '">' + fmtM(it.monto) + ' (' + pct + '%)</span>' +
+  // Mix de pagos con comisiones reales
+  var mixEl = $('fin-mix-pagos');
+  if (mixEl && bruto > 0) {
+    var items = [
+      { label:'💵 Efectivo', monto:ef,   com:0,      pct:0,        color:'#16A34A' },
+      { label:'💳 Débito',   monto:deb,  com:comDeb, pct:pctDeb*100, color:'#3B82F6' },
+      { label:'💙 MercadoPago', monto:mp, com:comMP,  pct:pctMP*100,  color:'#06B6D4' },
+      { label:'💳 Crédito',  monto:cred, com:comCred,pct:pctCred*100,color:'#8B5CF6' },
+    ].filter(function(i){ return i.monto > 0; });
+
+    mixEl.innerHTML = items.map(function(it) {
+      var mixPct  = Math.round(it.monto/bruto*100);
+      var neto    = it.monto - it.com;
+      return '<div style="margin-bottom:10px">' +
+        '<div style="display:flex;justify-content:space-between;margin-bottom:3px">' +
+          '<span style="font-size:12px;font-weight:700;color:#1A1A2E">' + it.label + '</span>' +
+          '<span style="font-size:12px;font-weight:800;color:' + it.color + '">' + fmtM(Math.round(it.monto)) + ' (' + mixPct + '%)</span>' +
         '</div>' +
-        '<div style="background:#F9FAFB;border-radius:4px;height:6px;overflow:hidden;margin-bottom:4px">' +
-          '<div style="height:100%;background:' + it.color + ';width:' + pct + '%;border-radius:4px"></div>' +
+        '<div style="background:#F3F4F6;border-radius:4px;height:6px;overflow:hidden;margin-bottom:4px">' +
+          '<div style="height:100%;background:' + it.color + ';width:' + mixPct + '%;border-radius:4px"></div>' +
         '</div>' +
-        (it.com > 0 ? '<div style="font-size:10px;color:#E53935">📉 Comisión: ' + fmtM(it.com) + ' (' + comPct + '%) · Neto: ' + fmtM(neto) + '</div>' :
-                      '<div style="font-size:10px;color:#43A047">✅ Sin comisión</div>') +
+        (it.com > 0
+          ? '<div style="font-size:10px;color:#EF4444">📉 Comisión ' + it.pct.toFixed(1) + '%: -' + fmtM(Math.round(it.com)) + ' · Neto: ' + fmtM(Math.round(neto)) + '</div>'
+          : '<div style="font-size:10px;color:#16A34A">✅ Sin comisión</div>') +
       '</div>';
-    }).join('');
+    }).join('') +
+    // Costo reposición info
+    (costoTotal > 0
+      ? '<div style="margin-top:8px;padding:8px;background:#FEF3C7;border-radius:8px;font-size:10px;color:#92400E">📦 Costo reposición: ' + fmtM(Math.round(costoTotal)) + (fuenteCosto ? ' ('+fuenteCosto+')' : '') + '</div>'
+      : '<div style="margin-top:8px;padding:8px;background:#F9FAFB;border-radius:8px;font-size:10px;color:#9CA3AF">📦 Sin costo de reposición — subí un XLS de ventas para calcularlo</div>') ;
   } else if (mixEl) {
-    mixEl.innerHTML = '<div style="color:#6B7280;font-size:12px;text-align:center;padding:12px">Sin ventas registradas en caja para este período</div>';
+    mixEl.innerHTML = '<div style="color:#9CA3AF;font-size:12px;text-align:center;padding:12px">Sin ventas — importá la planilla de caja primero</div>';
   }
 }
+
 
 // ── MEDIOS DE PAGO ────────────────────────────────
 async function loadMediosPago() {
@@ -12170,6 +12249,7 @@ _buildAgenteContext = async function(tipo, pregunta) {
   }
   return base;
 };
+
 
 
 
