@@ -2761,6 +2761,7 @@ input::placeholder { color: #9CA3AF !important; }
 
 
 
+
 // ══════════════════════════════════════════════════
 // SUPABASE
 // ══════════════════════════════════════════════════
@@ -11204,97 +11205,139 @@ function _parsearPlanillaCaja(rows) {
   loadComisionesCfg();
   var days = [];
 
-  for (var i = 0; i < rows.length; i++) {
+  // Structure confirmed from openpyxl analysis:
+  // Block starts at row where col[1] === 'SALDO INICIO $'
+  // col[5] = fecha (Date object or serial)
+  // Relative offsets from block start (i):
+  //   i+0: SALDO INICIO — col[5]=fecha
+  //   i+1: billetes header row
+  //   i+2: INGRESOS header
+  //   i+3: EFECTIVO MAÑANA — col[3]=importe, col[4]=egreso_nom, col[5]=egreso_imp
+  //   i+4: TARJETA MAÑANA  — col[3]=importe, col[4]=egreso_nom, col[5]=egreso_imp
+  //   i+5: EFECTIVO TARDE  — col[3]=importe, col[4]=egreso_nom, col[5]=egreso_imp
+  //   i+6: TARJETA TARDE   — col[3]=importe, col[4]=egreso_nom, col[5]=egreso_imp
+  //   i+7: MERCADOPAGO     — col[3]=importe, col[4]=egreso_nom, col[5]=egreso_imp
+  //   i+8: PLUS PAGOS      — col[3]=importe
+  //   i+9..i+11: extra egreso rows col[4]/col[5]
+  //   i+12: separator row with 'º' in col[5]
+  //   i+12: Total de Ingresos col[3], Total de Egresos col[5]  ← row[i+12]
+  //   i+14: Total al cierre
+  // Block size: ~16 rows
+
+  var toFloat = function(v) {
+    if (v === null || v === undefined || v === '') return 0;
+    if (typeof v === 'number') return v;
+    var s = String(v).replace(/[$,.]/g,'').trim();
+    var n = parseFloat(s);
+    return isNaN(n) ? 0 : n;
+  };
+
+  var parseDate = function(v) {
+    if (!v) return null;
+    // SheetJS with raw:true returns Date objects when cellDates:true
+    if (v instanceof Date) return v.toISOString().substring(0,10);
+    // Serial number
+    if (typeof v === 'number' && v > 40000) {
+      var d = new Date(Math.round((v - 25569) * 86400 * 1000));
+      return d.toISOString().substring(0,10);
+    }
+    // String
+    if (typeof v === 'string') {
+      var m = v.match(/(\d{4}-\d{2}-\d{2})/);
+      if (m) return m[1];
+      var m2 = v.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      if (m2) return m2[3] + '-' + m2[2].padStart(2,'0') + '-' + m2[1].padStart(2,'0');
+    }
+    return null;
+  };
+
+  for (var i = 0; i < rows.length - 14; i++) {
     var row = rows[i];
-    // Detect day block: col[1] = 'SALDO INICIO $' and col[5] has a date
-    if (row && row[0] === 'SALDO INICIO $') {
-      console.log('[XLS] Found day block at row', i, 'fechaRaw=', row[4]);
-      var fechaRaw = row[4];
-      if (!fechaRaw) { i++; continue; }
+    if (!row || row[1] !== 'SALDO INICIO $') continue;
 
-      // Parse date - handle multiple formats from SheetJS
-      var fecha = null;
-      try {
-        if (!fechaRaw) { i++; continue; }
-        if (typeof fechaRaw === 'string') {
-          // Try yyyy-mm-dd
-          var m1 = fechaRaw.match(/(\d{4})-(\d{2})-(\d{2})/);
-          if (m1) fecha = m1[0];
-          // Try dd/mm/yyyy
-          var m2 = fechaRaw.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-          if (!fecha && m2) fecha = m2[3] + '-' + m2[2].padStart(2,'0') + '-' + m2[1].padStart(2,'0');
-        } else if (fechaRaw instanceof Date) {
-          fecha = fechaRaw.toISOString().substring(0, 10);
-        } else if (typeof fechaRaw === 'number' && fechaRaw > 40000) {
-          // Excel serial
-          var d = new Date((fechaRaw - 25569) * 86400 * 1000);
-          fecha = d.toISOString().substring(0, 10);
+    var fecha = parseDate(row[5]);
+    if (!fecha || fecha < '2020-01-01') continue;
+
+    try {
+      var ef_man  = toFloat(rows[i+3] && rows[i+3][3]);
+      var tar_man = toFloat(rows[i+4] && rows[i+4][3]);
+      var ef_tar  = toFloat(rows[i+5] && rows[i+5][3]);
+      var tar_tar = toFloat(rows[i+6] && rows[i+6][3]);
+      var mp      = toFloat(rows[i+7] && rows[i+7][3]);
+      var plus    = toFloat(rows[i+8] && rows[i+8][3]);
+
+      var efectivo = ef_man + ef_tar;
+      var tarjeta  = tar_man + tar_tar + plus;
+      var ingresos = efectivo + tarjeta + mp;
+
+      // Billetes mañana: rows i+3..i+8, col[8]=cant, col[9]=valor
+      // Billetes tarde: rows i+10..i+14, col[8]=cant, col[9]=valor
+      var billetes_man = [], billetes_tar = [];
+      var enManana = false, enTarde = false;
+      for (var j = 1; j <= 14; j++) {
+        var br = rows[i+j];
+        if (!br) continue;
+        if (br[7] === 'Mañana') { enManana = true; enTarde = false; continue; }
+        if (br[7] === 'Tarde')  { enManana = false; enTarde = true; continue; }
+        var cant = toFloat(br[8]); var val = toFloat(br[9]);
+        if (cant > 0 && val > 0) {
+          if (enManana) billetes_man.push({cant: cant, valor: val, sub: cant*val});
+          if (enTarde)  billetes_tar.push({cant: cant, valor: val, sub: cant*val});
         }
-      } catch(e2) {}
-      if (!fecha || fecha < '2020-01-01') { i++; continue; }
+      }
 
-      try {
-        var toFloat = function(v) { 
-          if (!v) return 0; 
-          if (typeof v === 'number') return v;
-          return parseFloat(String(v).replace(/[$.]/g,'').replace(',','.')) || 0;
-        };
+      // Tarjetas: col[12] in rows i+3..i+16
+      var tarjetas_man = toFloat(rows[i+4] && rows[i+4][12]);  // row i+4 col12
+      var tarjetas_tar = toFloat(rows[i+8] && rows[i+8][12]);  // row i+8 col12
 
-        // SheetJS drops leading null col → indices shift -1 vs openpyxl
-        // EFECTIVO MAÑANA = i+3 (skipping: saldo, tickets, header rows)
-        // But actual layout: i+0=SALDO, i+1=blank, i+2=INGRESOS header, i+3=EF MAN...
-        // Wait - from log row[2] is SALDO INICIO, so i=2, i+3=row[5]
-        // Row[5] should be EFECTIVO MAÑANA with importe at col[2]
-        // Log raw rows - only first day
-        if (days.length === 0) { console.log('[XLS] Row i+3 (EF MAN):', JSON.stringify(rows[i+3])); console.log('[XLS] Row i+4 (TAR MAN):', JSON.stringify(rows[i+4])); console.log('[XLS] Row i+7 (MP):', JSON.stringify(rows[i+7])); }
-        var ef_man  = toFloat(rows[i+3] && rows[i+3][2]);
-        var tar_man = toFloat(rows[i+4] && rows[i+4][2]);
-        var ef_tar  = toFloat(rows[i+5] && rows[i+5][2]);
-        var tar_tar = toFloat(rows[i+6] && rows[i+6][2]);
-        var mp      = toFloat(rows[i+7] && rows[i+7][2]);
-        var plus    = toFloat(rows[i+8] && rows[i+8][2]);
-        console.log('[XLS] Day', fecha, 'ef_man=', ef_man, 'tar_man=', tar_man, 'mp=', mp);
-
-        var efectivo = ef_man + ef_tar;
-        var tarjeta  = tar_man + tar_tar + plus;
-        var ingresos = efectivo + tarjeta + mp;
-
-        // Egresos
-        var egresos = [];
-        for (var j = 3; j <= 8; j++) {
-          var er = rows[i+j];
-          if (!er) continue;
-          var nom = er[3]; var imp = toFloat(er[4]);
-          if (nom && imp > 0 && typeof nom === 'string' && !nom.match(/^(EGRESO|IMPORTE|º|Total)/i)) {
-            egresos.push({concepto: nom.trim(), importe: imp});
+      // Egresos: col[4]=nombre, col[5]=importe in rows i+3..i+11
+      var egresos = [];
+      for (var k = 3; k <= 11; k++) {
+        var er = rows[i+k]; if (!er) continue;
+        var nom = er[4]; var imp = toFloat(er[5]);
+        if (nom && imp > 0 && typeof nom === 'string') {
+          var ns = nom.trim();
+          if (!ns.match(/^(EGRESO|IMPORTE|º|Total|INGRESOS|EFECTIVO|TARJETA|MERCADO|PLUS)/i)) {
+            egresos.push({concepto: ns, importe: imp});
           }
         }
-        var totalEgresos = egresos.reduce(function(s,e){ return s+e.importe; }, 0);
+      }
+      var totalEgresos = egresos.reduce(function(s,e){ return s+e.importe; }, 0);
 
-        // Comisiones
-        var comTarj = tarjeta  * (_comisionesCfg.tarjeta_debito?.pct||0) / 100;
-        var comMP   = mp       * (_comisionesCfg.mercadopago?.pct||0)    / 100;
-        var comTotal = comTarj + comMP;
+      // Comisiones
+      var comTarj = tarjeta * (_comisionesCfg.tarjeta_debito?.pct||0) / 100;
+      var comMP   = mp      * (_comisionesCfg.mercadopago?.pct||0)    / 100;
 
-        days.push({
-          fecha: fecha,
-          efectivo: efectivo,
-          tarjeta: tarjeta,
-          mercadopago: mp,
-          ingresos: ingresos,
-          egresos_total: totalEgresos,
-          egresos: egresos,
-          com_tarjeta: comTarj,
-          com_mp: comMP,
-          com_total: comTotal,
-          neto: ingresos - totalEgresos - comTotal,
-        });
-      } catch(e) {}
-      i += 15;
+      days.push({
+        fecha: fecha,
+        efectivo: efectivo,
+        ef_man: ef_man, ef_tar: ef_tar,
+        tarjeta: tarjeta,
+        tar_man: tar_man, tar_tar: tar_tar,
+        mercadopago: mp,
+        plus: plus,
+        ingresos: ingresos,
+        egresos: egresos,
+        egresos_total: totalEgresos,
+        billetes_man: billetes_man,
+        billetes_tar: billetes_tar,
+        tarjetas_man: tarjetas_man,
+        tarjetas_tar: tarjetas_tar,
+        com_tarjeta: comTarj,
+        com_mp: comMP,
+        com_total: comTarj + comMP,
+        neto: ingresos - totalEgresos - comTarj - comMP,
+      });
+
+      i += 15; // skip to next block
+    } catch(e) {
+      console.log('[XLS] Error at row', i, e.message);
     }
   }
+  console.log('[XLS] Parsed days:', days.length, days.length > 0 ? days[0] : '');
   return days;
 }
+
 
 function renderXlsPreview(sheetName, days) {
   resetDropZone();
@@ -12156,6 +12199,7 @@ _buildAgenteContext = async function(tipo, pregunta) {
   }
   return base;
 };
+
 
 </script>
 
