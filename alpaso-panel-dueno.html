@@ -3033,6 +3033,9 @@ input::placeholder { color: #9CA3AF !important; }
 
 
 
+
+
+
 // ══════════════════════════════════════════════════
 // SUPABASE
 // ══════════════════════════════════════════════════
@@ -11750,6 +11753,45 @@ async function importarXlsCaja() {
 
   if (!dataToImport.length) { toast('⚠️ Sin días en el rango seleccionado'); return; }
 
+  // ── Verificar duplicados ──────────────────────
+  var fechas = dataToImport.map(function(d){ return d.fecha; });
+  var fechaMin = fechas[0]; var fechaMax = fechas[fechas.length-1];
+  try {
+    var { data: existing } = await db.from('movimientos_caja')
+      .select('fecha')
+      .eq('fuente','xls')
+      .gte('fecha', fechaMin)
+      .lte('fecha', fechaMax);
+
+    if (existing && existing.length > 0) {
+      var fechasExist = [...new Set(existing.map(function(m){ return m.fecha; }))];
+
+
+
+      var resp = await _mostrarDialogoImport(fechasExist.length, fechaMin, fechaMax);
+      if (resp === 'cancelar') return;
+      if (resp === 'limpiar') {
+        // Delete existing XLS imports for this period
+        var { error: delErr } = await db.from('movimientos_caja')
+          .delete()
+          .eq('fuente','xls')
+          .gte('fecha', fechaMin)
+          .lte('fecha', fechaMax);
+        if (delErr) { toast('⚠️ Error al limpiar: ' + delErr.message); return; }
+        toast('🗑️ Datos anteriores eliminados — reimportando...');
+      }
+      // resp === 'igual' → skip duplicate dates
+      if (resp === 'igual') {
+        var setExist = new Set(fechasExist);
+        dataToImport = dataToImport.filter(function(d){ return !setExist.has(d.fecha); });
+        if (!dataToImport.length) { toast('ℹ️ Todos los días ya están importados'); return; }
+        toast('ℹ️ Importando solo los ' + dataToImport.length + ' días nuevos...');
+      }
+    }
+  } catch(e) {
+    console.log('[XLS] Error verificando duplicados:', e.message);
+  }
+
   var btn = document.querySelector('[onclick="importarXlsCaja()"]');
   if (btn) { btn.textContent = '⏳ Importando ' + dataToImport.length + ' días...'; btn.disabled = true; }
 
@@ -13047,6 +13089,46 @@ function calcularSimulador() {
     }).join('');
   }
 }
+
+
+
+// ── Diálogo de duplicados ─────────────────────
+function _mostrarDialogoImport(cantDias, fechaMin, fechaMax) {
+  return new Promise(function(resolve) {
+    // Remove any existing dialog
+    var prev = document.getElementById('xls-dup-dialog');
+    if (prev) prev.remove();
+
+    var overlay = document.createElement('div');
+    overlay.id = 'xls-dup-dialog';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+
+    overlay.innerHTML =
+      '<div style="background:#fff;border-radius:16px;padding:24px;max-width:340px;width:100%">' +
+        '<div style="font-size:24px;margin-bottom:8px;text-align:center">⚠️</div>' +
+        '<div style="font-size:14px;font-weight:800;color:#1A1A2E;margin-bottom:6px;text-align:center">Datos duplicados detectados</div>' +
+        '<div style="font-size:12px;color:#6B7280;margin-bottom:16px;text-align:center">Ya existen ' + cantDias + ' días importados del período<br><strong>' + fechaMin + '</strong> al <strong>' + fechaMax + '</strong></div>' +
+        '<div style="display:flex;flex-direction:column;gap:8px">' +
+          '<button id="xls-dup-limpiar" style="padding:12px;border-radius:10px;background:#EF4444;border:none;color:#fff;font-family:Nunito,sans-serif;font-size:13px;font-weight:800;cursor:pointer">' +
+            '🗑️ Reemplazar — borrar anteriores e importar de nuevo' +
+          '</button>' +
+          '<button id="xls-dup-nuevos" style="padding:12px;border-radius:10px;background:#E53935;border:none;color:#fff;font-family:Nunito,sans-serif;font-size:13px;font-weight:800;cursor:pointer">' +
+            '➕ Solo agregar días nuevos' +
+          '</button>' +
+          '<button id="xls-dup-cancelar" style="padding:12px;border-radius:10px;background:#F4F5F7;border:1px solid #E5E7EB;color:#4B5563;font-family:Nunito,sans-serif;font-size:13px;font-weight:700;cursor:pointer">' +
+            'Cancelar' +
+          '</button>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(overlay);
+
+    document.getElementById('xls-dup-limpiar').onclick  = function() { overlay.remove(); resolve('limpiar'); };
+    document.getElementById('xls-dup-nuevos').onclick   = function() { overlay.remove(); resolve('igual'); };
+    document.getElementById('xls-dup-cancelar').onclick = function() { overlay.remove(); resolve('cancelar'); };
+  });
+}
+
 
 
 </script>
