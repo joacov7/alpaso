@@ -3045,6 +3045,7 @@ input::placeholder { color: #9CA3AF !important; }
 
 
 
+
 // ══════════════════════════════════════════════════
 // SUPABASE
 // ══════════════════════════════════════════════════
@@ -7313,6 +7314,7 @@ async function _cargarRomaneo() {
 
   // 1. Load items
   var itemsRes = await db.from('carn_romaneo_items').select('*').eq('romaneo_id', id).order('orden');
+  console.log('[CARN] items result:', itemsRes.error ? itemsRes.error.message : (itemsRes.data ? itemsRes.data.length + ' items' : 'null'));
   carnItemsActual = itemsRes.data || [];
   _renderItems();
 
@@ -7335,7 +7337,9 @@ async function _cargarRomaneo() {
 
 // Render items list
 function _renderItems() {
-  var el = $('carn-items-lista'); if (!el) return;
+  var el = $('carn-items-lista');
+  console.log('[CARN] _renderItems el:', el ? 'found' : 'NOT FOUND', 'items:', carnItemsActual ? carnItemsActual.length : 0);
+  if (!el) return;
   if (!carnItemsActual.length) {
     el.innerHTML = '<div style="background:#F9FAFB;border:1px dashed #E5E7EB;border-radius:12px;padding:20px;text-align:center">' +
       '<div style="font-size:24px;margin-bottom:8px">🐄</div>' +
@@ -13183,6 +13187,7 @@ function _mostrarDialogoImport(cantDias, fechaMin, fechaMax) {
 function loadStock() {
   loadStockPanel && loadStockPanel();
 }
+
 
 
 
