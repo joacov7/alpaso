@@ -3044,6 +3044,7 @@ input::placeholder { color: #9CA3AF !important; }
 
 
 
+
 // ══════════════════════════════════════════════════
 // SUPABASE
 // ══════════════════════════════════════════════════
@@ -7215,13 +7216,10 @@ async function loadCarniceria() {
   } catch(e) {
     console.error('[CARN] Error:', e.message);
   }
-  // Force show the carniceria tab content
-  var tab = $('tab-carniceria');
-  if (tab) tab.style.display = 'block';
-  // Show romaneo panel directly (most reliable approach)
+  // Show romaneo panel — only manipulate panels, NOT the tab visibility
   var romaneoPanel = $('carn-romaneo');
   if (romaneoPanel) romaneoPanel.style.display = 'block';
-  // Style first stab as active
+  // Style first stab as active (without clicking to avoid side effects)
   var allStabs = document.querySelectorAll('#tab-carniceria .carn-stab');
   console.log('[CARN] stabs found:', allStabs.length);
   if (allStabs.length > 0) {
@@ -7231,6 +7229,10 @@ async function loadCarniceria() {
     allStabs[0].style.background='#E53935';
     allStabs[0].style.color='#fff';
     allStabs[0].style.border='none';
+    // Hide all other carn panels
+    ['comparador-compra','transf','dashboard','simulador','precios-mkt','carn-cfg','sim-avanzado','cierre-semanal'].forEach(function(t) {
+      var el = $('carn-' + t); if (el) el.style.display = 'none';
+    });
   }
 }
 
@@ -13181,6 +13183,7 @@ function _mostrarDialogoImport(cantDias, fechaMin, fechaMax) {
 function loadStock() {
   loadStockPanel && loadStockPanel();
 }
+
 
 
 
