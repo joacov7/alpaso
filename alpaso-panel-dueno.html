@@ -3042,6 +3042,8 @@ input::placeholder { color: #9CA3AF !important; }
 
 
 
+
+
 // ══════════════════════════════════════════════════
 // SUPABASE
 // ══════════════════════════════════════════════════
@@ -7293,6 +7295,7 @@ async function loadRomaneoSemana() {
 
 // Internal: load items and cortes for current romaneo — SINGLE entry point
 async function _cargarRomaneo() {
+  console.log('[CARN] _cargarRomaneo start, romaneoActual:', carnRomaneoActual ? carnRomaneoActual.id : 'null');
   if (!carnRomaneoActual || !carnRomaneoActual.id) {
     var el = $('carn-items-lista');
     if (el) el.innerHTML = '<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:20px;text-align:center;margin:8px 0">' +
@@ -7332,9 +7335,9 @@ async function _cargarRomaneo() {
 function _renderItems() {
   var el = $('carn-items-lista'); if (!el) return;
   if (!carnItemsActual.length) {
-    el.innerHTML = '<div style="background:#fff;border:1px dashed #333;border-radius:12px;padding:20px;text-align:center">' +
+    el.innerHTML = '<div style="background:#F9FAFB;border:1px dashed #E5E7EB;border-radius:12px;padding:20px;text-align:center">' +
       '<div style="font-size:24px;margin-bottom:8px">🐄</div>' +
-      '<div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:4px">Romaneo ' + getSemanaLabel(carnRomaneoActual&&carnRomaneoActual.semana||'') + '</div>' +
+      '<div style="font-size:13px;font-weight:700;color:#1A1A2E;margin-bottom:4px">Romaneo ' + getSemanaLabel(carnRomaneoActual&&carnRomaneoActual.semana||'') + '</div>' +
       '<div style="font-size:11px;color:#6B7280;margin-bottom:12px">Agregá las compras de esta semana</div>' +
       '<button onclick="agregarItemCarn()" style="padding:9px 18px;border-radius:9px;background:#C9A84C;border:none;color:#0A0A0A;font-family:Nunito;font-size:12px;font-weight:800;cursor:pointer">+ Agregar primera compra</button>' +
     '</div>';
@@ -7349,7 +7352,7 @@ function _renderItems() {
     return '<div style="background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px">' +
       '<div style="font-size:20px">' + icon + '</div>' +
       '<div style="flex:1">' +
-        '<div style="font-size:13px;font-weight:700;color:#fff">' + item.descripcion + '</div>' +
+        '<div style="font-size:13px;font-weight:700;color:#1A1A2E">' + item.descripcion + '</div>' +
         '<div style="font-size:10px;color:#6B7280">' + item.peso_kg + 'kg · ' + fmtM(item.precio_compra_kg) + '/kg · ~' + kgVend + 'kg vendibles</div>' +
         '<div style="font-size:10px;color:#E53935;font-weight:700">Total: ' + fmtM(item.costo_total) + '</div>' +
       '</div>' +
@@ -7481,7 +7484,7 @@ function _renderCortes() {
       // Header: nombre + origen + destino
       '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px">' +
         '<div style="flex:1">' +
-          '<div style="font-size:13px;font-weight:700;color:#fff">' + c.nombre + '</div>' +
+          '<div style="font-size:13px;font-weight:700;color:#1A1A2E">' + c.nombre + '</div>' +
           (c.origen_desc ? '<div style="font-size:9px;color:#444">' + origIcon + ' ' + c.origen_desc.split(' ').slice(0,3).join(' ') + ' · Costo compra: ' + fmtM(c.costo_kg) + '/kg' + (costoHect > 0 ? ' + ' + fmtM(costoHect) + ' Héctor' : '') + '</div>' : '') +
         '</div>' +
         '<div style="font-size:10px;font-weight:700;color:' + color + ';white-space:nowrap">' + (DEST_LBL[c.destino]||c.destino) + '</div>' +
@@ -7493,7 +7496,7 @@ function _renderCortes() {
           '<div style="font-size:9px;color:#6B7280;margin-bottom:2px">Kg real</div>' +
           '<input type="number" value="' + kgReal + '" step="0.1" min="0" ' +
             'onchange="carnCortesActual[' + i + '].kg_real=parseFloat(this.value)||0;carnCortesActual[' + i + '].kg_disponible=parseFloat(this.value)||0;_renderCortes()" ' +
-            'style="width:100%;background:#F9FAFB;border:1px solid #333;border-radius:5px;padding:3px;font-family:Nunito;font-size:12px;font-weight:800;color:#E53935;outline:none;text-align:center">' +
+            'style="width:100%;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:5px;padding:3px;font-family:Nunito;font-size:12px;font-weight:800;color:#E53935;outline:none;text-align:center">' +
         '</div>' +
         '<div style="background:#F9FAFB;border-radius:6px;padding:5px;text-align:center">' +
           '<div style="font-size:9px;color:#6B7280;margin-bottom:2px">Costo real/kg</div>' +
@@ -7503,7 +7506,7 @@ function _renderCortes() {
           '<div style="font-size:9px;color:#6B7280;margin-bottom:2px">Precio vta</div>' +
           '<input type="number" value="' + (precioVenta||precioSug) + '" step="100" ' +
             'onchange="carnCortesActual[' + i + '].precio_venta_kg=parseFloat(this.value)||0;_renderCortes()" ' +
-            'style="width:100%;background:#F9FAFB;border:1px solid #333;border-radius:5px;padding:3px;font-family:Nunito;font-size:12px;font-weight:800;color:#43A047;outline:none;text-align:center">' +
+            'style="width:100%;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:5px;padding:3px;font-family:Nunito;font-size:12px;font-weight:800;color:#43A047;outline:none;text-align:center">' +
         '</div>' +
         '<div style="background:#F9FAFB;border-radius:6px;padding:5px;text-align:center">' +
           '<div style="font-size:9px;color:#6B7280;margin-bottom:2px">Margen</div>' +
@@ -7519,7 +7522,7 @@ function _renderCortes() {
 
       // Destino selector
       '<select onchange="carnCortesActual[' + i + '].destino=this.value;_renderCortes()" ' +
-        'style="width:100%;background:#F9FAFB;border:1px solid #333;border-radius:7px;padding:5px 8px;font-family:Nunito;font-size:11px;font-weight:700;color:' + color + ';outline:none">' +
+        'style="width:100%;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:7px;padding:5px 8px;font-family:Nunito;font-size:11px;font-weight:700;color:' + color + ';outline:none">' +
         Object.entries(DEST_LBL).map(function(e){ return '<option value="' + e[0] + '"' + (c.destino===e[0]?' selected':'') + '>' + e[1] + '</option>'; }).join('') +
       '</select>' +
 
@@ -13178,6 +13181,8 @@ function _mostrarDialogoImport(cantDias, fechaMin, fechaMax) {
 function loadStock() {
   loadStockPanel && loadStockPanel();
 }
+
+
 
 
 
