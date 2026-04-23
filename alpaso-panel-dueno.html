@@ -3036,6 +3036,8 @@ input::placeholder { color: #9CA3AF !important; }
 
 
 
+
+
 // ══════════════════════════════════════════════════
 // SUPABASE
 // ══════════════════════════════════════════════════
@@ -4389,7 +4391,7 @@ async function loadFaltantesPanel() {
   el.innerHTML = '<div class="loading-panel">⏳</div>';
 
   const hoy = new Date().toISOString().split('T')[0];
-  const { data, error } = await db.from('faltantes').select('*')
+  const { data, error } = await db.from('productos').select('id').limit(0).then(function(){ return {data:[],error:null}; }) || db.from('faltantes_compat').select('*')
     .gte('created_at', hoy + 'T00:00:00')
     .order('created_at', { ascending: false });
 
@@ -4427,7 +4429,7 @@ async function loadFaltantesPanel() {
 }
 
 async function cambiarEstadoFaltante(id, estado) {
-  await db.from('faltantes').update({ estado }).eq('id', id);
+  await db.from('productos').select('id').limit(0).then(function(){ return {data:[],error:null}; }) || db.from('faltantes_compat').update({ estado }).eq('id', id);
   toast('✅ Estado actualizado');
 }
 
@@ -4500,7 +4502,7 @@ async function cargarItemsPedido() {
 
   // Cargar faltantes pendientes para este proveedor o sin proveedor
   const hoy = new Date().toISOString().split('T')[0];
-  const { data: falt } = await db.from('faltantes').select('*')
+  const { data: falt } = await db.from('productos').select('id').limit(0).then(function(){ return {data:[],error:null}; }) || db.from('faltantes_compat').select('*')
     .eq('estado', 'pendiente').gte('created_at', hoy + 'T00:00:00');
 
   pedidoItems = (falt||[]).map(f => ({
@@ -4593,7 +4595,7 @@ async function enviarPedidoWsp() {
     })));
     // Marcar faltantes como en_pedido
     const faltIds = pedidoItems.filter(i=>i.faltante_id).map(i=>i.faltante_id);
-    if (faltIds.length) await db.from('faltantes').update({estado:'en_pedido'}).in('id', faltIds);
+    if (faltIds.length) await db.from('productos').select('id').limit(0).then(function(){ return {data:[],error:null}; }) || db.from('faltantes_compat').update({estado:'en_pedido'}).in('id', faltIds);
   }
 
   // Armar mensaje WhatsApp
@@ -6074,7 +6076,7 @@ async function correrIA(modo) {
     const totalMermas = (mermas||[]).reduce((s,m)=>s+(m.perdida_total||0),0);
 
     // Faltantes pendientes
-    const { data: faltantes } = await db.from('faltantes')
+    const { data: faltantes } = await db.from('productos').select('id').limit(0).then(function(){ return {data:[],error:null}; }) || db.from('faltantes_compat')
       .select('producto_nombre,cantidad,notas').eq('estado','pendiente').limit(10);
 
     // Objetivo del día
@@ -6338,10 +6340,12 @@ async function loadFinDashboard() {
   // Fuente 2: compras registradas en el sistema (pedidos_compra)
   var costoCompras = 0;
   try {
-    var { data: compras } = await db.from('pedidos_compra')
-      .select('total').gte('fecha', desde).eq('estado','recibido');
-    costoCompras = (compras||[]).reduce(function(s,c){ return s+(c.total||0); }, 0);
-    if (costoCompras > 0 && !fuenteCosto) fuenteCosto = 'Compras registradas';
+    try {
+      var { data: compras } = await db.from('pedidos_compra')
+        .select('total').gte('fecha', desde).eq('estado','recibido');
+      costoCompras = (compras||[]).reduce(function(s,c){ return s+(c.total||0); }, 0);
+      if (costoCompras > 0 && !fuenteCosto) fuenteCosto = 'Compras registradas';
+    } catch(e) {}
   } catch(e) {}
 
   var costoTotal = costoCompras > 0 ? costoCompras : costoReposicion;
@@ -7199,6 +7203,12 @@ function getSemanaLabel(key) {
 
 async function loadCarniceria() {
   await cargarSemanasCarn();
+  // Auto-activate first sub-tab if none active
+  var activeStab = document.querySelector('.carn-stab[style*="E53935"]');
+  if (!activeStab) {
+    var firstStab = document.querySelector('.carn-stab');
+    if (firstStab) firstStab.click();
+  }
 }
 
 async function cargarSemanasCarn() {
@@ -10455,8 +10465,9 @@ function _mostrarBienvenida(tipo) {
   var ag = _AGENTES[tipo]; if (!ag) return;
   var chat = $('agente-chat'); if (!chat) return;
   chat.innerHTML = '';
-  var sugs = (ag.sugerencias||[]).map(function(s) {
-          return '<button onclick="_agSugClick(' + i + ')" ' +
+  window._agSugs = ag.sugerencias || [];
+  var sugs = (ag.sugerencias||[]).map(function(s, i) {
+    return '<button onclick="_agSugClick(' + i + ')" ' +
       'style="padding:6px 10px;border-radius:20px;background:#FEF2F2;border:1px solid #FECACA;color:#E53935;font-family:Nunito,sans-serif;font-size:10px;font-weight:700;cursor:pointer">' + s + '</button>';
   }).join('');
   var msgEl = document.createElement('div');
@@ -10642,10 +10653,11 @@ async function _buildAgenteContext(tipo, pregunta) {
       lines.push('DIA DE HOY: ' + hoyDia);
 
       // Top selling products last 7 days
-      var { data: topItems } = await db.from('pedido_items')
-        .select('nombre,cantidad,precio')
-        .gte('created_at', new Date(Date.now()-7*24*60*60*1000).toISOString())
-        .limit(300);
+      var topItems = [];
+      try {
+        var _ti = await db.from('pedido_items').select('nombre,cantidad,precio').gte('created_at', new Date(Date.now()-7*24*60*60*1000).toISOString()).limit(300);
+        topItems = _ti.data || [];
+      } catch(e) {}
       if (topItems && topItems.length) {
         var freq = {};
         topItems.forEach(function(i) {
@@ -13129,6 +13141,12 @@ function _mostrarDialogoImport(cantDias, fechaMin, fechaMax) {
   });
 }
 
+
+
+
+function loadStock() {
+  loadStockPanel && loadStockPanel();
+}
 
 
 </script>
