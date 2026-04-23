@@ -3038,6 +3038,10 @@ input::placeholder { color: #9CA3AF !important; }
 
 
 
+
+
+
+
 // ══════════════════════════════════════════════════
 // SUPABASE
 // ══════════════════════════════════════════════════
@@ -7202,17 +7206,41 @@ function getSemanaLabel(key) {
 }
 
 async function loadCarniceria() {
-  await cargarSemanasCarn();
-  // Auto-activate first sub-tab if none active
-  var activeStab = document.querySelector('.carn-stab[style*="E53935"]');
-  if (!activeStab) {
-    var firstStab = document.querySelector('.carn-stab');
-    if (firstStab) firstStab.click();
+  console.log('[CARN] loadCarniceria start');
+  try {
+    await cargarSemanasCarn();
+    console.log('[CARN] cargarSemanasCarn done');
+  } catch(e) {
+    console.error('[CARN] Error:', e.message);
+  }
+  // Force show the carniceria tab content
+  var tab = $('tab-carniceria');
+  if (tab) tab.style.display = 'block';
+  // Show romaneo panel directly (most reliable approach)
+  var romaneoPanel = $('carn-romaneo');
+  if (romaneoPanel) romaneoPanel.style.display = 'block';
+  // Style first stab as active
+  var allStabs = document.querySelectorAll('#tab-carniceria .carn-stab');
+  console.log('[CARN] stabs found:', allStabs.length);
+  if (allStabs.length > 0) {
+    allStabs.forEach(function(b) {
+      b.style.background='#F4F5F7'; b.style.color='#4B5563'; b.style.border='1px solid #E5E7EB';
+    });
+    allStabs[0].style.background='#E53935';
+    allStabs[0].style.color='#fff';
+    allStabs[0].style.border='none';
   }
 }
 
 async function cargarSemanasCarn() {
-  var res = await db.from('carn_romaneos').select('*').order('fecha_inicio',{ascending:false}).limit(10);
+  console.log('[CARN] cargarSemanasCarn start');
+  // Try fecha_inicio first, fallback to created_at
+  var res = await db.from('carn_romaneos').select('*').order('created_at',{ascending:false}).limit(10);
+  if (res.error) {
+    console.error('[CARN] Query error:', res.error.message);
+    res = {data:[], error:null};
+  }
+  console.log('[CARN] carn_romaneos:', res.data ? res.data.length + ' rows' : 'null');
   var data = res.data || [];
 
   // Find activo (most recent active or first)
@@ -7257,7 +7285,7 @@ async function loadRomaneoSemana() {
   var sel = $('carn-semana-sel');
   var selId = sel ? parseInt(sel.value) : 0;
   if (selId) {
-    var res = await db.from('carn_romaneos').select('*').eq('id', selId).single();
+    var res = await db.from('carn_romaneos').select('*').eq('id', selId).maybeSingle();
     if (res.data) carnRomaneoActual = res.data;
   }
   await _cargarRomaneo();
@@ -7266,9 +7294,12 @@ async function loadRomaneoSemana() {
 // Internal: load items and cortes for current romaneo — SINGLE entry point
 async function _cargarRomaneo() {
   if (!carnRomaneoActual || !carnRomaneoActual.id) {
-    // No romaneo — show empty state
     var el = $('carn-items-lista');
-    if (el) el.innerHTML = '<div style="color:#333;font-size:12px;text-align:center;padding:20px">Sin romaneo activo. Tocá "+ Semana".</div>';
+    if (el) el.innerHTML = '<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:20px;text-align:center;margin:8px 0">' +
+      '<div style="font-size:24px;margin-bottom:8px">🥩</div>' +
+      '<div style="font-size:13px;font-weight:700;color:#1A1A2E;margin-bottom:4px">Sin romaneo activo</div>' +
+      '<div style="font-size:11px;color:#6B7280">Tocá el botón <strong>+ Semana</strong> para registrar una nueva compra de carne</div>' +
+      '</div>';
     var cs = $('carn-cortes-section'); if (cs) cs.style.display = 'none';
     return;
   }
@@ -13147,6 +13178,10 @@ function _mostrarDialogoImport(cantDias, fechaMin, fechaMax) {
 function loadStock() {
   loadStockPanel && loadStockPanel();
 }
+
+
+
+
 
 
 </script>
