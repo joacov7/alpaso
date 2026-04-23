@@ -2439,6 +2439,9 @@ input::placeholder { color: #9CA3AF !important; }
 <!-- ═══ CARNICERÍA V2 ══════════════════════════════ -->
 <div id="tab-carniceria" class="sec" style="display:none">
 
+  <!-- DEBUG: visible test -->
+  <div id="carn-debug-bar" style="background:#E53935;color:#fff;padding:8px;border-radius:8px;margin-bottom:8px;font-size:12px;font-weight:700;text-align:center">🥩 CARNICERÍA CARGADA</div>
+
   <!-- Sub-tabs -->
   <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px">
     <button class="carn-stab on" onclick="carnSubTab(this,'romaneo')"     style="flex:1;min-width:55px;padding:8px 4px;border-radius:9px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;background:#E53935;color:#fff;border:none">🐄 Romaneo</button>
@@ -2946,6 +2949,7 @@ input::placeholder { color: #9CA3AF !important; }
 <div class="toast" id="toast"></div>
 
 <script>
+
 
 
 
@@ -7299,6 +7303,7 @@ async function loadRomaneoSemana() {
 // Internal: load items and cortes for current romaneo — SINGLE entry point
 async function _cargarRomaneo() {
   console.log('[CARN] _cargarRomaneo start, romaneoActual:', carnRomaneoActual ? carnRomaneoActual.id : 'null');
+  try {
   if (!carnRomaneoActual || !carnRomaneoActual.id) {
     var el = $('carn-items-lista');
     if (el) el.innerHTML = '<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:20px;text-align:center;margin:8px 0">' +
@@ -7333,6 +7338,7 @@ async function _cargarRomaneo() {
     carnCortesActual = [];
     var cs = $('carn-cortes-section'); if (cs) cs.style.display = 'none';
   }
+  } catch(e) { console.error("[CARN] _cargarRomaneo error:", e.message, e.stack); }
 }
 
 // Render items list
@@ -13187,6 +13193,7 @@ function _mostrarDialogoImport(cantDias, fechaMin, fechaMax) {
 function loadStock() {
   loadStockPanel && loadStockPanel();
 }
+
 
 
 
