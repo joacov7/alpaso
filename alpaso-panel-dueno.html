@@ -2425,8 +2425,9 @@ input::placeholder { color: #9CA3AF !important; }
     </div>
 
   </div>
- </div>
 </div>
+</div><!-- /tab-finanzas -->
+
 <!-- ═══ AYUDA ════════════════════════════════════════ -->
 <div id="tab-ayuda" class="sec" style="display:none">
   <div class="sec-title">❓ Guía de uso</div>
@@ -2790,7 +2791,7 @@ input::placeholder { color: #9CA3AF !important; }
     <div style="font-size:11px;color:#6B7280;margin-bottom:12px">Modificá precios y destinos — el sistema calcula el impacto en la ganancia total</div>
 
     <div style="display:flex;gap:8px;margin-bottom:12px">
-      <select id="sim-semana" onchange="loadSimulador()"
+      <select id="sim-semana" onchange="loadSimuladorCarn()"
         style="flex:1;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:9px;padding:9px 12px;font-family:'Nunito';font-size:12px;color:#1A1A2E;outline:none">
       </select>
     </div>
@@ -7169,6 +7170,7 @@ let _preciosMkt       = [];
 let _costosItemModal  = [];
 let _otrosCostosCmp   = [];
 let simDelta          = 0;
+let simGananciaBase   = 0;
 
 // ── SUB-TABS ──────────────────────────────────────
 function carnSubTab(btn, id) {
@@ -7185,7 +7187,7 @@ function carnSubTab(btn, id) {
   if (id==='precios-mkt')       loadPreciosMercado();
   if (id==='carn-cfg')          loadCarnCfg();
   if (id==='comparador-compra') { setTimeout(function(){ cargarPrecioMR(); }, 100); }
-  if (id==='sim-avanzado') { if (typeof CarnSim !== 'undefined') CarnSim.init(); }
+  if (id==='sim-avanzado') { if (typeof CarnSim !== 'undefined' && !CarnSim._initialized) { CarnSim.init(); CarnSim._initialized = true; } }
   if (id==='cierre-semanal') { initCierreSemanal(); }
 }
 
@@ -8196,12 +8198,13 @@ async function loadSimuladorCarn() {
   simDelta = 0;
   if (!cortes.length) { $('sim-cortes-lista').innerHTML='<div style="color:#333;font-size:12px;text-align:center;padding:20px">Guardá el romaneo para usar el simulador</div>'; return; }
   var gananciaActual = cortes.reduce(function(s,c){return s+(c.ganancia_total||0);},0);
+  simGananciaBase = gananciaActual;
   if($('sim-ganancia-actual')) $('sim-ganancia-actual').textContent=fmtM(gananciaActual);
   $('sim-cortes-lista').innerHTML=cortes.filter(function(c){return c.precio_venta_kg>0;}).map(function(c,i){
     var margen=Math.round(c.margen_pct||0);
     return '<div style="background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:11px;margin-bottom:6px">'+
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'+
-        '<div style="font-size:12px;font-weight:700;color:#fff">'+c.nombre+' <span style="color:#6B7280;font-size:10px">('+c.kg_real+'kg)</span></div>'+
+        '<div style="font-size:12px;font-weight:700;color:#1A1A2E">'+c.nombre+' <span style="color:#6B7280;font-size:10px">('+c.kg_real+'kg)</span></div>'+
         '<div style="font-size:11px;color:#6B7280">Costo: '+fmtM(c.costo_kg)+'/kg</div>'+
       '</div>'+
       '<div style="display:flex;align-items:center;gap:8px">'+
@@ -8217,18 +8220,18 @@ async function loadSimuladorCarn() {
 }
 
 function handleSimRange(el) {
-  var n=parseFloat(el.value),kg=parseFloat(el.dataset.kg)||0,costo=parseFloat(el.dataset.costo)||0,base=parseFloat(el.dataset.base)||0;
-  var span=el.nextElementSibling; if(span) span.textContent=fmtM(n);
-  calcularSimulacion(0, n, kg, costo, base);
-}
-
-function calcularSimulacion(idx, nuevoPrecio, kg, costo, gananciaOrig) {
-  var nueva = (nuevoPrecio - costo) * kg;
-  simDelta += (nueva - gananciaOrig);
-  var actual = parseFloat(($('sim-ganancia-actual')?.textContent||'0').replace(/[^0-9,-]/g,'').replace(',','.')) || 0;
-  var total = actual + simDelta;
-  if($('sim-ganancia-nueva')){$('sim-ganancia-nueva').textContent=fmtM(total);$('sim-ganancia-nueva').style.color=total>=actual?'#43A047':'#E53935';}
-  var diff=total-actual;
+  var span=el.nextElementSibling; if(span) span.textContent=fmtM(parseFloat(el.value));
+  // Recalculate total from ALL sliders to avoid delta accumulation when same slider is moved twice
+  var totalSim = 0;
+  document.querySelectorAll('.sim-rng').forEach(function(rng) {
+    var precio = parseFloat(rng.value) || 0;
+    var kg     = parseFloat(rng.dataset.kg)    || 0;
+    var costo  = parseFloat(rng.dataset.costo) || 0;
+    totalSim += (precio - costo) * kg;
+  });
+  var actual = simGananciaBase;
+  if($('sim-ganancia-nueva')){$('sim-ganancia-nueva').textContent=fmtM(totalSim);$('sim-ganancia-nueva').style.color=totalSim>=actual?'#43A047':'#E53935';}
+  var diff=totalSim-actual;
   if($('sim-diferencia')){$('sim-diferencia').textContent=(diff>=0?'▲ +':'▼ ')+fmtM(Math.abs(diff))+' vs actual';$('sim-diferencia').style.color=diff>=0?'#43A047':'#E53935';}
   $('sim-resultado').style.display='block';
 }
