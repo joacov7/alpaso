@@ -1742,15 +1742,14 @@ function ocultarBannerCierre() {
 }
 
 function tiempoEntregaTexto() {
-  if (entrega === 'Delivery') {
-    const min = CONFIG.tiempo_delivery_min || CONFIG.t_del_min || '30';
-    const max = CONFIG.tiempo_delivery_max || CONFIG.t_del_max || '45';
-    return `${min}-${max} min`;
-  } else {
-    const min = CONFIG.tiempo_retiro_min || CONFIG.t_ret_min || '10';
-    const max = CONFIG.tiempo_retiro_max || CONFIG.t_ret_max || '15';
-    return `${min}-${max} min`;
-  }
+  const delMin = CONFIG.tiempo_delivery_min || CONFIG.t_del_min || '30';
+  const delMax = CONFIG.tiempo_delivery_max || CONFIG.t_del_max || '45';
+  const retMin = CONFIG.tiempo_retiro_min  || CONFIG.t_ret_min  || '10';
+  const retMax = CONFIG.tiempo_retiro_max  || CONFIG.t_ret_max  || '15';
+  return {
+    delivery: `${delMin}-${delMax} min`,
+    retiro:   `${retMin}-${retMax} min`,
+  };
 }
 
 // ══════════════════════════════════════════════════════
@@ -1938,7 +1937,7 @@ function renderSaboresGrid() {
         '<span class="sabor-emoji">' + (s.emoji||'\u{1FAD3}') + '</span>' +
         '<div>' +
           '<div class="sabor-nombre">' + s.nombre + '</div>' +
-          '<div class="sabor-precio">' + (s.precio>0 ? fmt(Math.round(s.precio/parseInt(pxc||'6')))+' por unidad' : 'Precio a confirmar') + '</div>' +
+          '<div class="sabor-precio">' + (s.precio>0 ? fmt(Math.round(s.precio/parseInt(pxc, 10)))+' por unidad' : 'Precio a confirmar') + '</div>' +
         '</div>' +
       '</div>' +
       '<div class="sabor-qty">' +
@@ -2091,14 +2090,15 @@ function renderCart() {
   }
 
   const sub = cartTotal();
-  const bvPct = parseFloat(CONFIG.descuento_bv||'10')/100;
+  const bvPct = (parseFloat(CONFIG.descuento_bv) || 10) / 100;
   const bvGlobal = CONFIG.bv_activa !== 'false';
   const bv  = bvGlobal && bvActiva && !bvUsada ? Math.round(sub * bvPct) : 0;
   const ptsDes = puntosAplicados && clienteActual?.puntos >= 500 ? 500 : 0;
   const desc = calcularDescuentoPersonal();
   const descAmt = desc ? Math.round(sub * desc.pct / 100) : 0;
-  const delCosto = entrega==='Delivery' ? (sub >= parseFloat(CONFIG.delivery_minimo||'10000') ? 0 : parseFloat(CONFIG.delivery_costo||'1500')) : 0;
-  const recargo  = pagoTipo==='credito3' ? Math.round(sub * parseFloat(CONFIG.recargo_credito3||'20') / 100) : 0;
+  const delMinimo = parseFloat(CONFIG.delivery_minimo) || 10000;
+  const delCosto = entrega==='Delivery' ? (sub >= delMinimo ? 0 : parseFloat(CONFIG.delivery_costo) || 1500) : 0;
+  const recargo  = pagoTipo==='credito3' ? Math.round(sub * ((parseFloat(CONFIG.recargo_credito3) || 20) / 100)) : 0;
   const total = sub - bv - ptsDes - descAmt + delCosto + recargo;
   const tiempoTxt = tiempoEntregaTexto();
 
@@ -2293,23 +2293,27 @@ function addUpsell(id) {
 // ══════════════════════════════════════════════════════
 // CONFIRMAR PEDIDO
 // ══════════════════════════════════════════════════════
-let lastOrderNum = '', lastOrderTotal = 0;
+let lastOrderNum = '', lastOrderTotal = 0, lastWspMsg = '', confirmando = false;
 
 async function confirmarPedido() {
+  if (confirmando) return;
   if (!clienteActual) { toast('👣 Registrate para hacer un pedido'); goTo('fidelidad'); return; }
   if (!estaAbierto()) { toast('🔴 ' + (CONFIG.mensaje_cierre||'Estamos cerrados')); return; }
   const items = Object.values(cart);
   if (!items.length) { toast('El carrito está vacío'); return; }
 
+  confirmando = true;
+  try {
   const sub = cartTotal();
-  const bvPct = parseFloat(CONFIG.descuento_bv||'10')/100;
+  const bvPct = (parseFloat(CONFIG.descuento_bv) || 10) / 100;
   const bvGlobal = CONFIG.bv_activa !== 'false';
   const bv  = bvGlobal && bvActiva && !bvUsada ? Math.round(sub * bvPct) : 0;
   const ptsDes = puntosAplicados && clienteActual.puntos >= 500 ? 500 : 0;
   const desc = calcularDescuentoPersonal();
   const descAmt = desc ? Math.round(sub * desc.pct / 100) : 0;
-  const delCosto = entrega==='Delivery' ? (sub >= parseFloat(CONFIG.delivery_minimo||'10000') ? 0 : parseFloat(CONFIG.delivery_costo||'1500')) : 0;
-  const recargo  = pagoTipo==='credito3' ? Math.round(sub * parseFloat(CONFIG.recargo_credito3||'20') / 100) : 0;
+  const delMinimo = parseFloat(CONFIG.delivery_minimo) || 10000;
+  const delCosto = entrega==='Delivery' ? (sub >= delMinimo ? 0 : parseFloat(CONFIG.delivery_costo) || 1500) : 0;
+  const recargo  = pagoTipo==='credito3' ? Math.round(sub * ((parseFloat(CONFIG.recargo_credito3) || 20) / 100)) : 0;
   const total = sub - bv - ptsDes - descAmt + delCosto + recargo;
 
   // Número único: count + timestamp corto para evitar duplicados
@@ -2330,6 +2334,7 @@ async function confirmarPedido() {
   };
 
   const ped = await guardarPedido(pedidoData, items);
+  if (!ped) { toast('⚠️ Error al guardar el pedido. Intentá de nuevo.'); return; }
   const pts = Math.floor(total / 100);
 
   // Marcar BV usada
@@ -2358,6 +2363,12 @@ async function confirmarPedido() {
   } else {
     abrirWsp();
   }
+  } catch(e) {
+    console.warn('Error en confirmarPedido:', e);
+    toast('⚠️ Ocurrió un error. Intentá de nuevo.');
+  } finally {
+    confirmando = false;
+  }
 }
 
 async function pagarConMP(total, pedidoNum) {
@@ -2374,10 +2385,15 @@ function reabrirMP() { pagarConMP(lastOrderTotal, lastOrderNum); }
 function abrirWsp() {
   const wsp = CONFIG.tel_cocina || CONFIG.local_wsp || '';
   if (!wsp) return;
-  const items = Object.values(cart);
-  const lines = items.map(it => '· ' + it.nombre + ' x' + it.qty + ' — ' + fmt(it.precio_venta * it.qty)).join('\n');
-  const sub = cartTotal();
-  const msg = '🛒 *Pedido Al Paso*\n\n' + lines + '\n\n📦 ' + entrega + ' · 💳 ' + pagoTipo + '\n💰 Total: ' + fmt(sub);
+  // Usar lastWspMsg cuando está disponible (ya incluye descuentos y nro de pedido)
+  let msg = lastWspMsg;
+  if (!msg) {
+    const items = Object.values(cart);
+    const lines = items.map(it => '· ' + it.nombre + ' x' + it.qty + ' — ' + fmt(it.precio_venta * it.qty)).join('\n');
+    const sub = cartTotal();
+    const pagoLabel = pagoTipo==='credito3' ? '3 cuotas' : pagoTipo==='mp' ? 'MercadoPago' : 'Efectivo/Débito';
+    msg = '🛒 *Pedido Al Paso*\n\n' + lines + '\n\n📦 ' + entrega + ' · 💳 ' + pagoLabel + '\n💰 Total: ' + fmt(sub);
+  }
   window.open('https://wa.me/54' + wsp.replace(/\D/g,'') + '?text=' + encodeURIComponent(msg), '_blank');
 }
 
@@ -2385,6 +2401,7 @@ function closeCO() {
   $('co').classList.remove('show');
   const mpBtn = $('btn-pagar-mp');
   if (mpBtn) mpBtn.style.display = 'none';
+  lastWspMsg = '';
   cart = {}; puntosAplicados = false; updateBadges(); renderCart(); goTo('home');
 }
 
